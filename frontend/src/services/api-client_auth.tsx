@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const apiClientAuth = axios.create({
-  baseURL: "http://localhost:4000/v1/auth",
+  baseURL: "/api/v1/auth",
   withCredentials: true, // مهم: کوکی‌ها رو خودکار ارسال و دریافت می‌کنه
   headers: {
     "Content-Type": "application/json",

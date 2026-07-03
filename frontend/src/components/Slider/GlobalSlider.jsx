@@ -24,7 +24,7 @@ const GlobalSlider = ({ myQuery, header, title, navigateLink, limit }) => {
         title={title}
         navigateLink={navigateLink}
         scrollOnMobile={limit !== undefined}
-        apiUrl="http://localhost:4000/v1/shoes"
+        apiUrl="/api/v1/shoes"
       />
     </div>
   );

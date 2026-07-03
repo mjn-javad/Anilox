@@ -252,7 +252,7 @@ const Basket = () => {
                 <div className="w-full sm:w-32 h-32 bg-gray-100 rounded-lg overflow-hidden">
                   {item.image && (
                     <img
-                      src={`http://localhost:4000/images/posts/${item.image}`}
+                      src={`/api/images/posts/${item.image}`}
                       alt={item.shoe?.name}
                       className="w-full h-full object-contain"
                     />

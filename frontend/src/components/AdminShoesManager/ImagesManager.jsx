@@ -7,7 +7,7 @@ const ImageGallery = ({
   onUpdateSortOrder,
   onSaveSortOrder, // تابع جدید برای ذخیره در سرور
 }) => {
-  const imageBaseUrl = "http://localhost:4000/images/posts/";
+  const imageBaseUrl = "/api/images/posts/";
   const [editingId, setEditingId] = useState(null);
   const [tempSortOrder, setTempSortOrder] = useState("");
   const [saving, setSaving] = useState(false);

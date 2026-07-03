@@ -180,7 +180,7 @@ const AdminShoesManagement = () => {
                       <img
                         src={
                           shoe?.images?.[0]?.image_name
-                            ? `http://localhost:4000/images/posts/${shoe?.images?.[0]?.image_name}`
+                            ? `/api/images/posts/${shoe?.images?.[0]?.image_name}`
                             : "/api/placeholder/50/50"
                         }
                         alt={shoe.name}

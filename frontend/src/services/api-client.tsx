@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export default axios.create({
-  baseURL: "http://localhost:4000/v1/brandPopular",
+  baseURL: "/api/v1/brandPopular",
   headers: {
     Authorization:
       "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxNSwicm9sZSI6InVzZXIiLCJpYXQiOjE3NzIxMzgyNzcsImV4cCI6MTc3MzQzNDI3N30.99tjUz1OSzk1uo5r-kyEBpDIxBzbzo6R1XaXMNgjaYk",

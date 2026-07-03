@@ -8,7 +8,7 @@ import MessageAlert from "../Shared/MessageAlert";
 import LoadingSpinner from "../Shared/LoadingSpinner";
 import OrderOnWhatsApp from "../OrderOnWhatsApp/OrderOnWhatsApp";
 
-const IMG_URL = "http://localhost:4000/images/posts/";
+const IMG_URL = "/api/images/posts/";
 
 const SingleShoe = () => {
   const { id } = useParams();

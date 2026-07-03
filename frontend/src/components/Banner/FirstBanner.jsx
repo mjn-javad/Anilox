@@ -40,7 +40,7 @@ const FirstBanner = () => {
 
   // ساخت آدرس کامل تصویر
   const getImageUrl = (imageName) => {
-    const baseUrl = `http://localhost:4000/images/banners/${imageName}`;
+    const baseUrl = `/api/images/banners/${imageName}`;
     return baseUrl;
   };
 

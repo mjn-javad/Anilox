@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { data, Link } from "react-router-dom";
 import apiClientBanner from "../../services/api-client_banner";
 
 const GlobalBanner = ({ brandId, link = "/" }) => {
@@ -46,6 +46,8 @@ const GlobalBanner = ({ brandId, link = "/" }) => {
     };
   }, [brandId]);
 
+  console.log("STATE:", { brandId, loading, error, banner });
+
   if (loading) {
     return (
       <div className="container mx-auto">
@@ -55,6 +57,7 @@ const GlobalBanner = ({ brandId, link = "/" }) => {
   }
 
   if (error || !banner) {
+    console.log("RETURN NULL:", { error, banner });
     return null;
   }
 
@@ -63,7 +66,7 @@ const GlobalBanner = ({ brandId, link = "/" }) => {
   const bannerContent = (
     <div className="min-w-full relative overflow-hidden group cursor-pointer">
       <img
-        src={imageUrl}
+        src={`/api/images/banners/${imageUrl}`}
         alt={banner.title2 || banner.title1 || "brand banner"}
         className="w-full h-[400px] sm:h-[500px] md:h-[660px] object-cover transition-transform duration-700 ease-out group-hover:scale-105"
       />

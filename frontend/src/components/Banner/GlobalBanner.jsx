@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import apiClientBanner from "../../services/api-client_banner";
 
-const GlobalBanner = ({ brId, link = "/" }) => {
+const GlobalBanner = ({ brandId, link = "/" }) => {
   const [banner, setBanner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

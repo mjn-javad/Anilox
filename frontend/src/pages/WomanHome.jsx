@@ -28,6 +28,7 @@ const WomenHome = () => {
         header={"Explore Women Watches"}
         title={"Discover luxury watches for women"}
         navigateLink={"/slider-shoes?type=watch&gender=female"}
+        limit={4}
       />
 
       <GlobalBanner
@@ -44,6 +45,7 @@ const WomenHome = () => {
         header={"Explore Women Bags"}
         title={"Discover luxury bags for women"}
         navigateLink={"/slider-shoes?type=bag&gender=female"}
+        limit={4}
       />
 
       <GlobalBanner

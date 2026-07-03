@@ -1,0 +1,10 @@
+CREATE TABLE refresh_tokens (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id INT UNSIGNED NOT NULL,
+    token VARCHAR(255) NOT NULL,
+    expire_time DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    INDEX (user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+)ENGINE innodb AUTO_INCREMENT=10 DEFAULT charset=utf8mb4 COLLATE=utf8mb4_unicode_ci;

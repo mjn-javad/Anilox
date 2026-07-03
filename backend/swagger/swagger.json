@@ -1,0 +1,618 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Shoe Store API",
+        "version": "1.0.0",
+        "description": "API documentation for the Shoe Store Project"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:4000/v1/",
+            "description": "Local server"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "cookieAuth": {
+                "type": "apiKey",
+                "in": "cookie",
+                "name": "access-token"
+            }
+        },
+        "schemas": {
+            "Shoe": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Nike Air Max 2024"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "nike-air-max-2024"
+                    },
+                    "brand": {
+                        "type": "string",
+                        "example": "Nike"
+                    },
+                    "gender": {
+                        "type": "string",
+                        "enum": [
+                            "men",
+                            "women",
+                            "unisex"
+                        ],
+                        "example": "men"
+                    },
+                    "price": {
+                        "type": "number",
+                        "example": 120.5
+                    },
+                    "discount_price": {
+                        "type": "number",
+                        "example": 99.99
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Premium running shoes"
+                    },
+                    "images": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "img1.jpg",
+                            "img2.jpg"
+                        ]
+                    },
+                    "sizes": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "size": {
+                                    "type": "number",
+                                    "example": 42
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "example": 10
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "paths": {
+        "/auth/register": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Register a new user",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "example": "user@example.com"
+                                    },
+                                    "username": {
+                                        "type": "string",
+                                        "example": "johndoe"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "Pass1234"
+                                    },
+                                    "confirmPassword": {
+                                        "type": "string",
+                                        "example": "Pass1234"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Registration successful"
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "409": {
+                        "description": "Username or email exists"
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "User login",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "username": {
+                                        "type": "string",
+                                        "example": "johndoe"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "Pass1234"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful"
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Logout user",
+                "responses": {
+                    "200": {
+                        "description": "Logged out"
+                    },
+                    "400": {
+                        "description": "No token found"
+                    }
+                }
+            }
+        },
+        "/auth/addAddress": {
+            "post": {
+                "tags": [
+                    "Addresses"
+                ],
+                "summary": "Add a new address for authenticated user",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "full_name",
+                                    "phone",
+                                    "province",
+                                    "city",
+                                    "address"
+                                ],
+                                "properties": {
+                                    "full_name": {
+                                        "type": "string",
+                                        "example": "Nona Norouz"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "09123456789"
+                                    },
+                                    "province": {
+                                        "type": "string",
+                                        "example": "Tehran"
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "example": "Tehran"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "Valiasr Street, No 120, Unit 5"
+                                    },
+                                    "postal_code": {
+                                        "type": "string",
+                                        "example": "1598745612"
+                                    },
+                                    "is_default": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                }
+                            },
+                            "example": {
+                                "full_name": "Nona Norouz",
+                                "phone": "09123456789",
+                                "province": "Tehran",
+                                "city": "Tehran",
+                                "address": "Valiasr Street, No 120, Unit 5",
+                                "postal_code": "1598745612",
+                                "is_default": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Address created successfully"
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing token"
+                    }
+                }
+            }
+        },
+        "/shoes": {
+            "get": {
+                "tags": [
+                    "Shoes"
+                ],
+                "summary": "Get all shoes with filters",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "brand",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "price",
+                                "created_at",
+                                "name"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of shoes"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Shoes"
+                ],
+                "summary": "Create a new shoe",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Shoe"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            }
+        },
+        "/shoes/{id}": {
+            "get": {
+                "tags": [
+                    "Shoes"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Shoe details"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Shoes"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Shoe"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Shoes"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    }
+                }
+            }
+        },
+        "/shoes/{shoeId}/stock/{size}": {
+            "patch": {
+                "tags": [
+                    "Shoes"
+                ],
+                "summary": "Increase stock for a specific size",
+                "parameters": [
+                    {
+                        "name": "shoeId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "size",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "quantity": {
+                                        "type": "integer",
+                                        "example": 5
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Stock updated"
+                    }
+                }
+            }
+        },
+        "/orders/cart": {
+            "post": {
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Add item to cart",
+                "security": [
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "shoesId": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "size": {
+                                        "type": "number",
+                                        "example": 42
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Added to cart"
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Get user cart",
+                "security": [
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cart items and total price"
+                    }
+                }
+            }
+        },
+        "/orders/cart/{cartItemId}": {
+            "delete": {
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Remove item from cart",
+                "security": [
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "cartItemId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Removed"
+                    }
+                }
+            }
+        },
+        "/orders/order": {
+            "post": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Complete user cart and create order",
+                "description": "Transfers all cart items to order_items, creates a new order record and clears the cart.",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "address_id",
+                                    "payment_method"
+                                ],
+                                "properties": {
+                                    "address_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "payment_method": {
+                                        "type": "string",
+                                        "enum": [
+                                            "online",
+                                            "onDelivery"
+                                        ],
+                                        "example": "onDelivery"
+                                    }
+                                }
+                            },
+                            "example": {
+                                "address_id": 1,
+                                "payment_method": "onDelivery"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Order created successfully",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "Order completed successfully",
+                                    "order_id": 12,
+                                    "total_price": 3500000,
+                                    "price_with_discount": 3100000
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Cart is empty or invalid input"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        }
+    }
+}

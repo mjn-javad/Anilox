@@ -8,6 +8,7 @@ import IntroduceBanner from "../components/Banner/IntroduceBanner";
 import FirstBannerImg from "../assets/myBannerOunass/womanFirstBanner2.png";
 import FourthBannerImg from "../assets/myBannerOunass/womanFourthBanner.png";
 import ThirdBannerImg from "../assets/myBannerOunass/womanThirdBanner.PNG";
+import HorizentalScroll from "../components/HorizentalScroll/HorizentalScroll";
 
 const WomenHome = () => {
   return (
@@ -18,6 +19,8 @@ const WomenHome = () => {
         subtitle="Exclusive Women's Collection | Limited-Time Deals"
         link="/slider-shoes?gender=female&discountOnly=true"
       />
+
+      <HorizentalScroll />
 
       <SecondWomanBanner />
 

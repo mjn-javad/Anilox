@@ -9,7 +9,7 @@ const ProductCard = ({
   navigateLink,
   scrollOnMobile = false,
   apiUrl = "/api/v1/shoes",
-  limit = 20,
+  limit,
 }) => {
   const [searchParams] = useSearchParams();
 
@@ -20,11 +20,25 @@ const ProductCard = ({
 
   const observerRef = useRef(null);
 
+  // فقط وقتی limit ارسال نشده باشد، اسکرول بینهایت فعال می‌شود
+  const enableInfiniteScroll = limit === undefined || limit === null;
+
+  // تعداد محصولاتی که در هر بار اسکرول بیشتر گرفته می‌شود
+  const infiniteScrollLimit = 20;
+
   useEffect(() => {
     setProducts(shoes || []);
     setPage(1);
     setTotalPages(null);
   }, [shoes]);
+
+  useEffect(() => {
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, []);
 
   const getDiscountPercentage = (price, discountPrice) => {
     if (!price || !discountPrice) return null;
@@ -32,6 +46,7 @@ const ProductCard = ({
   };
 
   const fetchMoreProducts = useCallback(async () => {
+    if (!enableInfiniteScroll) return;
     if (loading) return;
     if (totalPages && page >= totalPages) return;
 
@@ -42,7 +57,7 @@ const ProductCard = ({
 
       const params = new URLSearchParams(searchParams);
       params.set("page", nextPage);
-      params.set("limit", limit);
+      params.set("limit", infiniteScrollLimit);
 
       const res = await fetch(`${apiUrl}?${params.toString()}`);
       const result = await res.json();
@@ -55,13 +70,16 @@ const ProductCard = ({
     } finally {
       setLoading(false);
     }
-  }, [apiUrl, searchParams, page, limit, loading, totalPages]);
+  }, [apiUrl, searchParams, page, loading, totalPages, enableInfiniteScroll]);
 
   const lastProductRef = useCallback(
     (node) => {
+      if (!enableInfiniteScroll) return;
       if (loading) return;
 
-      if (observerRef.current) observerRef.current.disconnect();
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
 
       observerRef.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting) {
@@ -69,9 +87,11 @@ const ProductCard = ({
         }
       });
 
-      if (node) observerRef.current.observe(node);
+      if (node) {
+        observerRef.current.observe(node);
+      }
     },
-    [loading, fetchMoreProducts],
+    [loading, fetchMoreProducts, enableInfiniteScroll],
   );
 
   return (
@@ -81,6 +101,7 @@ const ProductCard = ({
           <h1 className="text-3xl md:text-4xl font-light tracking-wider uppercase text-gray-800 hover:text-gray-600 transition-colors">
             {header}
           </h1>
+
           <p className="text-sm text-gray-400 mt-2 tracking-wide">{title}</p>
         </Link>
       </div>
@@ -103,7 +124,9 @@ const ProductCard = ({
 
             return (
               <Link
-                ref={isLastProduct ? lastProductRef : null}
+                ref={
+                  enableInfiniteScroll && isLastProduct ? lastProductRef : null
+                }
                 to={`/shoe/${shoe._id || shoe.id}`}
                 key={shoe._id || shoe.id || index}
                 className={
@@ -148,6 +171,7 @@ const ProductCard = ({
                         <span className="text-sm font-medium text-gray-900">
                           ${shoe.discount_price?.toLocaleString()}
                         </span>
+
                         <span className="text-xs text-gray-400 line-through">
                           ${shoe.price?.toLocaleString()}
                         </span>
@@ -165,7 +189,7 @@ const ProductCard = ({
         </div>
       </div>
 
-      {loading && (
+      {enableInfiniteScroll && loading && (
         <p className="text-center text-sm text-gray-400 py-8">
           Loading more...
         </p>
@@ -174,6 +198,7 @@ const ProductCard = ({
       {products.length === 0 && (
         <div className="text-center py-16">
           <ShoppingBag className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+
           <h3 className="text-lg font-light text-gray-500">
             No products found
           </h3>

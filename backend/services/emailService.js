@@ -19,7 +19,7 @@ class EmailService {
       subject: "Registration Verification - Activation Code",
       html: `
         <div style="font-family: Arial, sans-serif;">
-          <h1>Mah Shop</h1>
+          <h1>Anilox</h1>
           <h2>Your Registration Verification Code</h2>
           <p>To complete your registration, please enter the code below:</p>
           <h1 style="text-align: center; padding: 10px; background: #f0f0f0;">${code}</h1>
@@ -44,7 +44,7 @@ class EmailService {
       subject: "Password Reset Request",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #333;">Mah Shop</h1>
+          <h1 style="color: #333;">Anilox</h1>
           <h2>Password Reset Request</h2>
           ${userName ? `<p>Hello <strong>${userName}</strong>,</p>` : "<p>Hello,</p>"}
           <p>We received a request to reset your password. Click the button below to reset it:</p>
@@ -111,7 +111,7 @@ class EmailService {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 10px;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #333; margin: 0;">Mah Shop</h1>
+            <h1 style="color: #333; margin: 0;">Anolx</h1>
             <p style="color: #666;">Thank you for your purchase!</p>
           </div>
           
@@ -167,8 +167,8 @@ class EmailService {
           
           <hr style="margin: 20px 0;" />
           <p style="color: #888; font-size: 12px; text-align: center;">
-            Need help? Contact us at support@mahshop.com<br>
-            © ${new Date().getFullYear()} Mah Shop. All rights reserved.
+            Need help? Contact us at mohammadnorouzi308@gmail.com<br>
+            © ${new Date().getFullYear()} Anilox. All rights reserved.
           </p>
         </div>
       `,
@@ -285,7 +285,7 @@ class EmailService {
           
           <hr style="margin: 20px 0;" />
           <p style="color: #888; font-size: 12px; text-align: center;">
-            This is an automated notification from Mah Shop.<br>
+            This is an automated notification from Anilox.<br>
             Please process this order as soon as possible.
           </p>
         </div>

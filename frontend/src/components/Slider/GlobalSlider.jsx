@@ -17,7 +17,7 @@ const GlobalSlider = ({ myQuery, header, title, navigateLink, limit }) => {
 
   return (
     <div className="container">
-      {limit !== undefined && <ProductFinderBox />}
+      {limit === undefined && <ProductFinderBox />}
       <ProductCard
         shoes={shoes}
         header={header}

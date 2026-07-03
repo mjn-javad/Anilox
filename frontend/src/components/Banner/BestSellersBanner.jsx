@@ -1,8 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import Suggest1 from "../../assets/Suggest1.jpg";
-import Suggest2 from "../../assets/BestsellerPic/HermesBag.png";
-import Suggest3 from "../../assets/BestsellerPic/HermesSandal.png";
+import Suggest2 from "../../assets/BestsellerPic/Rimowa.PNG";
+import Suggest3 from "../../assets/BestsellerPic/HermesBag.png";
 
 const BannerVertical = () => {
   const navigate = useNavigate();
@@ -18,17 +18,17 @@ const BannerVertical = () => {
     {
       id: 2,
       image: Suggest2,
-      title: "Hermes",
-      subtitle:
-        "Birkin 20 Faubourg White Matte Alligator with Palladium Hardware",
-      link: "/shoe/375",
+      title: "Rimowa",
+      subtitle: "Ready For Summer",
+      link: "/shoe/327",
     },
     {
       id: 3,
       image: Suggest3,
       title: "Hermes",
-      subtitle: "Miss Sandal",
-      link: "/shoe/322",
+      subtitle:
+        "Birkin 20 Faubourg White Matte Alligator with Palladium Hardware",
+      link: "/shoe/375",
     },
   ];
 

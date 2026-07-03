@@ -10,19 +10,7 @@ import {
 const FooterLinks = [
   {
     title: "Home",
-    link: "/#",
-  },
-  {
-    title: "About",
-    link: "/#about",
-  },
-  {
-    title: "Contact",
-    link: "/#contact",
-  },
-  {
-    title: "Blog",
-    link: "/#blog",
+    link: "/",
   },
 ];
 
@@ -88,14 +76,14 @@ const Footer = () => {
                   <span className="w-11 h-11 flex items-center justify-center rounded-full bg-primary/15 text-primary">
                     <FaLocationArrow />
                   </span>
-                  <p className="text-gray-300">Iran, Larestan Lar</p>
+                  <p className="text-gray-300">UAE, Sharjah</p>
                 </div>
 
                 <div className="flex items-center gap-4">
                   <span className="w-11 h-11 flex items-center justify-center rounded-full bg-primary/15 text-primary">
                     <FaMobileAlt />
                   </span>
-                  <p className="text-gray-300">+91 1234567890</p>
+                  <p className="text-gray-300">+971 566425118</p>
                 </div>
 
                 {/* Social links */}
@@ -131,16 +119,16 @@ const Footer = () => {
 
         {/* Bottom footer */}
         <div className="py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-400">
-          <p>© {new Date().getFullYear()} Eshop. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Anilox. All rights reserved.</p>
 
-          <div className="flex items-center gap-6">
+          {/* <div className="flex items-center gap-6">
             <a href="/#" className="hover:text-primary transition-colors">
               Privacy Policy
             </a>
             <a href="/#" className="hover:text-primary transition-colors">
               Terms
             </a>
-          </div>
+          </div> */}
         </div>
       </div>
     </footer>

@@ -8,19 +8,14 @@ import IntroduceBanner from "../components/Banner/IntroduceBanner";
 import FirstBannerImg from "../assets/myBannerOunass/womanFirstBanner2.png";
 import FourthBannerImg from "../assets/myBannerOunass/womanFourthBanner.png";
 import ThirdBannerImg from "../assets/myBannerOunass/womanThirdBanner.PNG";
-import HorizentalScroll from "../components/HorizentalScroll/HorizentalScroll";
 
 const WomenHome = () => {
   return (
     <>
       <GlobalBanner
-        image={FirstBannerImg}
-        title="Women-sale"
-        subtitle="Exclusive Women's Collection | Limited-Time Deals"
+        bannerdId={1}
         link="/slider-shoes?gender=female&discountOnly=true"
       />
-
-      <HorizentalScroll />
 
       <SecondWomanBanner />
 
@@ -35,9 +30,7 @@ const WomenHome = () => {
       />
 
       <GlobalBanner
-        image={ThirdBannerImg}
-        title="Woman - Heels"
-        subtitle="Walk with Power"
+        bannerdId={2}
         link="/slider-shoes?type=shoe&gender=female&category=heels"
       />
 
@@ -51,12 +44,7 @@ const WomenHome = () => {
         limit={4}
       />
 
-      <GlobalBanner
-        image={FourthBannerImg}
-        title="Luggages for Vacation"
-        subtitle="Travel This Summer"
-        link="/slider-shoes?type=luggage"
-      />
+      <GlobalBanner bannerdId={3} link="/slider-shoes?type=luggage" />
     </>
   );
 };

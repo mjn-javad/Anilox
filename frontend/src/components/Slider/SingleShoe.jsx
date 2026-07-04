@@ -3,12 +3,13 @@ import { Link, useParams } from "react-router-dom";
 
 import apiClientShoes from "../../services/api-client_shoes";
 import apiClientCart from "../../services/api-client_order";
+import apiClientAuth from "../../services/api-client_auth";
 
 import MessageAlert from "../Shared/MessageAlert";
 import LoadingSpinner from "../Shared/LoadingSpinner";
 import OrderOnWhatsApp from "../OrderOnWhatsApp/OrderOnWhatsApp";
 
-const IMG_URL = "/api/images/posts/";
+const IMG_URL = "http://localhost:4000/images/posts/";
 
 const SingleShoe = () => {
   const { id } = useParams();
@@ -17,6 +18,8 @@ const SingleShoe = () => {
   const [colors, setColors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [user, setUser] = useState(null);
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState("");
@@ -32,10 +35,35 @@ const SingleShoe = () => {
 
   const getId = (item) => item?.id || item?._id;
 
+  const isAdmin = user?.role === "admin";
+
   const getImageSrc = (image) => {
     if (!image) return "";
     return IMG_URL + (typeof image === "string" ? image : image.image_name);
   };
+
+  useEffect(() => {
+    let active = true;
+
+    apiClientAuth
+      .get("/me")
+      .then((res) => {
+        const authUser = res.data?.user || res.data?.data || res.data;
+
+        if (active) {
+          setUser(authUser);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setUser(null);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -179,8 +207,21 @@ const SingleShoe = () => {
 
         {/* Info */}
         <div className="space-y-4">
-          <h1 className="text-3xl font-bold">{shoe.name}</h1>
-          <p className="text-gray-600 text-lg">{shoe.brand}</p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold">{shoe.name}</h1>
+              <p className="text-gray-600 text-lg">{shoe.brand}</p>
+            </div>
+
+            {isAdmin && (
+              <Link
+                to={`/admin/dashboard/editShoe/${getId(shoe)}`}
+                className="shrink-0 rounded-full border border-gray-300 px-4 py-2 text-xs font-medium uppercase tracking-widest text-gray-700 transition hover:bg-black hover:text-white"
+              >
+                Edit
+              </Link>
+            )}
+          </div>
 
           <div>
             {shoe.discount_price ? (

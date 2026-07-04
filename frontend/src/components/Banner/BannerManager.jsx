@@ -74,7 +74,7 @@ const BannerManager = () => {
 
         <button
           type="button"
-          onClick={() => navigate("/admin/dashboard/banner-upload")}
+          onClick={() => navigate("/admin/dashboard/banner-uploader")}
           className="px-5 py-2 rounded-full bg-black text-white text-sm hover:bg-gray-800 transition"
         >
           Create Banner

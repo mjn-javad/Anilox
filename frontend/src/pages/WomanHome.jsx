@@ -2,17 +2,20 @@ import React from "react";
 import BestSellersBanner from "../components/Banner/WomanBestSellersBanner";
 import GlobalSlider from "../components/Slider/GlobalSlider";
 import GlobalBanner from "../components/Banner/GlobalBanner";
+import SecondWomanBanner from "../components/Banner/SecondWomanBanner";
 import IntroduceBanner from "../components/Banner/IntroduceBanner";
 
 import FirstBannerImg from "../assets/myBannerOunass/womanFirstBanner2.png";
 import FourthBannerImg from "../assets/myBannerOunass/womanFourthBanner.png";
 import ThirdBannerImg from "../assets/myBannerOunass/womanThirdBanner.PNG";
 import HorizentalScroll from "../components/HorizentalScroll/HorizentalScroll";
+import NewArivelsGlobalSlider from "../components/Slider/NewArivelsGlobalSlider";
 
 const WomenHome = () => {
   return (
     <>
       <GlobalBanner sort_order={1} />
+      <HorizentalScroll />
 
       {/* <SecondWomanBanner /> */}
 
@@ -28,8 +31,6 @@ const WomenHome = () => {
 
       <GlobalBanner sort_order={1} /> */}
 
-      <HorizentalScroll />
-
       <BestSellersBanner />
 
       {/* <GlobalSlider
@@ -44,6 +45,12 @@ const WomenHome = () => {
       <div className="mt-4">
         <GlobalBanner sort_order={6} />
       </div>
+
+      <NewArivelsGlobalSlider
+        myQuery={"?limit=4&gender=female"}
+        limit={20}
+        header={"Big Sizes Availabe"}
+      />
     </>
   );
 };

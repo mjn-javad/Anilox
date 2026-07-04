@@ -348,7 +348,10 @@ const getAllNewArrivals = async ({ gender }) => {
   );
 
   const [allImages] = await db.execute(
-    "SELECT shoes_id, image_name FROM shoes_images",
+    `
+      SELECT shoes_id, image_name
+      FROM shoes_images
+    `,
   );
 
   const imagesMap = {};
@@ -358,12 +361,14 @@ const getAllNewArrivals = async ({ gender }) => {
       imagesMap[img.shoes_id] = [];
     }
 
-    imagesMap[img.shoes_id].push(img.image_name);
+    imagesMap[img.shoes_id].push({
+      image_name: img.image_name,
+    });
   });
 
   const newArrivals = rows.map((shoe) => ({
     ...shoe,
-    images_name: imagesMap[shoe.id] || [],
+    images: imagesMap[shoe.id] || [],
   }));
 
   return {

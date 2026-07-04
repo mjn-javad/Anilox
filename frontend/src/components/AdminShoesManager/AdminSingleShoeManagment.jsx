@@ -1,8 +1,10 @@
 // AdminSingleShoeManagement.jsx
 
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import apiClientShoes from "../../services/api-client_shoes";
+import apiClientBrandPopular from "../../services/api-client";
+
 import LoadingSpinner from "../Shared/LoadingSpinner";
 import MessageAlert from "../Shared/MessageAlert";
 import ShoeInfoForm from "./ShoeInfoForm";
@@ -11,7 +13,6 @@ import ImagesManager from "./ImagesManager";
 
 const AdminSingleShoeManagement = () => {
   const { shoeId } = useParams();
-  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -53,7 +54,7 @@ const AdminSingleShoeManagement = () => {
         slug: shoe.slug ?? "",
         brand: shoe.brand ?? "",
         model: shoe.model ?? "",
-        category: shoe.category,
+        category: shoe.category ?? "",
         gender: shoe.gender ?? "genderless",
         type: shoe.type ?? "shoe",
         price: shoe.price ?? "",
@@ -101,6 +102,21 @@ const AdminSingleShoeManagement = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleAddToNewArrivals = async () => {
+    try {
+      setUpdating(true);
+
+      await apiClientBrandPopular.post(`/newArrivels/${shoeId}`);
+
+      showSuccess(`"${shoeInfo.name}" added to new arrivals`);
+    } catch (err) {
+      console.error("Error adding to new arrivals:", err);
+      showError(err.response?.data?.message || "Error adding to new arrivals");
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const handleUpdateInfo = async () => {
@@ -154,7 +170,7 @@ const AdminSingleShoeManagement = () => {
           shoeInfo.discountPrice === "" ||
           shoeInfo.discountPrice === null ||
           shoeInfo.discountPrice === undefined
-            ? shoeInfo.price
+            ? Number(shoeInfo.price)
             : Number(shoeInfo.discountPrice),
         description: shoeInfo.description?.trim() || null,
         colors: shoeInfo.colors?.trim() || null,
@@ -381,15 +397,20 @@ const AdminSingleShoeManagement = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Edit Product</h1>
 
         <button
           type="button"
-          onClick={() => navigate("/admin/dashboard")}
-          className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+          onClick={handleAddToNewArrivals}
+          disabled={updating}
+          className="
+            bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300
+            text-white px-5 py-2.5 rounded-lg transition-colors
+            font-medium shadow-sm
+          "
         >
-          ← Back to Dashboard
+          {updating ? "Adding..." : "Add to Big Size Shoes"}
         </button>
       </div>
 

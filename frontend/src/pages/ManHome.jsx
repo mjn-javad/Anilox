@@ -1,19 +1,22 @@
 import React from "react";
 import GlobalBanner from "../components/Banner/GlobalBanner";
 import GlobalSlider from "../components/Slider/GlobalSlider";
-import BestSellersBanner from "../components/Banner/ManBestSellersBanner";
+import BestSellersBanner from "../components/Banner/WomanBestSellersBanner";
 import IntroduceBanner from "../components/Banner/IntroduceBanner";
 
 // فعلاً عکس‌ها را با عکس‌های خودت جایگزین کن
 import MenFirstBannerImg from "../assets/myBannerOunass/menFirstBanner.PNG";
 import MenThirdBannerImg from "../assets/myBannerOunass/manThirdBannerShoes.PNG";
+import SecondManBanner from "../components/Banner/SecondManBanner";
 import FourthBannerImg from "../assets/myBannerOunass/womanFourthBanner.png";
 import HorizentalScroll from "../components/HorizentalScroll/HorizentalScroll";
+import NewArivelsGlobalSlider from "../components/Slider/NewArivelsGlobalSlider";
 
 const MenHome = () => {
   return (
     <>
       <GlobalBanner sort_order={7} />
+      <HorizentalScroll />
 
       {/* <SecondManBanner /> */}
 
@@ -34,8 +37,6 @@ const MenHome = () => {
         link="/slider-shoes?type=shoe&gender=male&category=sneaker"
       /> */}
 
-      <HorizentalScroll />
-
       <BestSellersBanner />
 
       {/* <GlobalSlider
@@ -52,6 +53,11 @@ const MenHome = () => {
         <GlobalBanner sort_order={11} />
       </div>
 
+      <NewArivelsGlobalSlider
+        myQuery={"?limit=4&gender=male"}
+        limit={20}
+        header={"Big Sizes Availabe"}
+      />
       {/* <GlobalSlider
         myQuery={"?limit=4&type=bag&gender=male"}
         header={"Explore Men Bags"}

@@ -4,6 +4,7 @@ import {
   FaArrowsRotate,
   FaHeadset,
   FaMoneyBillWave,
+  FaRulerCombined,
 } from "react-icons/fa6";
 
 const MiniTrustBar = () => {
@@ -19,6 +20,12 @@ const MiniTrustBar = () => {
       label: "Free Size Exchange",
       color: "text-blue-500",
       bg: "bg-blue-50",
+    },
+    {
+      icon: FaRulerCombined,
+      label: "Big Sizes Available up to 48",
+      color: "text-rose-500",
+      bg: "bg-rose-50",
     },
     {
       icon: FaHeadset,
@@ -71,7 +78,7 @@ const MiniTrustBar = () => {
 
       <style>{`
         .trust-marquee {
-          animation: trustMarquee 22s linear infinite;
+          animation: trustMarquee 24s linear infinite;
         }
 
         @keyframes trustMarquee {

@@ -8,7 +8,7 @@ const ProductCard = ({
   title,
   navigateLink,
   scrollOnMobile = false,
-  apiUrl = "/api/v1/shoes",
+  apiUrl = "/api/shoes",
   limit,
 }) => {
   const [searchParams] = useSearchParams();

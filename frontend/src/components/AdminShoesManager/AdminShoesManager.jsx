@@ -141,8 +141,6 @@ const AdminShoesManagement = () => {
     return <MessageAlert message={error} type="error" />;
   }
 
-  console.log(shoes?.[0]?.images?.[0]?.image_name);
-
   return (
     <div className="container">
       <div className="container mx-auto px-4 py-8">

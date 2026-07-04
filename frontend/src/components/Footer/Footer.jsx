@@ -1,16 +1,42 @@
 import React from "react";
-import { FaMobileAlt } from "react-icons/fa";
 import {
-  FaFacebook,
+  FaMobileAlt,
   FaInstagram,
-  FaLinkedin,
+  FaWhatsapp,
+  FaTelegramPlane,
   FaLocationArrow,
-} from "react-icons/fa6";
+} from "react-icons/fa";
 
 const FooterLinks = [
   {
     title: "Home",
     link: "/",
+  },
+  {
+    title: "Men",
+    link: "/men",
+  },
+  {
+    title: "Women",
+    link: "/women",
+  },
+];
+
+const socialLinks = [
+  {
+    title: "Instagram",
+    link: "https://www.instagram.com/anilox.stop",
+    icon: FaInstagram,
+  },
+  {
+    title: "Telegram",
+    link: "https://t.me/+Jll_oOOFeHAyYzBk",
+    icon: FaTelegramPlane,
+  },
+  {
+    title: "WhatsApp",
+    link: "https://wa.me/971566425118",
+    icon: FaWhatsapp,
   },
 ];
 
@@ -26,7 +52,7 @@ const Footer = () => {
           {/* Company details */}
           <div className="space-y-5">
             <a
-              href="#"
+              href="/"
               className="inline-block text-primary font-extrabold tracking-[0.25em] text-3xl uppercase sm:text-4xl"
             >
               Anilox
@@ -76,41 +102,41 @@ const Footer = () => {
                   <span className="w-11 h-11 flex items-center justify-center rounded-full bg-primary/15 text-primary">
                     <FaLocationArrow />
                   </span>
-                  <p className="text-gray-300">UAE, Sharjah</p>
+                  <p className="text-gray-300">UAE</p>
                 </div>
 
                 <div className="flex items-center gap-4">
                   <span className="w-11 h-11 flex items-center justify-center rounded-full bg-primary/15 text-primary">
                     <FaMobileAlt />
                   </span>
-                  <p className="text-gray-300">+971 566425118</p>
+                  <a
+                    href="https://wa.me/971566425118"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-300 hover:text-primary transition-colors"
+                  >
+                    +971 566425118
+                  </a>
                 </div>
 
                 {/* Social links */}
                 <div className="flex items-center gap-4 pt-3">
-                  <a
-                    href="#"
-                    aria-label="Instagram"
-                    className="w-11 h-11 flex items-center justify-center rounded-full bg-white/10 border border-white/10 text-gray-300 hover:bg-primary hover:text-white hover:-translate-y-1 transition-all duration-300"
-                  >
-                    <FaInstagram className="text-xl" />
-                  </a>
+                  {socialLinks.map((item, index) => {
+                    const Icon = item.icon;
 
-                  <a
-                    href="#"
-                    aria-label="Facebook"
-                    className="w-11 h-11 flex items-center justify-center rounded-full bg-white/10 border border-white/10 text-gray-300 hover:bg-primary hover:text-white hover:-translate-y-1 transition-all duration-300"
-                  >
-                    <FaFacebook className="text-xl" />
-                  </a>
-
-                  <a
-                    href="#"
-                    aria-label="LinkedIn"
-                    className="w-11 h-11 flex items-center justify-center rounded-full bg-white/10 border border-white/10 text-gray-300 hover:bg-primary hover:text-white hover:-translate-y-1 transition-all duration-300"
-                  >
-                    <FaLinkedin className="text-xl" />
-                  </a>
+                    return (
+                      <a
+                        key={index}
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={item.title}
+                        className="w-11 h-11 flex items-center justify-center rounded-full bg-white/10 border border-white/10 text-gray-300 hover:bg-primary hover:text-white hover:-translate-y-1 transition-all duration-300"
+                      >
+                        <Icon className="text-xl" />
+                      </a>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -120,15 +146,6 @@ const Footer = () => {
         {/* Bottom footer */}
         <div className="py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-400">
           <p>© {new Date().getFullYear()} Anilox. All rights reserved.</p>
-
-          {/* <div className="flex items-center gap-6">
-            <a href="/#" className="hover:text-primary transition-colors">
-              Privacy Policy
-            </a>
-            <a href="/#" className="hover:text-primary transition-colors">
-              Terms
-            </a>
-          </div> */}
         </div>
       </div>
     </footer>

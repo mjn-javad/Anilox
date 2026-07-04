@@ -8,14 +8,16 @@ const BannerManager = () => {
 
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const getImageUrl = (image) => {
     if (!image) return "";
     return image.startsWith("http") ? image : `/api/images/banners/${image}`;
   };
 
-  useEffect(() => {
+  const getBanners = () => {
     let isMounted = true;
 
     setLoading(true);
@@ -34,7 +36,7 @@ const BannerManager = () => {
         console.log("Get banners error:", err);
 
         if (isMounted) {
-          setError("خطا در دریافت لیست بنرها");
+          setError("an error acuured while fetching banners");
         }
       })
       .finally(() => {
@@ -46,7 +48,48 @@ const BannerManager = () => {
     return () => {
       isMounted = false;
     };
+  };
+
+  useEffect(() => {
+    const cleanup = getBanners();
+
+    return cleanup;
   }, []);
+
+  const handleDeleteBanner = async (e, bannerId) => {
+    e.stopPropagation();
+
+    if (!bannerId) {
+      setError("can not find this banner id");
+      return;
+    }
+
+    const confirmDelete = window.confirm("Really want to delete this banner?");
+
+    if (!confirmDelete) return;
+
+    try {
+      setDeletingId(bannerId);
+      setError("");
+      setMessage("");
+
+      await apiClientBanner.delete(`/${bannerId}`);
+
+      setBanners((prevBanners) =>
+        prevBanners.filter((banner) => {
+          const id = banner.id || banner.banner_id;
+          return id !== bannerId;
+        }),
+      );
+
+      setMessage("Banner deleted successfully");
+    } catch (err) {
+      console.log("Delete banner error:", err);
+      setError("Error deleteing banner");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -82,9 +125,12 @@ const BannerManager = () => {
       </div>
 
       {error && <MessageAlert message={error} type="error" />}
+      {message && <MessageAlert message={message} type="success" />}
 
       {!error && banners.length === 0 && (
-        <div className="text-center text-gray-500 py-20">هیچ بنری پیدا نشد</div>
+        <div className="text-center text-gray-500 py-20">
+          No banner ProductFinderBox
+        </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -122,12 +168,36 @@ const BannerManager = () => {
                   Link: {banner.title2 || "/"}
                 </p>
 
-                <button
-                  type="button"
-                  className="mt-5 w-full py-2 rounded-xl bg-gray-900 text-white text-sm hover:bg-gray-700 transition"
-                >
-                  Edit Banner
-                </button>
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/admin/dashboard/editBanner/${bannerId}`, {
+                        state: { banner },
+                      });
+                    }}
+                    className="w-full py-2 rounded-xl bg-gray-900 text-white text-sm hover:bg-gray-700 transition"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={deletingId === bannerId}
+                    onClick={(e) => handleDeleteBanner(e, bannerId)}
+                    className={`
+                      w-full py-2 rounded-xl text-white text-sm transition
+                      ${
+                        deletingId === bannerId
+                          ? "bg-red-300 cursor-not-allowed"
+                          : "bg-red-600 hover:bg-red-700"
+                      }
+                    `}
+                  >
+                    {deletingId === bannerId ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
               </div>
             </div>
           );

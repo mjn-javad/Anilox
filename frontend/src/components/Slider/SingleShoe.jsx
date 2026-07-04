@@ -160,7 +160,8 @@ const SingleShoe = () => {
   if (!shoe) return <div className="text-center py-10">Shoes not found</div>;
 
   return (
-    <div className="container mx-auto my-8 p-4">
+    <div className="container mx-auto my-0 p-4">
+      <ProductFinderBox />
       <OrderOnWhatsApp
         productName={shoe.name}
         productPrice={shoe.discount_price || shoe.price}

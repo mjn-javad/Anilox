@@ -45,6 +45,7 @@ const SliderShoes = ({ limit }) => {
   const type = searchParams.get("type");
   const gender = searchParams.get("gender");
   const discountOnly = searchParams.get("discountOnly");
+  const search = searchParams.get("search");
 
   const myQuery = useMemo(() => {
     const params = new URLSearchParams();
@@ -56,10 +57,11 @@ const SliderShoes = ({ limit }) => {
     if (type) params.set("type", type);
     if (gender) params.set("gender", gender);
     if (discountOnly) params.set("discountOnly", discountOnly);
+    if (search) params.set("search", search);
 
     const query = params.toString();
     return query ? `?${query}` : "";
-  }, [limit, brand, model, category, type, gender, discountOnly]);
+  }, [limit, brand, model, category, type, gender, discountOnly, search]);
 
   const pageInfo = useMemo(() => {
     const genderLabel = getGenderLabel(gender);

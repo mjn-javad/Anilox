@@ -4,7 +4,7 @@ import ProductCard from "./ProductCart";
 import ProductFinderBox from "../OrderOnWhatsApp/ProductFinderBox";
 import BrandScroller from "../HorizentalScroll/BrandScroller";
 
-const NewArivelsGlobalSlider = ({
+const BigSizeGlobalSlider = ({
   myQuery = "",
   header,
   title,
@@ -35,7 +35,7 @@ const NewArivelsGlobalSlider = ({
     <div className="container">
       {limit === undefined && <ProductFinderBox />}
 
-      <BrandScroller />
+      {/* <BrandScroller /> */}
 
       {error && (
         <p className="text-center text-red-500 text-sm my-4">{error}</p>
@@ -54,4 +54,4 @@ const NewArivelsGlobalSlider = ({
   );
 };
 
-export default NewArivelsGlobalSlider;
+export default BigSizeGlobalSlider;

@@ -1,7 +1,7 @@
 import React from "react";
 import GlobalBanner from "../components/Banner/GlobalBanner";
 import GlobalSlider from "../components/Slider/GlobalSlider";
-import BestSellersBanner from "../components/Banner/WomanBestSellersBanner";
+import BestSellersBanner from "../components/Banner/ManBestSellersBanner";
 import IntroduceBanner from "../components/Banner/IntroduceBanner";
 
 // فعلاً عکس‌ها را با عکس‌های خودت جایگزین کن
@@ -9,7 +9,7 @@ import MenFirstBannerImg from "../assets/myBannerOunass/menFirstBanner.PNG";
 import MenThirdBannerImg from "../assets/myBannerOunass/manThirdBannerShoes.PNG";
 import FourthBannerImg from "../assets/myBannerOunass/womanFourthBanner.png";
 import HorizentalScroll from "../components/HorizentalScroll/HorizentalScroll";
-import NewArivelsGlobalSlider from "../components/Slider/NewArivelsGlobalSlider";
+import NewArivelsGlobalSlider from "../components/Slider/BigSizeGlobalSlider";
 
 const MenHome = () => {
   return (

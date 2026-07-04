@@ -35,6 +35,8 @@ import DiscountCodeManager from "./components/Discount/DiscountCodeManager";
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop";
 
 import "./App.css";
+import BannerManager from "./components/Banner/BannerManager";
+import EditBanner from "./components/Banner/EditBanner";
 
 function App() {
   return (
@@ -113,6 +115,12 @@ function App() {
           <Route
             path="admin/dashboard/discount-code-manager"
             element={<DiscountCodeManager />}
+          />
+
+          <Route path="/admin/dashboard/banners" element={<BannerManager />} />
+          <Route
+            path="/admin/dashboard/editBanner/:id"
+            element={<EditBanner />}
           />
         </Route>
       </Routes>

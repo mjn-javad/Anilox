@@ -32,6 +32,8 @@ const WomenHome = () => {
 
       <BestSellersBanner />
 
+      <ProductFinderBox />
+
       {/* <GlobalSlider
         myQuery={"?limit=4&type=bag&gender=female"}
         header={"Explore Women Bags"}

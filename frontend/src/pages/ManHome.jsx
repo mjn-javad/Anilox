@@ -10,6 +10,7 @@ import MenThirdBannerImg from "../assets/myBannerOunass/manThirdBannerShoes.PNG"
 import FourthBannerImg from "../assets/myBannerOunass/womanFourthBanner.png";
 import HorizentalScroll from "../components/HorizentalScroll/HorizentalScroll";
 import NewArivelsGlobalSlider from "../components/Slider/BigSizeGlobalSlider";
+import ProductFinderBox from "../components/OrderOnWhatsApp/ProductFinderBox";
 
 const MenHome = () => {
   return (
@@ -37,6 +38,8 @@ const MenHome = () => {
       /> */}
 
       <BestSellersBanner />
+
+      <ProductFinderBox />
 
       {/* <GlobalSlider
         myQuery={"?limit=4&type=watch"}

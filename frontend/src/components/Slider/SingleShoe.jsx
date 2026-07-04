@@ -227,15 +227,15 @@ const SingleShoe = () => {
             {shoe.discount_price ? (
               <>
                 <p className="text-2xl text-gray-500 line-through">
-                  ${shoe.price?.toLocaleString()}
+                  {shoe.price?.toLocaleString()} AED
                 </p>
                 <p className="text-3xl font-bold text-green-600">
-                  ${shoe.discount_price?.toLocaleString()}
+                  {shoe.discount_price?.toLocaleString()} AED
                 </p>
               </>
             ) : (
               <p className="text-3xl font-bold text-gray-800">
-                ${shoe.price?.toLocaleString()}
+                {shoe.price?.toLocaleString()} AED
               </p>
             )}
           </div>

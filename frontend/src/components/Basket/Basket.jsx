@@ -292,15 +292,15 @@ const Basket = () => {
                       {item.discount_price ? (
                         <div>
                           <span className="text-sm text-gray-500 line-through">
-                            ${item?.price}
+                            {item?.price} AED
                           </span>
                           <span className="text-xl font-bold text-green-600 ml-2">
-                            ${item?.discount_price}
+                            {item?.discount_price} AED
                           </span>
                         </div>
                       ) : (
                         <span className="text-xl font-bold text-gray-800">
-                          ${item?.price}
+                          {item?.price} AED
                         </span>
                       )}
                     </div>
@@ -350,11 +350,11 @@ const Basket = () => {
                     <div className="text-right">
                       <span className="text-sm text-gray-500">جمع:</span>
                       <div className="font-bold text-lg">
-                        $
                         {(
                           (item.discount_price || item.price) *
                           item.cart_quantity
                         ).toLocaleString()}
+                        AED
                       </div>
                     </div>
                   </div>
@@ -443,14 +443,14 @@ const Basket = () => {
               <div className="flex justify-between">
                 <span className="text-gray-600">Total sum:</span>
                 <span className="line-through">
-                  ${finalPrice.toLocaleString()}
+                  {finalPrice.toLocaleString()} AED
                 </span>
               </div>
 
               <div className="flex justify-between text-green-600">
                 <span>Discount:</span>
                 <span>
-                  -${(finalPrice - finalDiscountPrice).toLocaleString()}
+                  -{(finalPrice - finalDiscountPrice).toLocaleString()} AED
                 </span>
               </div>
 
@@ -468,7 +468,7 @@ const Basket = () => {
               <div className="flex justify-between text-lg font-bold pt-2">
                 <span>Amount payable:</span>
                 <span className="text-green-600">
-                  ${finalDiscountPrice.toLocaleString()}
+                  {finalDiscountPrice.toLocaleString()} AED
                 </span>
               </div>
             </div>

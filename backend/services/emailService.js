@@ -96,9 +96,9 @@ class EmailService {
         <td style="padding: 10px; text-align: left;">${item.name}</td>
         <td style="padding: 10px; text-align: center;">${item.quantity}</td>
         <td style="padding: 10px; text-align: center;">${item.size || "-"}</td>
-        <td style="padding: 10px; text-align: right; text-decoration: line-through;">$${item.price.toFixed(2)}</td>
-        <td style="padding: 10px; text-align: right;">$${item.discount_price.toFixed(2)}</td>
-        <td style="padding: 10px; text-align: right;">$${(item.discount_price * item.quantity).toFixed(2)}</td>
+        <td style="padding: 10px; text-align: right; text-decoration: line-through;">${item.price.toFixed(2)} AED</td>
+        <td style="padding: 10px; text-align: right;">${item.discount_price.toFixed(2)} AED</td>
+        <td style="padding: 10px; text-align: right;">${(item.discount_price * item.quantity).toFixed(2)} AED</td>
       </tr>
     `,
       )
@@ -146,7 +146,7 @@ class EmailService {
               <tfoot>
                 <tr style="border-top: 2px solid #ddd;">
                   <td colspan="4" style="padding: 10px; text-align: right; font-weight: bold;">Total:</td>
-                  <td style="padding: 10px; text-align: right; font-weight: bold; color: #4CAF50;">$${totalAmount.toFixed(2)}</td>
+                  <td style="padding: 10px; text-align: right; font-weight: bold; color: #4CAF50;">${totalAmount.toFixed(2)} AED</td>
                 </tr>
               </tfoot>
             </table>
@@ -208,8 +208,8 @@ class EmailService {
         <td style="padding: 10px; text-align: center;">${item.quantity}</td>
         <td style="padding: 10px; text-align: center;">${item.size || "-"}</td>
         <td style="padding: 10px; text-align: right; text-decoration: line-through;">$${item.price.toFixed(2)}</td>
-        <td style="padding: 10px; text-align: right;">$${item.discount_price.toFixed(2)}</td>
-        <td style="padding: 10px; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
+        <td style="padding: 10px; text-align: right;">${item.discount_price.toFixed(2)} AED</td>
+        <td style="padding: 10px; text-align: right;">${(item.price * item.quantity).toFixed(2)} AED</td>
       </tr>
     `,
       )
@@ -256,7 +256,7 @@ class EmailService {
               <tfoot>
                 <tr style="border-top: 2px solid #ddd;">
                   <td colspan="4" style="padding: 10px; text-align: right; font-weight: bold;">Total Amount:</td>
-                  <td style="padding: 10px; text-align: right; font-weight: bold; color: #ff9800; font-size: 18px;">$${totalAmount.toFixed(2)}</td>
+                  <td style="padding: 10px; text-align: right; font-weight: bold; color: #ff9800; font-size: 18px;">${totalAmount.toFixed(2)} AED</td>
                 </tr>
               </tfoot>
             </table>

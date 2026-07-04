@@ -84,7 +84,7 @@ const CompletedOrdersPage = () => {
                     <span>Quantity: {item.quantity}</span>
                   </div>
                   <div className="font-semibold text-green-600 whitespace-nowrap">
-                    ${item.price_at_purchase * item.quantity}
+                    {item.price_at_purchase * item.quantity} AED
                   </div>
                 </div>
               ))}

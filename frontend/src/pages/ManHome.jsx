@@ -7,7 +7,6 @@ import IntroduceBanner from "../components/Banner/IntroduceBanner";
 // فعلاً عکس‌ها را با عکس‌های خودت جایگزین کن
 import MenFirstBannerImg from "../assets/myBannerOunass/menFirstBanner.PNG";
 import MenThirdBannerImg from "../assets/myBannerOunass/manThirdBannerShoes.PNG";
-import SecondManBanner from "../components/Banner/SecondManBanner";
 import FourthBannerImg from "../assets/myBannerOunass/womanFourthBanner.png";
 import HorizentalScroll from "../components/HorizentalScroll/HorizentalScroll";
 import NewArivelsGlobalSlider from "../components/Slider/NewArivelsGlobalSlider";

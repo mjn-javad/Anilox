@@ -2,7 +2,6 @@ import React from "react";
 import BestSellersBanner from "../components/Banner/WomanBestSellersBanner";
 import GlobalSlider from "../components/Slider/GlobalSlider";
 import GlobalBanner from "../components/Banner/GlobalBanner";
-import SecondWomanBanner from "../components/Banner/SecondWomanBanner";
 import IntroduceBanner from "../components/Banner/IntroduceBanner";
 
 import FirstBannerImg from "../assets/myBannerOunass/womanFirstBanner2.png";

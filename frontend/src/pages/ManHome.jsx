@@ -1,7 +1,7 @@
 import React from "react";
 import GlobalBanner from "../components/Banner/GlobalBanner";
 import GlobalSlider from "../components/Slider/GlobalSlider";
-import BestSellersBanner from "../components/Banner/WomanBestSellersBanner";
+import BestSellersBanner from "../components/Banner/ManBestSellersBanner";
 import IntroduceBanner from "../components/Banner/IntroduceBanner";
 
 // فعلاً عکس‌ها را با عکس‌های خودت جایگزین کن

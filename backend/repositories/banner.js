@@ -22,10 +22,11 @@ class BannerRepository {
     return rows;
   }
 
-  async getById(id) {
-    const query = `SELECT * FROM banners WHERE id = ?`;
-    const [rows] = await db.execute(query, [id]);
-    return rows[0];
+  async getBySortOrder(sort_order) {
+    const query = `SELECT * FROM banners WHERE sort_order = ?`;
+    const [rows] = await db.execute(query, [sort_order]);
+
+    return rows;
   }
 
   async update(id, data) {

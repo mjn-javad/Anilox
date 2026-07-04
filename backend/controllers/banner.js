@@ -50,15 +50,17 @@ exports.getAllBanners = async (req, res, next) => {
 };
 
 // دریافت یک بنر
-exports.getBannerById = async (req, res, next) => {
+exports.getBannerSortOrder = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const banner = await Banner.getById(id);
+    const { sort_order } = req.params;
+    const banner = await Banner.getBySortOrder(sort_order);
+
     if (!banner) {
       return res
         .status(404)
         .json({ success: false, message: "Banner not found" });
     }
+
     return res.status(200).json({ success: true, data: banner });
   } catch (err) {
     next(err);

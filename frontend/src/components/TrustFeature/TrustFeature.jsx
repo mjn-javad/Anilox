@@ -7,79 +7,82 @@ import {
 } from "react-icons/fa6";
 
 const MiniTrustBar = () => {
-  const size = {
-    barPadding: "py-2 sm:py-3 px-2 sm:px-4",
-    itemGap: "gap-1 sm:gap-2",
-    iconBox: "p-1 sm:p-1.5",
-    iconSize: "text-[10px] sm:text-sm",
-    textSize: "text-[7px] sm:text-xs",
-  };
-
   const items = [
     {
       icon: FaMoneyBillWave,
       label: "Cash on Delivery",
       color: "text-emerald-500",
-      bgColor: "bg-emerald-50",
+      bg: "bg-emerald-50",
     },
     {
       icon: FaArrowsRotate,
       label: "Free Size Exchange",
       color: "text-blue-500",
-      bgColor: "bg-blue-50",
+      bg: "bg-blue-50",
     },
     {
       icon: FaHeadset,
       label: "24/7 Support",
       color: "text-purple-500",
-      bgColor: "bg-purple-50",
+      bg: "bg-purple-50",
     },
     {
       icon: FaTruckFast,
       label: "Fast Delivery",
       color: "text-orange-500",
-      bgColor: "bg-orange-50",
+      bg: "bg-orange-50",
     },
   ];
 
+  const marqueeItems = [...items, ...items, ...items];
+
   return (
-    <div
-      className={`bg-white border-y border-gray-100 shadow-sm ${size.barPadding}`}
-    >
-      <div className="max-w-7xl mx-auto grid grid-cols-4 items-center">
-        {items.map((item, idx) => (
+    <div className="relative overflow-hidden bg-white border-y border-gray-100 shadow-sm py-2 sm:py-3">
+      <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-12 bg-gradient-to-r from-white to-transparent" />
+      <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-12 bg-gradient-to-l from-white to-transparent" />
+
+      <div className="trust-marquee flex w-max items-center gap-3 sm:gap-5 hover:[animation-play-state:paused]">
+        {marqueeItems.map((item, index) => (
           <div
-            key={idx}
-            className={`
-              group flex items-center justify-center ${size.itemGap}
-              text-gray-700 cursor-default min-w-0
-              transition-transform duration-200 hover:scale-105
-              ${idx < items.length - 1 ? "border-r border-gray-100" : ""}
-            `}
+            key={index}
+            className="
+              flex items-center gap-2 rounded-full border border-gray-100
+              bg-white px-3 py-1.5 sm:px-4 sm:py-2
+              shadow-sm transition-all duration-300
+              hover:-translate-y-0.5 hover:shadow-md
+            "
           >
             <div
               className={`
-                ${item.bgColor}
-                ${size.iconBox}
-                rounded-full transition-all duration-200 group-hover:shadow-md
-                shrink-0
+                ${item.bg}
+                flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center
+                rounded-full shrink-0
               `}
             >
-              <item.icon className={`${size.iconSize} ${item.color}`} />
+              <item.icon className={`${item.color} text-xs sm:text-sm`} />
             </div>
 
-            <span
-              className={`
-                ${size.textSize}
-                font-medium text-gray-700 group-hover:text-gray-900
-                whitespace-nowrap truncate min-w-0
-              `}
-            >
+            <span className="whitespace-nowrap text-[10px] sm:text-xs font-medium tracking-wide text-gray-700">
               {item.label}
             </span>
           </div>
         ))}
       </div>
+
+      <style>{`
+        .trust-marquee {
+          animation: trustMarquee 22s linear infinite;
+        }
+
+        @keyframes trustMarquee {
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(-33.333%);
+          }
+        }
+      `}</style>
     </div>
   );
 };

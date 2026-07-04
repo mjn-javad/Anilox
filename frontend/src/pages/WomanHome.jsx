@@ -1,27 +1,24 @@
 import React from "react";
-import BestSellersBanner from "../components/Banner/BestSellersBanner";
+import BestSellersBanner from "../components/Banner/WomanBestSellersBanner";
 import GlobalSlider from "../components/Slider/GlobalSlider";
 import GlobalBanner from "../components/Banner/GlobalBanner";
-import SecondWomanBanner from "../components/Banner/SecondWomanBanner";
 import IntroduceBanner from "../components/Banner/IntroduceBanner";
 
 import FirstBannerImg from "../assets/myBannerOunass/womanFirstBanner2.png";
 import FourthBannerImg from "../assets/myBannerOunass/womanFourthBanner.png";
 import ThirdBannerImg from "../assets/myBannerOunass/womanThirdBanner.PNG";
+import HorizentalScroll from "../components/HorizentalScroll/HorizentalScroll";
 
 const WomenHome = () => {
   return (
     <>
-      <GlobalBanner
-        bannerdId={1}
-        link="/slider-shoes?gender=female&discountOnly=true"
-      />
+      <GlobalBanner sort_order={1} />
 
-      <SecondWomanBanner />
+      {/* <SecondWomanBanner /> */}
 
       {/* <IntroduceBanner /> */}
 
-      <GlobalSlider
+      {/* <GlobalSlider
         myQuery={"?limit=4&type=watch&gender=female"}
         header={"Explore Women Watches"}
         title={"Discover luxury watches for women"}
@@ -29,22 +26,24 @@ const WomenHome = () => {
         limit={4}
       />
 
-      <GlobalBanner
-        bannerdId={2}
-        link="/slider-shoes?type=shoe&gender=female&category=heels"
-      />
+      <GlobalBanner sort_order={1} /> */}
+
+      <HorizentalScroll />
 
       <BestSellersBanner />
 
-      <GlobalSlider
+      {/* <GlobalSlider
         myQuery={"?limit=4&type=bag&gender=female"}
         header={"Explore Women Bags"}
         title={"Discover luxury bags for women"}
         navigateLink={"/slider-shoes?type=bag&gender=female"}
         limit={4}
-      />
+      /> */}
 
-      <GlobalBanner bannerdId={3} link="/slider-shoes?type=luggage" />
+      <GlobalBanner sort_order={5} />
+      <div className="mt-4">
+        <GlobalBanner sort_order={6} />
+      </div>
     </>
   );
 };

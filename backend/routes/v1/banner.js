@@ -10,7 +10,7 @@ const upload = multerStorage("public/images/banners", /jpg|jpeg|webp|png|avif/);
 const router = express.Router();
 
 router.get("/", controller.getAllBanners);
-router.get("/:id", controller.getBannerById);
+router.get("/:sort_order", controller.getBannerSortOrder);
 
 router.post(
   "/",

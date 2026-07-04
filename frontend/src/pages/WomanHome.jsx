@@ -9,6 +9,7 @@ import FourthBannerImg from "../assets/myBannerOunass/womanFourthBanner.png";
 import ThirdBannerImg from "../assets/myBannerOunass/womanThirdBanner.PNG";
 import HorizentalScroll from "../components/HorizentalScroll/HorizentalScroll";
 import NewArivelsGlobalSlider from "../components/Slider/BigSizeGlobalSlider";
+import ProductFinderBox from "../components/OrderOnWhatsApp/ProductFinderBox";
 
 const WomenHome = () => {
   return (

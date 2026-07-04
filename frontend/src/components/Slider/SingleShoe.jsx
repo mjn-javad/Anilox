@@ -8,6 +8,7 @@ import apiClientAuth from "../../services/api-client_auth";
 import MessageAlert from "../Shared/MessageAlert";
 import LoadingSpinner from "../Shared/LoadingSpinner";
 import OrderOnWhatsApp from "../OrderOnWhatsApp/OrderOnWhatsApp";
+import ProductFinderBox from "../OrderOnWhatsApp/ProductFinderBox";
 
 const IMG_URL = "/api/images/posts/";
 

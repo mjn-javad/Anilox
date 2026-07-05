@@ -10,7 +10,7 @@ import {
 import { FaWhatsapp } from "react-icons/fa";
 
 const ProductFinderBox = () => {
-  const phoneNumber = "989384835369";
+  const phoneNumber = "971566425118";
 
   const message =
     "Hi, I’m looking for a product. I will send you the name or photo. Please help me find it and let me know the price.";
@@ -27,20 +27,20 @@ const ProductFinderBox = () => {
 
   return (
     <section className="w-full px-4 py-4">
-      <div className="mx-auto max-w-xl rounded-[20px] border border-[#d2a12c] bg-[#fffdf8] px-4 py-5 shadow-[0_8px_22px_rgba(0,0,0,0.06)]">
+      <div className="mx-auto max-w-xl rounded-[20px] border border-[#d2a12c] bg-white px-4 py-5 shadow-[0_8px_22px_rgba(0,0,0,0.06)]">
         <div className="mb-3 flex justify-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#f5efe2] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[#0b5425]">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#f5efe2] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[#285539]">
             <Gift size={14} className="text-[#c99a2e]" />
             Free Service
           </div>
         </div>
 
         <div className="text-center">
-          <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.32em] text-[#0b5425]">
+          <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.32em] text-[#285539]">
             Personal Shopping
           </p>
 
-          <h2 className="font-serif text-xl font-semibold leading-tight text-[#0b5425] sm:text-2xl md:text-3xl">
+          <h2 className="font-serif text-xl font-semibold leading-tight text-[#285539] sm:text-2xl md:text-3xl">
             Can’t find it?
           </h2>
 
@@ -52,7 +52,7 @@ const ProductFinderBox = () => {
         <div className="mx-auto mt-4 flex max-w-xs items-center justify-center gap-2">
           {steps.map((item, index) => (
             <React.Fragment key={index}>
-              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#0b5425] shadow-sm ring-1 ring-[#efe4cc] sm:h-11 sm:w-11">
+              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#285539] shadow-sm ring-1 ring-[#efe4cc] sm:h-11 sm:w-11">
                 {item.icon}
 
                 {item.extra && (
@@ -73,19 +73,26 @@ const ProductFinderBox = () => {
           href={whatsappLink}
           target="_blank"
           rel="noopener noreferrer"
-          className="mx-auto mt-5 flex w-full max-w-xs items-center justify-between rounded-full bg-[#25D366] px-4 py-2.5 text-white shadow-[0_8px_20px_rgba(37,211,102,0.25)] transition-all duration-300 hover:bg-[#20bd5a] active:scale-95"
+          className="
+            mx-auto mt-5 flex h-11 w-[270px] max-w-full items-center justify-between
+            rounded-full bg-gradient-to-r from-[#285539] to-[#1d2f16]
+            px-4 text-white shadow-[0_8px_20px_rgba(40,85,57,0.25)]
+            transition-all duration-300 hover:-translate-y-0.5
+            hover:shadow-[0_12px_26px_rgba(40,85,57,0.32)]
+            active:scale-95 sm:w-[320px]
+          "
         >
           <div className="flex items-center gap-2.5">
-            <FaWhatsapp className="text-2xl" />
+            <FaWhatsapp className="text-2xl text-[#d9b85c]" />
 
-            <span className="h-5 w-px bg-white/40" />
+            <span className="h-5 w-px bg-[#d9b85c]/50" />
 
-            <span className="text-[9px] font-bold uppercase tracking-[0.1em] sm:text-[10px]">
+            <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-white sm:text-[10px]">
               Send Photo On WhatsApp
             </span>
           </div>
 
-          <ArrowRight size={17} />
+          <ArrowRight size={17} className="text-[#d9b85c]" />
         </a>
       </div>
     </section>

@@ -44,7 +44,6 @@ const GlobalBanner = ({ sort_order }) => {
 
         setBanners(finalBanners);
 
-        // preload کردن همه عکس‌ها برای اینکه اسلایدر خاکستری نشود
         finalBanners.forEach((banner) => {
           if (banner?.image) {
             const img = new Image();
@@ -70,13 +69,13 @@ const GlobalBanner = ({ sort_order }) => {
     };
   }, [sort_order]);
 
-  // نمایش متن کمی بعد از آمدن عکس
+  // متن با تاخیر بعد از تغییر عکس ظاهر می‌شود
   useEffect(() => {
     setShowText(false);
 
     const timer = setTimeout(() => {
       setShowText(true);
-    }, 300);
+    }, 450);
 
     return () => clearTimeout(timer);
   }, [currentIndex]);
@@ -89,7 +88,7 @@ const GlobalBanner = ({ sort_order }) => {
       setCurrentIndex((prevIndex) =>
         prevIndex === banners.length - 1 ? 0 : prevIndex + 1,
       );
-    }, 4000);
+    }, 2500);
 
     return () => clearInterval(interval);
   }, [banners]);
@@ -97,7 +96,7 @@ const GlobalBanner = ({ sort_order }) => {
   if (loading) {
     return (
       <div className="container mx-auto">
-        <div className="w-full h-[220px] sm:h-[360px] md:h-[520px] lg:h-[660px] bg-gray-100 animate-pulse" />
+        <div className="h-[220px] w-full animate-pulse bg-gray-100 sm:h-[360px] md:h-[520px] lg:h-[660px]" />
       </div>
     );
   }
@@ -111,14 +110,18 @@ const GlobalBanner = ({ sort_order }) => {
   if (!currentBanner) return null;
 
   const bannerContent = (
-    <div className="min-w-full relative overflow-hidden group cursor-pointer bg-gray-100">
-      <div className="w-full h-[220px] sm:h-[360px] md:h-[520px] lg:h-[660px] overflow-hidden">
+    <div
+      key={currentIndex}
+      className="banner-reveal group relative min-w-full cursor-pointer overflow-hidden bg-gray-100"
+    >
+      <div className="h-[220px] w-full overflow-hidden sm:h-[360px] md:h-[520px] lg:h-[660px]">
         <img
           src={getImageUrl(currentBanner.image)}
           alt={currentBanner.title1 || "brand banner"}
           className="
-            w-full
+            banner-image
             h-full
+            w-full
             object-cover
             transition-transform
             duration-700
@@ -128,29 +131,37 @@ const GlobalBanner = ({ sort_order }) => {
         />
       </div>
 
-      {/* Very soft gradient */}
+      {/* گرادیانت خیلی نرم */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-transparent" />
+
+      {/* افکت طلایی هنگام تغییر بنر */}
+      <div className="banner-light absolute inset-0 pointer-events-none" />
 
       {/* Text */}
       <div
         className={`
-          absolute left-6 sm:left-10 md:left-16 top-3/4 sm:top-1/2 -translate-y-1/2
-          transition-all duration-700
-          ${showText ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}
+          absolute left-6 top-3/4 -translate-y-1/2
+          transition-all duration-700 ease-out
+          sm:left-10 sm:top-1/2 md:left-16
+          ${
+            showText
+              ? "translate-x-0 opacity-100 blur-0"
+              : "-translate-x-5 opacity-0 blur-sm"
+          }
         `}
       >
         {currentBanner.title1 && (
-          <h1 className="text-white text-2xl sm:text-5xl md:text-6xl font-light tracking-[0.18em] uppercase drop-shadow-xl">
+          <h1 className="text-2xl font-light uppercase tracking-[0.18em] text-white drop-shadow-xl sm:text-5xl md:text-6xl">
             {currentBanner.title1}
           </h1>
         )}
 
-        <div className="mt-5 w-14 sm:w-20 h-[1px] bg-white/90 drop-shadow-lg" />
+        <div className="mt-5 h-[1px] w-14 bg-white/90 drop-shadow-lg sm:w-20" />
       </div>
 
       {/* Dots */}
       {banners.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
+        <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2">
           {banners.map((_, index) => (
             <button
               key={index}
@@ -168,6 +179,87 @@ const GlobalBanner = ({ sort_order }) => {
           ))}
         </div>
       )}
+
+      <style>{`
+        .banner-reveal {
+          animation: bannerReveal 950ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        .banner-image {
+          animation: bannerImageZoom 4200ms ease-out both;
+        }
+
+        .banner-light::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            110deg,
+            transparent 0%,
+            transparent 35%,
+            rgba(255, 255, 255, 0.18) 48%,
+            rgba(214, 170, 72, 0.22) 50%,
+            rgba(255, 255, 255, 0.14) 52%,
+            transparent 65%,
+            transparent 100%
+          );
+          transform: translateX(-120%) skewX(-12deg);
+          animation: bannerLightSweep 1150ms ease-out 120ms both;
+        }
+
+        @keyframes bannerReveal {
+          0% {
+            opacity: 0;
+            filter: blur(10px);
+            clip-path: inset(0 0 0 16%);
+          }
+
+          55% {
+            opacity: 1;
+            filter: blur(0);
+          }
+
+          100% {
+            opacity: 1;
+            filter: blur(0);
+            clip-path: inset(0 0 0 0);
+          }
+        }
+
+        @keyframes bannerImageZoom {
+          0% {
+            transform: scale(1.08);
+          }
+
+          100% {
+            transform: scale(1);
+          }
+        }
+
+        @keyframes bannerLightSweep {
+          0% {
+            transform: translateX(-120%) skewX(-12deg);
+            opacity: 0;
+          }
+
+          20% {
+            opacity: 1;
+          }
+
+          100% {
+            transform: translateX(120%) skewX(-12deg);
+            opacity: 0;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .banner-reveal,
+          .banner-image,
+          .banner-light::before {
+            animation: none;
+          }
+        }
+      `}</style>
     </div>
   );
 

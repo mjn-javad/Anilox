@@ -1,6 +1,15 @@
 import React, { useMemo, useState } from "react";
-import { Sparkles } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+
+import ImgShoeMen from "../../assets/ShopByTypePic/Men/Shoes.png";
+import ImgGlassMen from "../../assets/ShopByTypePic/Men/SunGlasses.png";
+import ImgLuggMen from "../../assets/ShopByTypePic/Men/Luggages.png";
+import ImgBagMen from "../../assets/ShopByTypePic/Men/Bags.png";
+
+import ImgShoeWomen from "../../assets/ShopByTypePic/Women/Shoes.png";
+import ImgGlassWomen from "../../assets/ShopByTypePic/Women/SunGlasses.png";
+import ImgLuggWomen from "../../assets/ShopByTypePic/Women/Luggages.png";
+import ImgBagWomen from "../../assets/ShopByTypePic/Women/Bags.png";
 
 const ShopByType = ({
   title = "Shop by Type",
@@ -16,23 +25,44 @@ const ShopByType = ({
     const params = new URLSearchParams(search);
     const genderParam = params.get("gender");
 
-    if (genderParam) return genderParam;
+    if (genderParam) return genderParam.toLowerCase();
 
-    const isMen =
-      pathname === "/men" ||
-      pathname.includes("men") ||
-      genderParam === "men" ||
-      genderParam === "male";
+    const path = pathname.toLowerCase();
 
-    return isMen ? "male" : "female";
+    if (path === "/men" || path.startsWith("/men/")) return "male";
+    if (path === "/women" || path.startsWith("/women/")) return "female";
+
+    return "female";
   }, [pathname, search]);
 
-  const shopTypes = [
-    { title: "Shoes", type: "shoe", icon: "👟" },
-    { title: "Bags", type: "bag", icon: "👜" },
-    { title: "Glasses", type: "glasses", icon: "🕶️" },
-    { title: "Luggage", type: "luggage", icon: "🧳" },
-  ];
+  const isMale = useMemo(() => {
+    return gender === "male" || gender === "men";
+  }, [gender]);
+
+  const shopTypes = useMemo(() => {
+    return [
+      {
+        title: "Shoes",
+        type: "shoe",
+        image: isMale ? ImgShoeMen : ImgShoeWomen,
+      },
+      {
+        title: "Bags",
+        type: "bag",
+        image: isMale ? ImgBagMen : ImgBagWomen,
+      },
+      {
+        title: "Glasses",
+        type: "glasses",
+        image: isMale ? ImgGlassMen : ImgGlassWomen,
+      },
+      {
+        title: "Luggage",
+        type: "luggage",
+        image: isMale ? ImgLuggMen : ImgLuggWomen,
+      },
+    ];
+  }, [isMale]);
 
   const handleTypeClick = (type, index) => {
     const params = new URLSearchParams(search);
@@ -48,17 +78,6 @@ const ShopByType = ({
     setActiveTypeIndex(index);
 
     navigate(`${navigatePath}?${params.toString()}`);
-  };
-
-  const getTypeGradient = (index) => {
-    const gradients = [
-      "from-neutral-950 to-stone-800 text-white border-neutral-700",
-      "from-stone-900 to-neutral-800 text-white border-stone-700",
-      "from-zinc-900 to-gray-800 text-white border-zinc-700",
-      "from-black to-neutral-800 text-white border-neutral-700",
-    ];
-
-    return gradients[index % gradients.length];
   };
 
   return (
@@ -82,57 +101,28 @@ const ShopByType = ({
             type="button"
             onClick={() => handleTypeClick(item.type, index)}
             className={`
-              group/type relative overflow-hidden rounded-2xl md:rounded-3xl border
-              bg-gradient-to-br ${getTypeGradient(index)}
-              px-4 md:px-5 py-5 md:py-8
-              shadow-lg md:shadow-xl hover:shadow-2xl
+              group/type relative overflow-hidden rounded-2xl md:rounded-3xl
+              bg-white shadow-lg md:shadow-xl hover:shadow-2xl
               transition-all duration-500 hover:-translate-y-1 active:scale-95
-              ${activeTypeIndex === index ? "scale-[1.03]" : ""}
+              ${
+                activeTypeIndex === index
+                  ? "scale-[1.03] ring-2 ring-black/20"
+                  : ""
+              }
             `}
           >
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-white/20 opacity-0 transition-opacity duration-500 group-hover/type:opacity-100" />
+            <div className="relative aspect-square w-full overflow-hidden rounded-2xl md:rounded-3xl">
+              <img
+                src={item.image}
+                alt={item.title}
+                className="h-full w-full object-cover transition-transform duration-700 group-hover/type:scale-105"
+                draggable="false"
+              />
 
-            <div className="absolute -top-12 -right-12 h-28 w-28 md:h-32 md:w-32 rounded-full bg-white/10 blur-2xl transition-transform duration-700 group-hover/type:scale-125" />
+              <div className="absolute inset-0 bg-black/0 transition-colors duration-500 group-hover/type:bg-black/10" />
 
-            <Sparkles
-              size={15}
-              className="absolute top-3 right-3 md:top-4 md:right-4 text-white/50 transition-colors duration-300 group-hover/type:text-white animate-spin-slow"
-            />
-
-            <div className="relative flex flex-col items-center justify-center gap-3 md:gap-4">
-              <div className="flex h-12 w-12 md:h-16 md:w-16 items-center justify-center rounded-xl md:rounded-2xl border border-white/15 bg-white/10 text-2xl md:text-3xl shadow-inner backdrop-blur-md">
-                {item.icon}
-              </div>
-
-              <div>
-                <h3 className="text-xs md:text-lg font-medium uppercase tracking-[0.18em]">
-                  {item.title}
-                </h3>
-
-                <p className="mt-1 md:mt-2 text-[9px] md:text-xs uppercase tracking-widest text-white/50">
-                  View Products
-                </p>
-              </div>
+              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 ease-in-out group-hover/type:translate-x-full" />
             </div>
-
-            <div className="absolute bottom-0 left-0 h-px w-full scale-x-0 bg-gradient-to-r from-transparent via-white/50 to-transparent transition-transform duration-700 group-hover/type:scale-x-100" />
-
-            <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-in-out group-hover/type:translate-x-full" />
-
-            <style>{`
-              .animate-spin-slow {
-                animation: spin 8s linear infinite;
-              }
-
-              @keyframes spin {
-                from {
-                  transform: rotate(0deg);
-                }
-                to {
-                  transform: rotate(360deg);
-                }
-              }
-            `}</style>
           </button>
         ))}
       </div>

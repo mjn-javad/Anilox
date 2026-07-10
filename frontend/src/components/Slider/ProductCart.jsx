@@ -132,7 +132,7 @@ const ProductCard = ({
                 <div className="relative bg-gray-50 overflow-hidden">
                   {shoe?.images?.[0]?.image_name ? (
                     <img
-                      src={`http://localhost:4000/images/posts/${shoe.images[0].image_name}`}
+                      src={`/api/images/posts/${shoe.images[0].image_name}`}
                       alt={shoe.name}
                       className="w-full aspect-square object-cover group-hover:opacity-90 transition-opacity duration-300"
                       loading="lazy"

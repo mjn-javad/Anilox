@@ -101,27 +101,18 @@ const ShopByType = ({
             type="button"
             onClick={() => handleTypeClick(item.type, index)}
             className={`
-              group/type relative overflow-hidden rounded-2xl md:rounded-3xl
-              bg-white shadow-lg md:shadow-xl hover:shadow-2xl
-              transition-all duration-500 hover:-translate-y-1 active:scale-95
-              ${
-                activeTypeIndex === index
-                  ? "scale-[1.03] ring-2 ring-black/20"
-                  : ""
-              }
-            `}
+        group/type relative appearance-none border-0 bg-transparent
+        transition-transform duration-500 hover:-translate-y-1 active:scale-95
+        ${activeTypeIndex === index ? "scale-[1.03]" : ""}
+      `}
           >
-            <div className="relative aspect-square w-full overflow-hidden rounded-2xl md:rounded-3xl">
+            <div className="relative aspect-square w-full bg-transparent">
               <img
                 src={item.image}
                 alt={item.title}
-                className="h-full w-full object-cover transition-transform duration-700 group-hover/type:scale-105"
+                className="h-full w-full object-contain bg-transparent transition-transform duration-700 group-hover/type:scale-105"
                 draggable="false"
               />
-
-              <div className="absolute inset-0 bg-black/0 transition-colors duration-500 group-hover/type:bg-black/10" />
-
-              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 ease-in-out group-hover/type:translate-x-full" />
             </div>
           </button>
         ))}

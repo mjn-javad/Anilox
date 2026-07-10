@@ -1,68 +1,186 @@
 // repositories/banner.js
-const db = require("../db"); // یا هر طور که داری connection رو میگیری
+
+const db = require("../db");
 
 class BannerRepository {
   async create(data) {
-    const { title1, title2, image } = data;
+    const {
+      title1,
+      title2,
+      btnTitle1,
+      btnLink1,
+      btnTitle2,
+      btnLink2,
+      bannerLink,
+      image,
+      is_active,
+      sort_order,
+    } = data;
+
     const query = `
-      INSERT INTO banners (title1, title2, image, created_at, updated_at)
-      VALUES (?, ?, ?, NOW(), NOW())
+      INSERT INTO banners (
+        title1,
+        title2,
+        btnTitle1,
+        btnLink1,
+        btnTitle2,
+        btnLink2,
+        bannerLink,
+        image,
+        is_active,
+        sort_order,
+        created_at,
+        updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
     `;
-    const [result] = await db.execute(query, [title1, title2, image]);
+
+    const values = [
+      title1,
+      title2,
+      btnTitle1,
+      btnLink1,
+      btnTitle2,
+      btnLink2,
+      bannerLink,
+      image,
+      is_active,
+      sort_order,
+    ];
+
+    const [result] = await db.execute(query, values);
+
     return result.insertId;
   }
 
   async getAll() {
     const query = `
-      SELECT id, title1, title2, image, is_active, sort_order, created_at
+      SELECT
+        id,
+        title1,
+        title2,
+        btnTitle1,
+        btnLink1,
+        btnTitle2,
+        btnLink2,
+        bannerLink,
+        image,
+        is_active,
+        sort_order,
+        created_at,
+        updated_at
       FROM banners
       ORDER BY sort_order ASC, id DESC
     `;
+
     const [rows] = await db.execute(query);
+
     return rows;
   }
 
-  async getBySortOrder(sort_order) {
-    const query = `SELECT * FROM banners WHERE sort_order = ?`;
-    const [rows] = await db.execute(query, [sort_order]);
+  async getById(id) {
+    const query = `
+      SELECT
+        id,
+        title1,
+        title2,
+        btnTitle1,
+        btnLink1,
+        btnTitle2,
+        btnLink2,
+        bannerLink,
+        image,
+        is_active,
+        sort_order,
+        created_at,
+        updated_at
+      FROM banners
+      WHERE id = ?
+      LIMIT 1
+    `;
 
-    return rows;
+    const [rows] = await db.execute(query, [id]);
+
+    return rows[0] || null;
+  }
+
+  async getBySortOrder(sortOrder) {
+    const query = `
+      SELECT
+        id,
+        title1,
+        title2,
+        btnTitle1,
+        btnLink1,
+        btnTitle2,
+        btnLink2,
+        bannerLink,
+        image,
+        is_active,
+        sort_order,
+        created_at,
+        updated_at
+      FROM banners
+      WHERE sort_order = ?
+    `;
+
+    const [rows] = await db.execute(query, [sortOrder]);
+
+    return rows[0] || null;
   }
 
   async update(id, data) {
-    const { title1, title2, image, is_active, sort_order } = data;
-    let query = `UPDATE banners SET title1 = ?, title2 = ?, updated_at = NOW()`;
-    const params = [title1, title2];
+    const allowedFields = [
+      "title1",
+      "title2",
+      "btnTitle1",
+      "btnLink1",
+      "btnTitle2",
+      "btnLink2",
+      "bannerLink",
+      "image",
+      "is_active",
+      "sort_order",
+    ];
 
-    if (image) {
-      query += `, image = ?`;
-      params.push(image);
-    }
-    if (is_active !== undefined) {
-      query += `, is_active = ?`;
-      params.push(is_active);
-    }
-    if (sort_order !== undefined) {
-      query += `, sort_order = ?`;
-      params.push(sort_order);
+    const updateFields = [];
+    const values = [];
+
+    allowedFields.forEach((field) => {
+      if (data[field] !== undefined) {
+        updateFields.push(`${field} = ?`);
+        values.push(data[field]);
+      }
+    });
+
+    if (updateFields.length === 0) {
+      return false;
     }
 
-    query += ` WHERE id = ?`;
-    params.push(id);
+    const query = `
+      UPDATE banners
+      SET
+        ${updateFields.join(", ")},
+        updated_at = NOW()
+      WHERE id = ?
+    `;
 
-    await db.execute(query, params);
-    return true;
+    values.push(id);
+
+    const [result] = await db.execute(query, values);
+
+    return result.affectedRows > 0;
   }
 
   async delete(id) {
-    const query = `DELETE FROM banners WHERE id = ?`;
-    await db.execute(query, [id]);
-    return true;
-  }
+    const query = `
+      DELETE FROM banners
+      WHERE id = ?
+    `;
 
-  async updateSortOrder(id, sortOrder) {
-    const query = `UPDATE banners SET sort_order = ? WHERE id = ?`;
-    await db.execute(query, [sortOrder, id]);
+    const [result] = await db.execute(query, [id]);
+
+    return result.affectedRows > 0;
   }
 }
 

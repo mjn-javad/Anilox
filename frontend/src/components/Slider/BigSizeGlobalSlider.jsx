@@ -49,6 +49,7 @@ const BigSizeGlobalSlider = ({
         scrollOnMobile={limit !== undefined}
         apiUrl={`/api/brandPopular/newArrivels${myQuery}`}
         limit={limit}
+        infiniteScroll={false}
       />
     </div>
   );

@@ -3,9 +3,33 @@ import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import apiClientBrand from "../../services/api-client";
 
+const gradients = [
+  "from-amber-100/90 to-yellow-100/90 hover:from-amber-200/90 hover:to-yellow-200/90 border-amber-300/30",
+  "from-gray-200/90 to-slate-200/90 hover:from-gray-300/90 hover:to-slate-300/90 border-gray-400/20",
+  "from-stone-100/90 to-neutral-100/90 hover:from-stone-200/90 hover:to-neutral-200/90 border-stone-300/30",
+  "from-yellow-200/90 to-orange-200/90 hover:from-yellow-300/90 hover:to-orange-300/90 border-yellow-400/30",
+  "from-rose-100/80 to-pink-100/80 hover:from-rose-200/90 hover:to-pink-200/90 border-rose-300/20",
+  "from-slate-200/90 to-gray-200/90 hover:from-slate-300/90 hover:to-gray-300/90 border-gray-500/20",
+  "from-amber-50/90 to-yellow-50/90 hover:from-amber-100/90 hover:to-yellow-100/90 border-amber-200/40",
+  "from-sky-100/80 to-blue-100/80 hover:from-sky-200/90 hover:to-blue-200/90 border-sky-300/20",
+];
+
+const formatBrand = (name) =>
+  String(name || "")
+    .trim()
+    .split(/\s+/)
+    .map((word, index) => {
+      const cleanWord = word.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+
+      if (!cleanWord) return "";
+
+      return index === 0
+        ? cleanWord
+        : cleanWord.charAt(0).toUpperCase() + cleanWord.slice(1);
+    })
+    .join("");
+
 const BrandScroller = ({
-  title = "",
-  subtitle = "",
   navigatePath = "/slider-shoes",
   defaultType = "",
 }) => {
@@ -18,189 +42,206 @@ const BrandScroller = ({
   const { pathname, search } = useLocation();
 
   const scrollRef = useRef(null);
-  const animRef = useRef(null);
+  const animationRef = useRef(null);
   const timerRef = useRef(null);
 
-  const pausedRef = useRef(false);
-  const draggingRef = useRef(false);
-  const draggedRef = useRef(false);
-  const startXRef = useRef(0);
-  const startScrollRef = useRef(0);
+  const scrollState = useRef({
+    paused: false,
+    dragging: false,
+    dragged: false,
+    startX: 0,
+    startScroll: 0,
+    position: 0,
+    lastTime: 0,
+  });
 
   const genderFromPage = useMemo(() => {
-    const params = new URLSearchParams(search);
-    const genderParam = params.get("gender");
+    const value = new URLSearchParams(search).get("gender")?.toLowerCase();
 
-    if (genderParam) return genderParam;
+    if (value === "male" || value === "men") return "male";
+    if (value === "female" || value === "women") return "female";
 
-    const isMen =
-      pathname === "/men" ||
-      pathname.includes("men") ||
-      genderParam === "men" ||
-      genderParam === "male";
+    const path = pathname.toLowerCase();
 
-    return isMen ? "male" : "female";
+    return path === "/men" || path.startsWith("/men/") ? "male" : "female";
   }, [pathname, search]);
 
-  const movingBrands = useMemo(() => {
-    if (!brands.length) return [];
-    return [...brands, ...brands, ...brands];
-  }, [brands]);
+  const movingBrands = useMemo(
+    () => (brands.length ? [...brands, ...brands, ...brands] : []),
+    [brands],
+  );
 
   useEffect(() => {
     apiClientBrand
       .get("")
-      .then((res) => setBrands(res.data.data || []))
-      .catch(() => setError("Failed to load brands"));
+      .then((res) => setBrands(res.data?.data || []))
+      .catch((err) => {
+        console.error("Get brands error:", err);
+        setError("Failed to load brands");
+      });
   }, []);
 
-  const formatBrandForQuery = (brandName) => {
-    return String(brandName || "")
-      .trim()
-      .split(/\s+/)
-      .map((word, index) => {
-        const cleanWord = word.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-
-        if (!cleanWord) return "";
-
-        if (index === 0) return cleanWord;
-
-        return cleanWord.charAt(0).toUpperCase() + cleanWord.slice(1);
-      })
-      .join("");
-  };
-
   const pauseAuto = () => {
-    pausedRef.current = true;
-
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
+    scrollState.current.paused = true;
+    clearTimeout(timerRef.current);
   };
 
   const resumeAuto = (delay = 1000) => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
+    clearTimeout(timerRef.current);
 
     timerRef.current = setTimeout(() => {
-      draggingRef.current = false;
-      pausedRef.current = false;
+      scrollState.current.dragging = false;
+      scrollState.current.paused = false;
     }, delay);
   };
 
-  const fixLoopPosition = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const onePart = el.scrollWidth / 3;
-    if (!onePart) return;
-
-    if (el.scrollLeft >= onePart * 2) {
-      el.scrollLeft -= onePart;
-    }
-
-    if (el.scrollLeft <= onePart * 0.2) {
-      el.scrollLeft += onePart;
-    }
-  };
-
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el || !brands.length) return;
+    const element = scrollRef.current;
 
-    const setMiddle = () => {
-      const onePart = el.scrollWidth / 3;
+    if (!element || !brands.length) return;
 
-      if (onePart > 0) {
-        el.scrollLeft = onePart;
+    const initialize = () => {
+      const middle = element.scrollWidth / 3;
+
+      if (middle) {
+        element.scrollLeft = middle;
+        scrollState.current.position = middle;
       }
 
-      setCanScroll(el.scrollWidth > el.clientWidth + 5);
+      setCanScroll(element.scrollWidth > element.clientWidth + 5);
     };
 
-    const id = requestAnimationFrame(setMiddle);
-    window.addEventListener("resize", setMiddle);
+    const updateSize = () => {
+      setCanScroll(element.scrollWidth > element.clientWidth + 5);
+    };
+
+    const frameId = requestAnimationFrame(() =>
+      requestAnimationFrame(initialize),
+    );
+
+    const observer =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(updateSize)
+        : null;
+
+    observer?.observe(element);
+    window.addEventListener("resize", updateSize);
 
     return () => {
-      cancelAnimationFrame(id);
-      window.removeEventListener("resize", setMiddle);
+      cancelAnimationFrame(frameId);
+      observer?.disconnect();
+      window.removeEventListener("resize", updateSize);
     };
   }, [brands.length]);
 
   useEffect(() => {
     if (!brands.length) return;
 
-    const speed = 0.7;
+    const speed = 42;
 
-    const move = () => {
-      const el = scrollRef.current;
+    const move = (time) => {
+      const element = scrollRef.current;
+      const state = scrollState.current;
 
-      if (el && el.scrollWidth > el.clientWidth) {
-        fixLoopPosition();
+      const elapsed = state.lastTime ? Math.min(time - state.lastTime, 50) : 0;
 
-        if (!pausedRef.current && !draggingRef.current) {
-          el.scrollLeft += speed;
+      state.lastTime = time;
+
+      if (element && element.scrollWidth > element.clientWidth) {
+        if (!state.paused && !state.dragging) {
+          const onePart = element.scrollWidth / 3;
+
+          state.position += (speed * elapsed) / 1000;
+
+          if (state.position >= onePart * 2) {
+            state.position -= onePart;
+          }
+
+          if (state.position <= onePart * 0.2) {
+            state.position += onePart;
+          }
+
+          element.scrollLeft = state.position;
+        } else {
+          state.position = element.scrollLeft;
         }
       }
 
-      animRef.current = requestAnimationFrame(move);
+      animationRef.current = requestAnimationFrame(move);
     };
 
-    animRef.current = requestAnimationFrame(move);
+    scrollState.current.lastTime = 0;
+    animationRef.current = requestAnimationFrame(move);
 
     return () => {
-      if (animRef.current) cancelAnimationFrame(animRef.current);
-      if (timerRef.current) clearTimeout(timerRef.current);
+      cancelAnimationFrame(animationRef.current);
+      clearTimeout(timerRef.current);
     };
   }, [brands.length]);
 
-  const handlePointerDown = (e) => {
-    const el = scrollRef.current;
-    if (!el) return;
+  const handlePointerDown = (event) => {
+    const element = scrollRef.current;
+    if (!element) return;
+
+    const state = scrollState.current;
 
     pauseAuto();
 
-    draggingRef.current = true;
-    draggedRef.current = false;
-    startXRef.current = e.clientX || 0;
-    startScrollRef.current = el.scrollLeft;
-  };
+    state.dragging = true;
+    state.dragged = false;
+    state.startX = event.clientX;
+    state.startScroll = element.scrollLeft;
+    state.position = element.scrollLeft;
 
-  const handlePointerMove = (e) => {
-    const el = scrollRef.current;
-    if (!el || !draggingRef.current) return;
-
-    const diff = (e.clientX || 0) - startXRef.current;
-
-    if (Math.abs(diff) > 8) {
-      draggedRef.current = true;
-      pauseAuto();
-    }
-
-    if (e.pointerType === "mouse") {
-      el.scrollLeft = startScrollRef.current - diff;
+    if (event.pointerType === "mouse") {
+      event.currentTarget.setPointerCapture?.(event.pointerId);
     }
   };
 
-  const handlePointerUp = () => {
-    draggingRef.current = false;
-    resumeAuto(1000);
+  const handlePointerMove = (event) => {
+    const element = scrollRef.current;
+    const state = scrollState.current;
+
+    if (!element || !state.dragging) return;
+
+    const difference = event.clientX - state.startX;
+
+    if (Math.abs(difference) > 8) {
+      state.dragged = true;
+    }
+
+    if (event.pointerType === "mouse") {
+      state.position = state.startScroll - difference;
+      element.scrollLeft = state.position;
+    }
+  };
+
+  const handlePointerUp = (event) => {
+    const element = scrollRef.current;
+    const state = scrollState.current;
+
+    if (element) {
+      state.position = element.scrollLeft;
+    }
+
+    state.dragging = false;
+
+    if (
+      event?.pointerType === "mouse" &&
+      event.currentTarget?.hasPointerCapture?.(event.pointerId)
+    ) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    resumeAuto();
 
     setTimeout(() => {
-      draggedRef.current = false;
+      state.dragged = false;
     }, 180);
   };
 
-  const handleWheel = () => {
-    pauseAuto();
-    resumeAuto(1000);
-  };
-
   const handleBrandClick = (brandName, index) => {
-    if (draggedRef.current) return;
-
-    const formattedBrand = formatBrandForQuery(brandName);
+    if (scrollState.current.dragged) return;
 
     const params = new URLSearchParams(search);
 
@@ -212,40 +253,29 @@ const BrandScroller = ({
       params.set("type", defaultType);
     }
 
-    params.set("brand", formattedBrand);
+    params.set("brand", formatBrand(brandName));
 
     setActiveIndex(index);
-
     navigate(`${navigatePath}?${params.toString()}`);
   };
 
   const scrollByButton = (direction) => {
-    const el = scrollRef.current;
-    if (!el) return;
+    const element = scrollRef.current;
+    if (!element) return;
 
     pauseAuto();
 
-    el.scrollBy({
-      left: direction === "left" ? -280 : 280,
+    const nextPosition =
+      element.scrollLeft + (direction === "left" ? -280 : 280);
+
+    scrollState.current.position = nextPosition;
+
+    element.scrollTo({
+      left: nextPosition,
       behavior: "smooth",
     });
 
-    resumeAuto(1000);
-  };
-
-  const getBrandGradient = (index) => {
-    const gradients = [
-      "from-amber-100/90 to-yellow-100/90 hover:from-amber-200/90 hover:to-yellow-200/90 border-amber-300/30",
-      "from-gray-200/90 to-slate-200/90 hover:from-gray-300/90 hover:to-slate-300/90 border-gray-400/20",
-      "from-stone-100/90 to-neutral-100/90 hover:from-stone-200/90 hover:to-neutral-200/90 border-stone-300/30",
-      "from-yellow-200/90 to-orange-200/90 hover:from-yellow-300/90 hover:to-orange-300/90 border-yellow-400/30",
-      "from-rose-100/80 to-pink-100/80 hover:from-rose-200/90 hover:to-pink-200/90 border-rose-300/20",
-      "from-slate-200/90 to-gray-200/90 hover:from-slate-300/90 hover:to-gray-300/90 border-gray-500/20",
-      "from-amber-50/90 to-yellow-50/90 hover:from-amber-100/90 hover:to-yellow-100/90 border-amber-200/40",
-      "from-sky-100/80 to-blue-100/80 hover:from-sky-200/90 hover:to-blue-200/90 border-sky-300/20",
-    ];
-
-    return gradients[index % gradients.length];
+    resumeAuto();
   };
 
   return (
@@ -256,27 +286,16 @@ const BrandScroller = ({
         </div>
       )}
 
-      {/* <div className="mb-4 text-center">
-        <p className="mb-2 text-[10px] md:text-xs uppercase tracking-[0.35em] text-gray-400">
-          {subtitle}
-        </p>
+      <div className="relative">
+        <div className="pointer-events-none absolute left-0 top-0 z-20 h-full w-10 bg-gradient-to-r from-white via-white/80 to-transparent md:w-24" />
 
-        <h2 className="text-2xl md:text-4xl font-light uppercase tracking-[0.18em] text-gray-900">
-          {title}
-        </h2>
-
-        <div className="mx-auto mt-4 h-px w-16 md:w-20 bg-gray-300" />
-      </div> */}
-
-      <div className="relative py-0 md:py-0">
-        <div className="pointer-events-none absolute left-0 top-0 z-20 h-full w-10 md:w-24 bg-gradient-to-r from-white via-white/80 to-transparent" />
-        <div className="pointer-events-none absolute right-0 top-0 z-20 h-full w-10 md:w-24 bg-gradient-to-l from-white via-white/80 to-transparent" />
+        <div className="pointer-events-none absolute right-0 top-0 z-20 h-full w-10 bg-gradient-to-l from-white via-white/80 to-transparent md:w-24" />
 
         {canScroll && (
           <button
             type="button"
             onClick={() => scrollByButton("left")}
-            className="hidden sm:flex absolute left-2 top-1/2 z-30 h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 shadow-lg backdrop-blur-md transition hover:scale-110"
+            className="absolute left-2 top-1/2 z-30 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 shadow-lg backdrop-blur-md transition hover:scale-110 sm:flex"
           >
             <ChevronLeft size={22} className="text-gray-700" />
           </button>
@@ -288,13 +307,22 @@ const BrandScroller = ({
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
-          onWheel={handleWheel}
-          className="
-            no-scrollbar flex gap-3 md:gap-5 overflow-x-auto
-            px-1 py-3 md:py-5
-            cursor-grab active:cursor-grabbing
-            select-none touch-pan-x overscroll-x-contain
-          "
+          onScroll={() => {
+            const state = scrollState.current;
+
+            if (state.paused || state.dragging) {
+              state.position = scrollRef.current?.scrollLeft || 0;
+            }
+          }}
+          onWheel={() => {
+            pauseAuto();
+            resumeAuto();
+          }}
+          className="no-scrollbar flex cursor-grab select-none gap-3 overflow-x-auto overscroll-x-contain px-1 py-3 active:cursor-grabbing md:gap-5 md:py-5"
+          style={{
+            WebkitOverflowScrolling: "touch",
+            touchAction: "pan-x",
+          }}
         >
           {movingBrands.length ? (
             movingBrands.map((brand, index) => {
@@ -302,49 +330,45 @@ const BrandScroller = ({
 
               return (
                 <button
-                  key={`${brand.id || brand.name || "brand"}-${index}`}
+                  key={`${brand.id || brand.name}-${index}`}
                   type="button"
                   onClick={() => handleBrandClick(brand.name, originalIndex)}
-                  className={`
-                    group/brand relative flex-none
-                    transition-transform duration-300 hover:scale-105 active:scale-95
-                    ${activeIndex === originalIndex ? "scale-105" : ""}
-                  `}
+                  className={`group/brand relative flex-none transition-transform duration-300 hover:scale-105 active:scale-95 ${
+                    activeIndex === originalIndex ? "scale-105" : ""
+                  }`}
                 >
                   <div
                     className={`
-                      relative overflow-hidden rounded-xl md:rounded-2xl
-                      bg-gradient-to-br ${getBrandGradient(originalIndex)}
-                      border border-white/30
-                      px-5 py-3 md:px-10 md:py-5
-                      min-w-[92px] sm:min-w-[115px] md:min-w-[140px]
-                      shadow-md md:shadow-lg hover:shadow-2xl
-                      transition-all duration-500
+                      relative min-w-[92px] overflow-hidden rounded-xl
+                      border border-white/30 bg-gradient-to-br
+                      px-5 py-3 shadow-md transition-all duration-500
+                      hover:shadow-2xl sm:min-w-[115px]
+                      md:min-w-[140px] md:rounded-2xl md:px-10
+                      md:py-5 md:shadow-lg
+                      ${gradients[originalIndex % gradients.length]}
                     `}
                   >
                     <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent opacity-0 transition-opacity duration-500 group-hover/brand:opacity-100" />
 
-                    <div className="absolute -top-8 -right-8 md:-top-10 md:-right-10 h-24 w-24 md:h-32 md:w-32 rounded-full bg-gradient-to-br from-white/30 to-transparent blur-2xl animate-pulse-slow" />
+                    <div className="animate-pulse-slow absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gradient-to-br from-white/30 to-transparent blur-2xl md:-right-10 md:-top-10 md:h-32 md:w-32" />
 
-                    <div className="absolute -bottom-8 -left-8 md:-bottom-10 md:-left-10 h-20 w-20 md:h-24 md:w-24 rounded-full bg-gradient-to-tr from-white/20 to-transparent blur-xl animate-pulse-slow delay-1000" />
+                    <div className="animate-pulse-slow delay-1000 absolute -bottom-8 -left-8 h-20 w-20 rounded-full bg-gradient-to-tr from-white/20 to-transparent blur-xl md:-bottom-10 md:-left-10 md:h-24 md:w-24" />
 
                     <Sparkles
                       size={12}
-                      className="absolute top-1.5 right-2 md:top-2 md:right-3 text-white/60 transition-colors duration-300 group-hover/brand:text-white/90 animate-spin-slow"
+                      className="animate-spin-slow absolute right-2 top-1.5 text-white/60 group-hover/brand:text-white/90 md:right-3 md:top-2"
                     />
 
-                    <span className="relative block whitespace-nowrap text-xs sm:text-sm md:text-base font-semibold tracking-wide text-gray-800/90 drop-shadow-sm transition-colors duration-300 group-hover/brand:text-gray-900">
+                    <span className="relative block whitespace-nowrap text-xs font-semibold tracking-wide text-gray-800/90 drop-shadow-sm sm:text-sm md:text-base">
                       {brand.name}
                     </span>
 
-                    <div className="absolute bottom-1.5 md:bottom-2 left-1/2 h-0.5 w-6 md:w-8 -translate-x-1/2 rounded-full bg-gradient-to-r from-white/60 to-white/20 transition-all duration-700 ease-out group-hover/brand:w-3/4" />
+                    <div className="absolute bottom-1.5 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-gradient-to-r from-white/60 to-white/20 transition-all duration-700 group-hover/brand:w-3/4 md:bottom-2 md:w-8" />
 
-                    <div className="absolute inset-0 rounded-xl md:rounded-2xl border-2 border-white/0 transition-all duration-500 group-hover/brand:border-white/40" />
-
-                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 ease-in-out group-hover/brand:translate-x-full" />
+                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover/brand:translate-x-full" />
                   </div>
 
-                  <div className="hidden sm:flex absolute -top-2 -right-2 h-6 w-6 md:h-7 md:w-7 items-center justify-center rounded-full border border-gray-200/50 bg-white/90 text-[10px] md:text-xs font-bold text-gray-500 shadow-md backdrop-blur-md">
+                  <div className="absolute -right-2 -top-2 hidden h-6 w-6 items-center justify-center rounded-full border border-gray-200/50 bg-white/90 text-[10px] font-bold text-gray-500 shadow-md sm:flex md:h-7 md:w-7 md:text-xs">
                     {originalIndex + 1}
                   </div>
                 </button>
@@ -361,7 +385,7 @@ const BrandScroller = ({
           <button
             type="button"
             onClick={() => scrollByButton("right")}
-            className="hidden sm:flex absolute right-2 top-1/2 z-30 h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 shadow-lg backdrop-blur-md transition hover:scale-110"
+            className="absolute right-2 top-1/2 z-30 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 shadow-lg backdrop-blur-md transition hover:scale-110 sm:flex"
           >
             <ChevronRight size={22} className="text-gray-700" />
           </button>
@@ -379,10 +403,10 @@ const BrandScroller = ({
         }
 
         @keyframes pulseSlow {
-          0%,
-          100% {
+          0%, 100% {
             transform: scale(1) rotate(0deg);
           }
+
           50% {
             transform: scale(1.2) rotate(10deg);
           }
@@ -392,17 +416,18 @@ const BrandScroller = ({
           animation: pulseSlow 4s ease-in-out infinite;
         }
 
-        .animate-spin-slow {
-          animation: spin 8s linear infinite;
-        }
-
         @keyframes spin {
           from {
             transform: rotate(0deg);
           }
+
           to {
             transform: rotate(360deg);
           }
+        }
+
+        .animate-spin-slow {
+          animation: spin 8s linear infinite;
         }
 
         .delay-1000 {

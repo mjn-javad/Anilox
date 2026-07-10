@@ -277,7 +277,7 @@ class EmailService {
           </div>
           
           <div style="text-align: center; margin-top: 20px; padding: 10px; background: #f5f5f5; border-radius: 8px;">
-            <a href="http://localhost:3000/admin/orders/${orderId}" 
+            <a href="/api/admin/orders/${orderId}" 
                style="background-color: #ff9800; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
               View Order Details
             </a>

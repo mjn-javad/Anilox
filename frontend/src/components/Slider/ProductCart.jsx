@@ -8,8 +8,9 @@ const ProductCard = ({
   title,
   navigateLink,
   scrollOnMobile = false,
-  apiUrl = "/api/shoes",
-  limit,
+  infiniteScroll = true,
+  apiUrl = "/api/v1/shoes",
+  limit = 20,
 }) => {
   const [searchParams] = useSearchParams();
 
@@ -19,12 +20,6 @@ const ProductCard = ({
   const [loading, setLoading] = useState(false);
 
   const observerRef = useRef(null);
-
-  // فقط وقتی limit ارسال نشده باشد، اسکرول بینهایت فعال می‌شود
-  const enableInfiniteScroll = limit === undefined || limit === null;
-
-  // تعداد محصولاتی که در هر بار اسکرول بیشتر گرفته می‌شود
-  const infiniteScrollLimit = 20;
 
   useEffect(() => {
     setProducts(shoes || []);
@@ -46,7 +41,7 @@ const ProductCard = ({
   };
 
   const fetchMoreProducts = useCallback(async () => {
-    if (!enableInfiniteScroll) return;
+    if (!infiniteScroll) return;
     if (loading) return;
     if (totalPages && page >= totalPages) return;
 
@@ -57,9 +52,10 @@ const ProductCard = ({
 
       const params = new URLSearchParams(searchParams);
       params.set("page", nextPage);
-      params.set("limit", infiniteScrollLimit);
+      params.set("limit", limit);
 
-      const res = await fetch(`${apiUrl}?${params.toString()}`);
+      const separator = apiUrl.includes("?") ? "&" : "?";
+      const res = await fetch(`${apiUrl}${separator}${params.toString()}`);
       const result = await res.json();
 
       setProducts((prev) => [...prev, ...(result.data || [])]);
@@ -70,11 +66,11 @@ const ProductCard = ({
     } finally {
       setLoading(false);
     }
-  }, [apiUrl, searchParams, page, loading, totalPages, enableInfiniteScroll]);
+  }, [apiUrl, searchParams, page, loading, totalPages, infiniteScroll, limit]);
 
   const lastProductRef = useCallback(
     (node) => {
-      if (!enableInfiniteScroll) return;
+      if (!infiniteScroll) return;
       if (loading) return;
 
       if (observerRef.current) {
@@ -91,7 +87,7 @@ const ProductCard = ({
         observerRef.current.observe(node);
       }
     },
-    [loading, fetchMoreProducts, enableInfiniteScroll],
+    [loading, fetchMoreProducts, infiniteScroll],
   );
 
   return (
@@ -124,9 +120,7 @@ const ProductCard = ({
 
             return (
               <Link
-                ref={
-                  enableInfiniteScroll && isLastProduct ? lastProductRef : null
-                }
+                ref={infiniteScroll && isLastProduct ? lastProductRef : null}
                 to={`/shoe/${shoe._id || shoe.id}`}
                 key={shoe._id || shoe.id || index}
                 className={
@@ -138,7 +132,7 @@ const ProductCard = ({
                 <div className="relative bg-gray-50 overflow-hidden">
                   {shoe?.images?.[0]?.image_name ? (
                     <img
-                      src={`/api/images/posts/${shoe.images[0].image_name}`}
+                      src={`http://localhost:4000/images/posts/${shoe.images[0].image_name}`}
                       alt={shoe.name}
                       className="w-full aspect-square object-cover group-hover:opacity-90 transition-opacity duration-300"
                       loading="lazy"
@@ -169,16 +163,16 @@ const ProductCard = ({
                     {shoe.discount_price ? (
                       <>
                         <span className="text-sm font-medium text-gray-900">
-                          {shoe.discount_price?.toLocaleString()} AED
+                          ${shoe.discount_price?.toLocaleString()}
                         </span>
 
                         <span className="text-xs text-gray-400 line-through">
-                          {shoe.price?.toLocaleString()} AED
+                          ${shoe.price?.toLocaleString()}
                         </span>
                       </>
                     ) : (
                       <span className="text-sm font-medium text-gray-900">
-                        {shoe.price?.toLocaleString()} AED
+                        ${shoe.price?.toLocaleString()}
                       </span>
                     )}
                   </div>
@@ -189,7 +183,7 @@ const ProductCard = ({
         </div>
       </div>
 
-      {enableInfiniteScroll && loading && (
+      {infiniteScroll && loading && (
         <p className="text-center text-sm text-gray-400 py-8">
           Loading more...
         </p>

@@ -1,38 +1,104 @@
 // controllers/bannerController.js
+
 const Banner = require("../repositories/banner");
+
+const requiredTextFields = ["title1", "bannerLink"];
+
+const getMissingField = (data) => {
+  return requiredTextFields.find((field) => {
+    const value = data[field];
+
+    return typeof value !== "string" || value.trim() === "";
+  });
+};
+
+const normalizeSortOrder = (value) => {
+  const parsedValue = Number(value);
+
+  return Number.isFinite(parsedValue) ? parsedValue : 0;
+};
+
+const normalizeBoolean = (value, defaultValue = true) => {
+  if (value === undefined || value === null || value === "") {
+    return defaultValue;
+  }
+
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  return ["true", "1", "on"].includes(String(value).toLowerCase());
+};
 
 // ساخت بنر جدید
 exports.createBanner = async (req, res, next) => {
   try {
-    const { title1, title2, sort_order = 0 } = req.body;
+    const {
+      title1,
+      title2,
+      btnTitle1,
+      btnLink1,
+      btnTitle2,
+      btnLink2,
+      bannerLink,
+      sort_order = 0,
+      is_active = true,
+    } = req.body;
 
-    let imageName = null;
-    if (req.file) {
-      imageName = req.file.filename;
-    }
+    const imageName = req.file?.filename || null;
 
-    if (!imageName || !title1 || !title2) {
+    const bannerData = {
+      title1,
+      title2,
+      btnTitle1,
+      btnLink1,
+      btnTitle2,
+      btnLink2,
+      bannerLink,
+    };
+
+    const missingField = getMissingField(bannerData);
+
+    if (missingField) {
       return res.status(400).json({
         success: false,
-        message: "Image, title1 and title2 are required",
+        message: `${missingField} is required`,
       });
     }
 
-    const bannerId = await Banner.create({
-      title1,
-      title2,
-      image: imageName,
-    });
-
-    // اگر sort_order داده شده، آپدیت کن
-    if (sort_order) {
-      await Banner.updateSortOrder(bannerId, sort_order);
+    if (!imageName) {
+      return res.status(400).json({
+        success: false,
+        message: "Banner image is required",
+      });
     }
+
+    const newBanner = {
+      title1: title1.trim(),
+      title2: title2.trim(),
+
+      btnTitle1: btnTitle1.trim(),
+      btnLink1: btnLink1.trim(),
+
+      btnTitle2: btnTitle2.trim(),
+      btnLink2: btnLink2.trim(),
+
+      bannerLink: bannerLink.trim(),
+
+      image: imageName,
+      sort_order: normalizeSortOrder(sort_order),
+      is_active: normalizeBoolean(is_active, true),
+    };
+
+    const bannerId = await Banner.create(newBanner);
 
     return res.status(201).json({
       success: true,
       message: "Banner created successfully",
-      data: { id: bannerId, title1, title2, image: imageName },
+      data: {
+        id: bannerId,
+        ...newBanner,
+      },
     });
   } catch (err) {
     next(err);
@@ -43,25 +109,57 @@ exports.createBanner = async (req, res, next) => {
 exports.getAllBanners = async (req, res, next) => {
   try {
     const banners = await Banner.getAll();
-    return res.status(200).json({ success: true, data: banners });
+
+    return res.status(200).json({
+      success: true,
+      data: banners,
+    });
   } catch (err) {
     next(err);
   }
 };
 
-// دریافت یک بنر
+// دریافت یک بنر براساس شناسه
+exports.getBannerById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const banner = await Banner.getById(id);
+
+    if (!banner) {
+      return res.status(404).json({
+        success: false,
+        message: "Banner not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: banner,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// دریافت بنر براساس ترتیب نمایش
 exports.getBannerSortOrder = async (req, res, next) => {
   try {
     const { sort_order } = req.params;
+
     const banner = await Banner.getBySortOrder(sort_order);
 
     if (!banner) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Banner not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Banner not found",
+      });
     }
 
-    return res.status(200).json({ success: true, data: banner });
+    return res.status(200).json({
+      success: true,
+      data: banner,
+    });
   } catch (err) {
     next(err);
   }
@@ -71,23 +169,81 @@ exports.getBannerSortOrder = async (req, res, next) => {
 exports.updateBanner = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { title1, title2, is_active, sort_order } = req.body;
 
-    let imageName = null;
-    if (req.file) {
-      imageName = req.file.filename;
+    const {
+      title1,
+      title2,
+      btnTitle1,
+      btnLink1,
+      btnTitle2,
+      btnLink2,
+      bannerLink,
+      is_active,
+      sort_order,
+    } = req.body;
+
+    const currentBanner = await Banner.getById(id);
+
+    if (!currentBanner) {
+      return res.status(404).json({
+        success: false,
+        message: "Banner not found",
+      });
     }
 
-    const updateData = { title1, title2 };
-    if (imageName) updateData.image = imageName;
-    if (is_active !== undefined) updateData.is_active = is_active;
-    if (sort_order !== undefined) updateData.sort_order = sort_order;
+    const bannerData = {
+      title1,
+      title2,
+      btnTitle1,
+      btnLink1,
+      btnTitle2,
+      btnLink2,
+      bannerLink,
+    };
+
+    const missingField = getMissingField(bannerData);
+
+    if (missingField) {
+      return res.status(400).json({
+        success: false,
+        message: `${missingField} is required`,
+      });
+    }
+
+    const updateData = {
+      title1: title1.trim(),
+      title2: title2.trim(),
+
+      btnTitle1: btnTitle1.trim(),
+      btnLink1: btnLink1.trim(),
+
+      btnTitle2: btnTitle2.trim(),
+      btnLink2: btnLink2.trim(),
+
+      bannerLink: bannerLink.trim(),
+    };
+
+    if (req.file) {
+      updateData.image = req.file.filename;
+    }
+
+    if (is_active !== undefined) {
+      updateData.is_active = normalizeBoolean(is_active);
+    }
+
+    if (sort_order !== undefined) {
+      updateData.sort_order = normalizeSortOrder(sort_order);
+    }
 
     await Banner.update(id, updateData);
 
     return res.status(200).json({
       success: true,
       message: "Banner updated successfully",
+      data: {
+        id,
+        ...updateData,
+      },
     });
   } catch (err) {
     next(err);
@@ -98,7 +254,18 @@ exports.updateBanner = async (req, res, next) => {
 exports.deleteBanner = async (req, res, next) => {
   try {
     const { id } = req.params;
+
+    const banner = await Banner.getById(id);
+
+    if (!banner) {
+      return res.status(404).json({
+        success: false,
+        message: "Banner not found",
+      });
+    }
+
     await Banner.delete(id);
+
     return res.status(200).json({
       success: true,
       message: "Banner deleted successfully",

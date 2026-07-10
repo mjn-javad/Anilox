@@ -1,179 +1,263 @@
-import React, { useState, useEffect } from "react";
-import Button from "../Shared/Button";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import apiClientBanner from "../../services/api-client_banner";
-import LoadingSpinner from "../Shared/LoadingSpinner";
-import MessageAlert from "../Shared/MessageAlert";
 
-const FirstBanner = () => {
+const IMAGE_BASE_URL = "/api/images/banners/";
+
+const getImageUrl = (image) => {
+  if (!image) return "";
+
+  if (image.startsWith("http")) {
+    return image;
+  }
+
+  return `${IMAGE_BASE_URL}${image}`;
+};
+
+const FirstBanner = ({ gender }) => {
+  const navigate = useNavigate();
+
   const [banners, setBanners] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
+  const [showText, setShowText] = useState(false);
+
+  const [isDesktop, setIsDesktop] = useState(
+    () => window.matchMedia("(min-width: 1024px)").matches,
+  );
 
   useEffect(() => {
-    fetchBanners();
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+
+    const handleScreenChange = (event) => {
+      setIsDesktop(event.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleScreenChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleScreenChange);
+    };
   }, []);
 
-  // افکت برای تغییر خودکار اسلایدها
+  const getSortOrder = () => {
+    if (gender === "female") {
+      return isDesktop ? 2 : 1;
+    }
+
+    if (gender === "male") {
+      return isDesktop ? 4 : 3;
+    }
+
+    return null;
+  };
+
+  const sortOrder = getSortOrder();
+
+  useEffect(() => {
+    if (!sortOrder) {
+      setBanners([]);
+      setError("gender باید male یا female باشد");
+      setLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    setLoading(true);
+    setError("");
+    setCurrentIndex(0);
+    setShowText(false);
+
+    apiClientBanner
+      .get(`/${sortOrder}`)
+      .then((res) => {
+        const result = res.data?.data || res.data;
+
+        const finalBanners = Array.isArray(result)
+          ? result
+          : result
+            ? [result]
+            : [];
+
+        if (!isMounted) return;
+
+        setBanners(finalBanners);
+
+        finalBanners.forEach((banner) => {
+          if (banner?.image) {
+            const image = new Image();
+            image.src = getImageUrl(banner.image);
+          }
+        });
+      })
+      .catch((err) => {
+        console.log("Get banner error:", err);
+
+        if (isMounted) {
+          setError("خطا در دریافت اطلاعات بنر");
+          setBanners([]);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [sortOrder]);
+
+  useEffect(() => {
+    if (banners.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((previousIndex) => (previousIndex + 1) % banners.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [banners.length]);
+
   useEffect(() => {
     if (banners.length === 0) return;
 
-    const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % banners.length);
-    }, 5000); // هر ۵ ثانیه یکبار
+    setShowText(false);
 
-    return () => clearInterval(interval); // پاک کردن interval هنگام unmount
-  }, [banners.length]);
+    const textTimer = setTimeout(() => {
+      setShowText(true);
+    }, 700);
 
-  const fetchBanners = async () => {
-    try {
-      setLoading(true);
-      const response = await apiClientBanner.get("/");
-      setBanners(response.data.data);
-      setLoading(false);
-    } catch (err) {
-      console.error("Error:", err);
-      setError(err.message || "An error occurred");
-      setLoading(false);
-    }
+    return () => clearTimeout(textTimer);
+  }, [currentIndex, banners.length]);
+
+  const handleBannerClick = (event) => {
+    const currentBanner = banners[currentIndex];
+
+    if (!currentBanner?.bannerLink) return;
+
+    if (event.target.closest("a")) return;
+    if (event.target.closest("[data-banner-dot]")) return;
+
+    navigate(currentBanner.bannerLink);
   };
 
-  // ساخت آدرس کامل تصویر
-  const getImageUrl = (imageName) => {
-    const baseUrl = `/api/images/banners/${imageName}`;
-    return baseUrl;
-  };
+  const handleDotClick = (event, index) => {
+    event.preventDefault();
+    event.stopPropagation();
 
-  // رفتن به اسلاید بعدی
-  const nextSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % banners.length);
-  };
+    if (index === currentIndex) return;
 
-  // رفتن به اسلاید قبلی
-  const prevSlide = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? banners.length - 1 : prevIndex - 1,
-    );
-  };
-
-  // رفتن به اسلاید خاص با نقطه‌ها
-  const goToSlide = (index) => {
     setCurrentIndex(index);
   };
 
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <section className="relative w-full overflow-hidden bg-stone-100">
+        <div className="w-full h-[520px] sm:h-[620px] lg:h-[720px] bg-stone-100 animate-pulse" />
+      </section>
+    );
   }
 
-  if (error) {
-    return <MessageAlert message={error} type="error" />;
-  }
-
-  if (banners.length === 0) {
-    return <MessageAlert message="هیچ بنری یافت نشد" type="info" />;
+  if (error || banners.length === 0) {
+    return null;
   }
 
   const currentBanner = banners[currentIndex];
 
-  return (
-    <div className="relative w-full overflow-hidden">
-      {/* اسلایدها */}
-      <div
-        className="relative transition-transform duration-500 ease-out"
-        style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-      >
-        <div className="flex">
-          {banners.map((banner, index) => (
-            <div key={banner.id || index} className="min-w-full relative">
-              <img
-                src={getImageUrl(banner.image)}
-                alt={banner.title || "Banner"}
-                className="w-full h-[400px] sm:h-[500px] md:h-[600px] object-cover"
-              />
+  if (!currentBanner) {
+    return null;
+  }
 
-              {/* محتوای متنی بنر - می‌تواند داینامیک باشد */}
-              <div className="absolute inset-0 flex items-center justify-start">
-                <div className="absolute bottom-1 sm:bottom-10 left-1 sm:left-10">
-                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h1 className="sm:1xl md:text-3xl sm:mb-2 color text-primary">
-                      {banner.title1 || "Go Like Never Before"}
-                    </h1>
-                    <h1 className="sm:2xl md:text-5xl uppercase sm:mb-4">
-                      {banner.title2 || "Javad Electronic Shop"}
-                    </h1>
-                    <Button
-                      text="Shop Now"
-                      bgColor="bg-white"
-                      textColor="text-black"
-                    />
-                  </div>
-                </div>
+  const hasButtons = currentBanner.btnTitle1 || currentBanner.btnTitle2;
+
+  return (
+    <section
+      className="relative w-full h-[520px] sm:h-[620px] lg:h-[720px] overflow-hidden bg-stone-100"
+      onClick={handleBannerClick}
+    >
+      {banners.map((banner, index) => (
+        <img
+          key={banner.id || index}
+          src={getImageUrl(banner.image)}
+          alt={banner.title1 || banner.title2 || "Modern Luxury Banner"}
+          className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-1000 ease-in-out ${
+            index === currentIndex
+              ? "opacity-100 scale-100"
+              : "opacity-0 scale-[1.02]"
+          }`}
+        />
+      ))}
+
+      <div className="absolute inset-0 bg-gradient-to-r from-white/75 via-white/5 to-transparent" />
+
+      <div className="absolute inset-0 flex items-center">
+        <div className="w-full px-6 sm:px-10 md:px-16 lg:px-20">
+          <div
+            className={`max-w-[430px] transition-all duration-700 ease-out ${
+              showText
+                ? "opacity-100 translate-x-0"
+                : "opacity-0 -translate-x-6"
+            }`}
+          >
+            {currentBanner.title1 && (
+              <h1 className="font-serif text-[42px] sm:text-[58px] md:text-[72px] leading-[0.95] text-black tracking-tight whitespace-pre-line">
+                {currentBanner.title1.replace(/\\n/g, "\n")}
+              </h1>
+            )}
+
+            {currentBanner.title2 && (
+              <p className="mt-6 max-w-[380px] text-sm sm:text-base md:text-lg leading-7 lg:text-black text-gray-200 whitespace-pre-line">
+                {currentBanner.title2.replace(/\\n/g, "\n")}
+              </p>
+            )}
+
+            {hasButtons && (
+              <div className="mt-8 flex flex-col gap-4 w-[230px] sm:w-[260px]">
+                {currentBanner.btnTitle1 && (
+                  <Link
+                    to={currentBanner.btnLink1 || "#"}
+                    className="h-12 flex items-center justify-center bg-black text-white text-xs sm:text-sm tracking-[0.28em] uppercase transition-all duration-300 hover:bg-zinc-800"
+                  >
+                    {currentBanner.btnTitle1}
+                  </Link>
+                )}
+
+                {currentBanner.btnTitle2 && (
+                  <Link
+                    to={currentBanner.btnLink2 || "#"}
+                    className="h-12 flex items-center justify-center border border-white text-white text-xs sm:text-sm tracking-[0.28em] uppercase transition-all duration-300 hover:bg-white hover:text-black lg:border-black lg:text-black lg:hover:bg-black lg:hover:text-white"
+                  >
+                    {currentBanner.btnTitle2}
+                  </Link>
+                )}
               </div>
-            </div>
-          ))}
+            )}
+          </div>
         </div>
       </div>
 
-      {/* دکمه قبلی */}
-      <button
-        onClick={prevSlide}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10"
-        aria-label="Previous slide"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={2}
-          stroke="currentColor"
-          className="w-6 h-6"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M15.75 19.5L8.25 12l7.5-7.5"
-          />
-        </svg>
-      </button>
-
-      {/* دکمه بعدی */}
-      <button
-        onClick={nextSlide}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10"
-        aria-label="Next slide"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={2}
-          stroke="currentColor"
-          className="w-6 h-6"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M8.25 4.5l7.5 7.5-7.5 7.5"
-          />
-        </svg>
-      </button>
-
-      {/* نقطه‌های ناوبری (indicator dots) */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 space-x-reverse z-10">
-        {banners.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => goToSlide(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              index === currentIndex
-                ? "bg-white w-6"
-                : "bg-white/50 hover:bg-white/80"
-            }`}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
-      </div>
-    </div>
+      {banners.length > 1 && (
+        <div className="absolute bottom-5 sm:bottom-7 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
+          {banners.map((banner, index) => (
+            <button
+              key={banner.id || index}
+              type="button"
+              data-banner-dot
+              aria-label={`نمایش بنر ${index + 1}`}
+              onClick={(event) => handleDotClick(event, index)}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                index === currentIndex
+                  ? "w-8 bg-white shadow-md"
+                  : "w-2 bg-white/50 hover:bg-white/80"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </section>
   );
 };
 

@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import apiClientShoes from "../../services/api-client_shoes";
 import ProductCard from "./ProductCart";
 import ProductFinderBox from "../OrderOnWhatsApp/ProductFinderBox";
-import HorizentalScroll from "../HorizentalScroll/HorizentalScroll";
 import BrandScroller from "../HorizentalScroll/BrandScroller";
 
 const GlobalSlider = ({ myQuery, header, title, navigateLink, limit }) => {

@@ -1,74 +1,30 @@
 import React from "react";
-import GlobalBanner from "../components/Banner/GlobalBanner";
+import BestSellersBanner from "../components/Banner/BestSellersBanner";
 import GlobalSlider from "../components/Slider/GlobalSlider";
-import BestSellersBanner from "../components/Banner/ManBestSellersBanner";
-import IntroduceBanner from "../components/Banner/IntroduceBanner";
-
-// فعلاً عکس‌ها را با عکس‌های خودت جایگزین کن
-import MenFirstBannerImg from "../assets/myBannerOunass/menFirstBanner.PNG";
-import MenThirdBannerImg from "../assets/myBannerOunass/manThirdBannerShoes.PNG";
-import FourthBannerImg from "../assets/myBannerOunass/womanFourthBanner.png";
+import GlobalBanner from "../components/Banner/GlobalBanner";
 import HorizentalScroll from "../components/HorizentalScroll/HorizentalScroll";
-import NewArivelsGlobalSlider from "../components/Slider/BigSizeGlobalSlider";
+import BigSizeGlobalSlider from "../components/Slider/BigSizeGlobalSlider";
 import ProductFinderBox from "../components/OrderOnWhatsApp/ProductFinderBox";
+import FirstBanner from "../components/Banner/FirstBanner";
 
-const MenHome = () => {
+const WomenHome = () => {
   return (
     <>
-      <GlobalBanner sort_order={7} />
+      <FirstBanner gender={"male"} />
       <HorizentalScroll />
 
-      {/* <SecondManBanner /> */}
+      <BestSellersBanner gender={"male"} />
 
-      {/* <IntroduceBanner /> */}
+      <GlobalBanner sort_order={6} />
 
-      {/* <GlobalSlider
-        myQuery={"?limit=4&type=shoe&gender=male"}
-        header={"Explore Men Shoes"}
-        title={"Discover luxury shoes for men"}
-        navigateLink={"/slider-shoes?type=shoe&gender=male"}
-        limit={4}
-      /> */}
-
-      {/* <GlobalBanner
-        image={MenThirdBannerImg}
-        title="Men-Sneakers"
-        subtitle="Lightweight. Flexible. Built for Motion."
-        link="/slider-shoes?type=shoe&gender=male&category=sneaker"
-      /> */}
-
-      <BestSellersBanner />
-
-      <ProductFinderBox />
-
-      {/* <GlobalSlider
-        myQuery={"?limit=4&type=watch"}
-        header={"Explore Men Watches"}
-        title={"Discover luxury watches for men"}
-        navigateLink={"/slider-shoes?type=watch&gender=male"}
-        limit={4}
-      /> */}
-
-      <GlobalBanner sort_order={5} />
-
-      <div className="mt-4">
-        <GlobalBanner sort_order={11} />
-      </div>
-
-      <NewArivelsGlobalSlider
-        myQuery={"?limit=4&gender=male"}
+      <BigSizeGlobalSlider
+        myQuery={"?limit=20&gender=male"}
         limit={20}
-        header={"Big Sizes Availabe"}
+        header={"Big Sizes Available"}
       />
-      {/* <GlobalSlider
-        myQuery={"?limit=4&type=bag&gender=male"}
-        header={"Explore Men Bags"}
-        title={"Discover luxury bags for men"}
-        navigateLink={"/slider-shoes?type=bag&gender=male"}
-        limit={4}
-      /> */}
+      <ProductFinderBox />
     </>
   );
 };
 
-export default MenHome;
+export default WomenHome;

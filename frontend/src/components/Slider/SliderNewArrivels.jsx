@@ -6,7 +6,6 @@ import ProductCard from "./ProductCart";
 
 const SliderNewArrivels = ({ limit }) => {
   const [searchParams] = useSearchParams();
-  const brand = searchParams.get("brand");
   const [shoes, setShoes] = useState([]);
   const [error, setError] = useState("");
   const gender = searchParams.get("gender");

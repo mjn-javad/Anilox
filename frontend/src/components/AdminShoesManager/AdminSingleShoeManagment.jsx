@@ -104,16 +104,63 @@ const AdminSingleShoeManagement = () => {
     }));
   };
 
-  const handleAddToNewArrivals = async () => {
+  const handleAddToBigSize = async () => {
     try {
       setUpdating(true);
 
       await apiClientBrandPopular.post(`/newArrivels/${shoeId}`);
 
-      showSuccess(`"${shoeInfo.name}" added to new arrivals`);
+      showSuccess(`"${shoeInfo.name}" added to big size`);
     } catch (err) {
-      console.error("Error adding to new arrivals:", err);
-      showError(err.response?.data?.message || "Error adding to new arrivals");
+      console.error("Error adding to big size:", err);
+      showError(err.response?.data?.message || "Error adding to big size");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleRemoveFromBigSize = async () => {
+    try {
+      setUpdating(true);
+
+      await apiClientBrandPopular.delete(`/newArrivels/${shoeId}`);
+
+      showSuccess(`"${shoeInfo.name}" removed from big size`);
+    } catch (err) {
+      console.error("Error removing from big size:", err);
+      showError(err.response?.data?.message || "Error removing from big size");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleAddToBestSellers = async () => {
+    try {
+      setUpdating(true);
+
+      await apiClientBrandPopular.post(`/bestSellers/${shoeId}`);
+
+      showSuccess(`"${shoeInfo.name}" added to best sellers`);
+    } catch (err) {
+      console.error("Error adding to best sellers:", err);
+      showError(err.response?.data?.message || "Error adding to best sellers");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleRemoveFromBestSellers = async () => {
+    try {
+      setUpdating(true);
+
+      await apiClientBrandPopular.delete(`/bestSellers/${shoeId}`);
+
+      showSuccess(`"${shoeInfo.name}" removed from best sellers`);
+    } catch (err) {
+      console.error("Error removing from best sellers:", err);
+      showError(
+        err.response?.data?.message || "Error removing from best sellers",
+      );
     } finally {
       setUpdating(false);
     }
@@ -397,21 +444,62 @@ const AdminSingleShoeManagement = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+      <div className="flex flex-col gap-4 mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Edit Product</h1>
 
-        <button
-          type="button"
-          onClick={handleAddToNewArrivals}
-          disabled={updating}
-          className="
-            bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300
-            text-white px-5 py-2.5 rounded-lg transition-colors
-            font-medium shadow-sm
-          "
-        >
-          {updating ? "Adding..." : "Add to Big Size Shoes"}
-        </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <button
+            type="button"
+            onClick={handleAddToBigSize}
+            disabled={updating}
+            className="
+              bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300
+              text-white px-5 py-2.5 rounded-lg transition-colors
+              font-medium shadow-sm
+            "
+          >
+            {updating ? "Please wait..." : "Add to Big Size"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleRemoveFromBigSize}
+            disabled={updating}
+            className="
+              bg-red-600 hover:bg-red-700 disabled:bg-red-300
+              text-white px-5 py-2.5 rounded-lg transition-colors
+              font-medium shadow-sm
+            "
+          >
+            {updating ? "Please wait..." : "Remove Big Size"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleAddToBestSellers}
+            disabled={updating}
+            className="
+              bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-300
+              text-white px-5 py-2.5 rounded-lg transition-colors
+              font-medium shadow-sm
+            "
+          >
+            {updating ? "Please wait..." : "Add Best Seller"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleRemoveFromBestSellers}
+            disabled={updating}
+            className="
+              bg-gray-800 hover:bg-black disabled:bg-gray-400
+              text-white px-5 py-2.5 rounded-lg transition-colors
+              font-medium shadow-sm
+            "
+          >
+            {updating ? "Please wait..." : "Remove Best Seller"}
+          </button>
+        </div>
       </div>
 
       <MessageAlert message={error} type="error" />

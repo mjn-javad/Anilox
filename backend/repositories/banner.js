@@ -106,27 +106,28 @@ class BannerRepository {
 
   async getBySortOrder(sortOrder) {
     const query = `
-      SELECT
-        id,
-        title1,
-        title2,
-        btnTitle1,
-        btnLink1,
-        btnTitle2,
-        btnLink2,
-        bannerLink,
-        image,
-        is_active,
-        sort_order,
-        created_at,
-        updated_at
-      FROM banners
-      WHERE sort_order = ?
-    `;
+    SELECT
+      id,
+      title1,
+      title2,
+      btnTitle1,
+      btnLink1,
+      btnTitle2,
+      btnLink2,
+      bannerLink,
+      image,
+      is_active,
+      sort_order,
+      created_at,
+      updated_at
+    FROM banners
+    WHERE sort_order = ?
+    ORDER BY id ASC
+  `;
 
     const [rows] = await db.execute(query, [sortOrder]);
 
-    return rows[0] || null;
+    return rows;
   }
 
   async update(id, data) {

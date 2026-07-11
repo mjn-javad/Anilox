@@ -17,10 +17,18 @@ const WomenHome = () => {
 
       <GlobalBanner sort_order={5} />
 
-      <BigSizeGlobalSlider
+      {/* <BigSizeGlobalSlider
         myQuery={"?limit=20&gender=female"}
         limit={20}
         header={"Big Sizes Available"}
+      /> */}
+
+      <GlobalSlider
+        myQuery={"?type=watch&gender=female&limit=20"}
+        header={"Woman Watches"}
+        title={"Sell All"}
+        navigateLink={"/slider-shoes?type=watch&gender=female"}
+        limit={20}
       />
       <ProductFinderBox />
     </>

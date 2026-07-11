@@ -32,13 +32,11 @@ const GlobalBanner = ({ sort_order }) => {
       .then((res) => {
         const result = res.data?.data || res.data;
 
-        let finalBanners = [];
-
-        if (Array.isArray(result)) {
-          finalBanners = result;
-        } else if (result) {
-          finalBanners = [result];
-        }
+        const finalBanners = Array.isArray(result)
+          ? result
+          : result
+            ? [result]
+            : [];
 
         if (!isMounted) return;
 
@@ -69,7 +67,6 @@ const GlobalBanner = ({ sort_order }) => {
     };
   }, [sort_order]);
 
-  // متن با تاخیر بعد از تغییر عکس ظاهر می‌شود
   useEffect(() => {
     setShowText(false);
 
@@ -80,7 +77,6 @@ const GlobalBanner = ({ sort_order }) => {
     return () => clearTimeout(timer);
   }, [currentIndex]);
 
-  // اسلایدر اتوماتیک
   useEffect(() => {
     if (banners.length <= 1) return;
 
@@ -96,7 +92,18 @@ const GlobalBanner = ({ sort_order }) => {
   if (loading) {
     return (
       <div className="container mx-auto">
-        <div className="h-[220px] w-full animate-pulse bg-gray-100 sm:h-[360px] md:h-[520px] lg:h-[660px]" />
+        <div
+          className="
+            aspect-[2/1]
+            w-full
+            animate-pulse
+            bg-gray-100
+            sm:aspect-auto
+            sm:h-[360px]
+            md:h-[520px]
+            lg:h-[660px]
+          "
+        />
       </div>
     );
   }
@@ -112,9 +119,27 @@ const GlobalBanner = ({ sort_order }) => {
   const bannerContent = (
     <div
       key={currentIndex}
-      className="banner-reveal group relative min-w-full cursor-pointer overflow-hidden bg-gray-100"
+      className="
+        banner-reveal
+        group
+        relative
+        min-w-full
+        cursor-pointer
+        overflow-hidden
+        bg-gray-100
+      "
     >
-      <div className="h-[220px] w-full overflow-hidden sm:h-[360px] md:h-[520px] lg:h-[660px]">
+      <div
+        className="
+          aspect-[2/1]
+          w-full
+          overflow-hidden
+          sm:aspect-auto
+          sm:h-[360px]
+          md:h-[520px]
+          lg:h-[660px]
+        "
+      >
         <img
           src={getImageUrl(currentBanner.image)}
           alt={currentBanner.title1 || "brand banner"}
@@ -123,6 +148,7 @@ const GlobalBanner = ({ sort_order }) => {
             h-full
             w-full
             object-cover
+            object-center
             transition-transform
             duration-700
             ease-out
@@ -131,18 +157,22 @@ const GlobalBanner = ({ sort_order }) => {
         />
       </div>
 
-      {/* گرادیانت خیلی نرم */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-transparent" />
 
-      {/* افکت طلایی هنگام تغییر بنر */}
-      <div className="banner-light absolute inset-0 pointer-events-none" />
+      <div className="banner-light pointer-events-none absolute inset-0" />
 
-      {/* Text */}
       <div
         className={`
-          absolute left-6 top-3/4 -translate-y-1/2
-          transition-all duration-700 ease-out
-          sm:left-10 sm:top-1/2 md:left-16
+          absolute
+          left-6
+          top-3/4
+          -translate-y-1/2
+          transition-all
+          duration-700
+          ease-out
+          sm:left-10
+          sm:top-1/2
+          md:left-16
           ${
             showText
               ? "translate-x-0 opacity-100 blur-0"
@@ -151,7 +181,18 @@ const GlobalBanner = ({ sort_order }) => {
         `}
       >
         {currentBanner.title1 && (
-          <h1 className="text-2xl font-light uppercase tracking-[0.18em] text-white drop-shadow-xl sm:text-5xl md:text-6xl">
+          <h1
+            className="
+              text-2xl
+              font-light
+              uppercase
+              tracking-[0.18em]
+              text-white
+              drop-shadow-xl
+              sm:text-5xl
+              md:text-6xl
+            "
+          >
             {currentBanner.title1}
           </h1>
         )}
@@ -159,13 +200,13 @@ const GlobalBanner = ({ sort_order }) => {
         <div className="mt-5 h-[1px] w-14 bg-white/90 drop-shadow-lg sm:w-20" />
       </div>
 
-      {/* Dots */}
       {banners.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2">
+        <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 sm:bottom-6">
           {banners.map((_, index) => (
             <button
               key={index}
               type="button"
+              aria-label={`نمایش بنر ${index + 1}`}
               onClick={(e) => {
                 e.preventDefault();
                 setCurrentIndex(index);

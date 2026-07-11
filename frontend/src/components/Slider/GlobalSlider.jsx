@@ -19,15 +19,16 @@ const GlobalSlider = ({ myQuery, header, title, navigateLink, limit }) => {
   return (
     <div className="container">
       {limit === undefined && <ProductFinderBox />}
-      <BrandScroller />
+      {limit === undefined && <BrandScroller />}
       <ProductCard
         shoes={shoes}
         header={header}
         title={title}
         navigateLink={navigateLink}
         scrollOnMobile={limit !== undefined}
-        apiUrl="/api/v1/shoes"
+        apiUrl="http://localhost:4000/v1/shoes"
         limit={limit}
+        infiniteScroll={false}
       />
     </div>
   );

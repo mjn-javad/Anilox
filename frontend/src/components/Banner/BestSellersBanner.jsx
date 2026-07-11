@@ -51,7 +51,7 @@ const BannerVertical = ({ gender = "female" }) => {
 
   const imageUrl = banner.image?.startsWith("http")
     ? banner.image
-    : `http://localhost:4000/images/banners/${banner.image}`;
+    : `/api/images/banners/${banner.image}`;
 
   return (
     <section className="w-full px-4 py-12">

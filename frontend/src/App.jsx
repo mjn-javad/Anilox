@@ -54,7 +54,7 @@ function App() {
           <Route path="shoe/:id" element={<SingleShoe />} />
           <Route path="slider-shoes" element={<SliderShoes />} />
           <Route path="new-arrivals" element={<SliderNewArrivels />} />
-          <Route path="best-sellers" element={<SliderBestSellers />} />
+          <Route path="bestSellers" element={<SliderBestSellers />} />
 
           {/* Auth Pages */}
           <Route path="LoginLogout" element={<Login />} />

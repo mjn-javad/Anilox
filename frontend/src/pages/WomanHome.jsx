@@ -24,11 +24,11 @@ const WomenHome = () => {
       /> */}
 
       <GlobalSlider
-        myQuery={"?type=watch&gender=female&limit=20"}
+        myQuery={"?type=watch&gender=female&limit=4"}
         header={"Woman Watches"}
         title={"See All"}
         navigateLink={"/slider-shoes?type=watch&gender=female"}
-        limit={20}
+        limit={4}
       />
       <ProductFinderBox />
     </>

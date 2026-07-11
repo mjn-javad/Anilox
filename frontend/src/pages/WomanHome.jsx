@@ -26,7 +26,7 @@ const WomenHome = () => {
       <GlobalSlider
         myQuery={"?type=watch&gender=female&limit=20"}
         header={"Woman Watches"}
-        title={"Sell All"}
+        title={"See All"}
         navigateLink={"/slider-shoes?type=watch&gender=female"}
         limit={20}
       />

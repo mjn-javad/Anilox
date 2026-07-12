@@ -6,7 +6,7 @@ const BannerVertical = ({ gender = "female" }) => {
   const [banner, setBanner] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const bannerSortOrder = 1;
+  const bannerSortOrder = gender === "female" ? 5 : 6;
 
   useEffect(() => {
     let isMounted = true;

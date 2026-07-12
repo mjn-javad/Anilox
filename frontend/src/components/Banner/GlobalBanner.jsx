@@ -1,68 +1,98 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import apiClientBanner from "../../services/api-client_banner";
 
 const IMAGE_BASE_URL = "/api/images/banners/";
 
-const BannerButton = ({ title, link }) => {
-  if (!title || !link) return null;
+const getImageUrl = (image) => {
+  if (!image) return "";
 
-  const isExternal =
+  if (image.startsWith("http://") || image.startsWith("https://")) {
+    return image;
+  }
+
+  return `${IMAGE_BASE_URL}${image}`;
+};
+
+const isExternalLink = (link) => {
+  if (!link) return false;
+
+  return (
     link.startsWith("http://") ||
     link.startsWith("https://") ||
     link.startsWith("tel:") ||
-    link.startsWith("mailto:");
+    link.startsWith("mailto:")
+  );
+};
 
-  const buttonClass = `
-    inline-flex
-    items-center
-    justify-center
-    border
-    border-white/80
-    bg-black/20
-    px-3
-    py-1.5
-    text-[10px]
-    font-medium
-    uppercase
-    tracking-[0.12em]
-    text-white
-    backdrop-blur-sm
-    transition-all
-    duration-300
-    hover:bg-white
-    hover:text-black
-    sm:px-5
-    sm:py-2.5
-    sm:text-xs
-  `;
+const BannerButton = ({ title, link, secondary = false }) => {
+  if (!title || !link) return null;
 
-  if (isExternal) {
+  const className = secondary
+    ? `
+        flex
+        h-12
+        items-center
+        justify-center
+        border
+        border-white
+        text-xs
+        uppercase
+        tracking-[0.28em]
+        text-white
+        transition-all
+        duration-300
+        hover:bg-white
+        hover:text-black
+        sm:text-sm
+        lg:border-black
+        lg:text-black
+        lg:hover:bg-black
+        lg:hover:text-white
+      `
+    : `
+        flex
+        h-12
+        items-center
+        justify-center
+        bg-black
+        text-xs
+        uppercase
+        tracking-[0.28em]
+        text-white
+        transition-all
+        duration-300
+        hover:bg-zinc-800
+        sm:text-sm
+      `;
+
+  if (isExternalLink(link)) {
     return (
-      <a href={link} target="_blank" rel="noreferrer" className={buttonClass}>
+      <a href={link} target="_blank" rel="noreferrer" className={className}>
         {title}
       </a>
     );
   }
 
   return (
-    <Link to={link} className={buttonClass}>
+    <Link to={link} className={className}>
       {title}
     </Link>
   );
 };
 
 const GlobalBanner = ({ sort_order }) => {
+  const navigate = useNavigate();
+
   const [banners, setBanners] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showText, setShowText] = useState(false);
 
-  const getImageUrl = (image) => `${IMAGE_BASE_URL}${image}`;
-
   useEffect(() => {
-    if (!sort_order) {
+    if (sort_order === undefined || sort_order === null) {
+      setBanners([]);
       setError("sort_order ارسال نشده است");
       setLoading(false);
       return;
@@ -91,10 +121,10 @@ const GlobalBanner = ({ sort_order }) => {
         setBanners(finalBanners);
 
         finalBanners.forEach((banner) => {
-          if (banner?.image) {
-            const img = new Image();
-            img.src = getImageUrl(banner.image);
-          }
+          if (!banner?.image) return;
+
+          const image = new Image();
+          image.src = getImageUrl(banner.image);
         });
       })
       .catch((err) => {
@@ -102,6 +132,7 @@ const GlobalBanner = ({ sort_order }) => {
 
         if (isMounted) {
           setError("خطا در دریافت اطلاعات بنر");
+          setBanners([]);
         }
       })
       .finally(() => {
@@ -116,32 +147,60 @@ const GlobalBanner = ({ sort_order }) => {
   }, [sort_order]);
 
   useEffect(() => {
+    if (banners.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((previousIndex) => {
+        return (previousIndex + 1) % banners.length;
+      });
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [banners.length]);
+
+  useEffect(() => {
+    if (banners.length === 0) return;
+
     setShowText(false);
 
     const timer = setTimeout(() => {
       setShowText(true);
-    }, 350);
+    }, 700);
 
     return () => clearTimeout(timer);
-  }, [currentIndex]);
+  }, [currentIndex, banners.length]);
 
-  useEffect(() => {
-    if (banners.length <= 1) return;
+  const handleBannerClick = (event) => {
+    const currentBanner = banners[currentIndex];
 
-    const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) =>
-        prevIndex === banners.length - 1 ? 0 : prevIndex + 1,
-      );
-    }, 2500);
+    if (!currentBanner?.bannerLink) return;
 
-    return () => clearInterval(interval);
-  }, [banners]);
+    if (event.target.closest("a")) return;
+    if (event.target.closest("button")) return;
+
+    if (isExternalLink(currentBanner.bannerLink)) {
+      window.open(currentBanner.bannerLink, "_blank", "noopener,noreferrer");
+
+      return;
+    }
+
+    navigate(currentBanner.bannerLink);
+  };
+
+  const handleDotClick = (event, index) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (index === currentIndex) return;
+
+    setCurrentIndex(index);
+  };
 
   if (loading) {
     return (
-      <div className="container mx-auto">
-        <div className="h-[165px] w-full animate-pulse bg-gray-100 sm:h-[360px] md:h-[520px] lg:h-[660px]" />
-      </div>
+      <section className="relative w-full overflow-hidden bg-stone-100">
+        <div className="h-[520px] w-full animate-pulse bg-stone-100 sm:h-[620px] lg:h-[720px]" />
+      </section>
     );
   }
 
@@ -151,201 +210,123 @@ const GlobalBanner = ({ sort_order }) => {
 
   const currentBanner = banners[currentIndex];
 
-  if (!currentBanner) return null;
+  if (!currentBanner) {
+    return null;
+  }
+
+  const hasButtons =
+    (currentBanner.btnTitle1 && currentBanner.btnLink1) ||
+    (currentBanner.btnTitle2 && currentBanner.btnLink2);
 
   return (
-    <div className="container mx-auto">
-      <div
-        key={currentIndex}
-        className="banner-reveal group relative h-[165px] w-full overflow-hidden bg-gray-100 sm:h-[360px] md:h-[520px] lg:h-[660px]"
-      >
+    <section
+      className={`
+        relative
+        h-[520px]
+        w-full
+        overflow-hidden
+        bg-stone-100
+        sm:h-[620px]
+        lg:h-[720px]
+        ${currentBanner.bannerLink ? "cursor-pointer" : ""}
+      `}
+      onClick={handleBannerClick}
+    >
+      {banners.map((banner, index) => (
         <img
-          src={getImageUrl(currentBanner.image)}
-          alt={currentBanner.title1 || "brand banner"}
-          className="
-            banner-image
+          key={banner.id || index}
+          src={getImageUrl(banner.image)}
+          alt={banner.title1 || banner.title2 || "Modern Luxury Banner"}
+          className={`
+            absolute
+            inset-0
             h-full
             w-full
             object-cover
             object-center
-            transition-transform
-            duration-700
-            ease-out
-            lg:group-hover:scale-105
-          "
-        />
-
-        {currentBanner.bannerLink && (
-          <Link
-            to={currentBanner.bannerLink}
-            aria-label={currentBanner.title1 || "مشاهده بنر"}
-            className="absolute inset-0 z-10"
-          />
-        )}
-
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/25 via-black/5 to-transparent" />
-
-        <div className="banner-light pointer-events-none absolute inset-0" />
-
-        {/* عنوان‌ها در بالای تصویر */}
-        <div
-          className={`
-            pointer-events-none
-            absolute
-            left-4
-            top-4
-            z-20
-            max-w-[75%]
             transition-all
-            duration-700
-            ease-out
-            sm:left-10
-            sm:top-10
-            md:left-16
-            md:top-14
+            duration-1000
+            ease-in-out
             ${
-              showText
-                ? "translate-x-0 opacity-100 blur-0"
-                : "-translate-x-5 opacity-0 blur-sm"
+              index === currentIndex
+                ? "scale-100 opacity-100"
+                : "scale-[1.02] opacity-0"
             }
           `}
-        >
-          {currentBanner.title1 && (
-            <h1 className="text-lg font-light uppercase leading-tight tracking-[0.14em] text-white drop-shadow-xl sm:text-4xl md:text-5xl">
-              {currentBanner.title1}
-            </h1>
-          )}
+        />
+      ))}
 
-          {currentBanner.title2 && (
-            <p className="mt-1.5 text-xs font-light tracking-[0.08em] text-white/90 drop-shadow-lg sm:mt-3 sm:text-lg md:text-xl">
-              {currentBanner.title2}
-            </p>
-          )}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/75 via-white/5 to-transparent" />
 
-          <div className="mt-2 h-px w-10 bg-white/90 drop-shadow-lg sm:mt-4 sm:w-16" />
-        </div>
+      <div className="absolute inset-0 flex items-center">
+        <div className="w-full px-6 sm:px-10 md:px-16 lg:px-20">
+          <div
+            className={`
+              max-w-[430px]
+              transition-all
+              duration-700
+              ease-out
+              ${
+                showText
+                  ? "translate-x-0 opacity-100"
+                  : "-translate-x-6 opacity-0"
+              }
+            `}
+          >
+            {currentBanner.title1 && (
+              <h1 className="whitespace-pre-line font-serif text-[42px] leading-[0.95] tracking-tight text-black sm:text-[58px] md:text-[72px]">
+                {currentBanner.title1.replace(/\\n/g, "\n")}
+              </h1>
+            )}
 
-        {/* دکمه‌ها در پایین تصویر */}
-        <div className="absolute bottom-4 left-4 z-30 flex flex-wrap items-center gap-2 sm:bottom-8 sm:left-10 sm:gap-3 md:left-16">
-          <BannerButton
-            title={currentBanner.btnTitle1}
-            link={currentBanner.btnLink1}
-          />
+            {currentBanner.title2 && (
+              <p className="mt-6 max-w-[380px] whitespace-pre-line text-sm leading-7 text-gray-200 sm:text-base md:text-lg lg:text-black">
+                {currentBanner.title2.replace(/\\n/g, "\n")}
+              </p>
+            )}
 
-          <BannerButton
-            title={currentBanner.btnTitle2}
-            link={currentBanner.btnLink2}
-          />
-        </div>
+            {hasButtons && (
+              <div className="mt-8 flex w-[230px] flex-col gap-4 sm:w-[260px]">
+                <BannerButton
+                  title={currentBanner.btnTitle1}
+                  link={currentBanner.btnLink1}
+                />
 
-        {/* نقاط اسلایدر */}
-        {banners.length > 1 && (
-          <div className="absolute bottom-4 right-4 z-30 flex items-center gap-1.5 sm:bottom-8 sm:right-10 sm:gap-2">
-            {banners.map((_, index) => (
-              <button
-                key={index}
-                type="button"
-                aria-label={`نمایش بنر ${index + 1}`}
-                onClick={() => setCurrentIndex(index)}
-                className={`h-1.5 rounded-full transition-all duration-300 sm:h-2 ${
-                  index === currentIndex
-                    ? "w-6 bg-white sm:w-8"
-                    : "w-1.5 bg-white/50 hover:bg-white/80 sm:w-2"
-                }`}
-              />
-            ))}
+                <BannerButton
+                  title={currentBanner.btnTitle2}
+                  link={currentBanner.btnLink2}
+                  secondary
+                />
+              </div>
+            )}
           </div>
-        )}
-
-        <style>{`
-          .banner-reveal {
-            animation: bannerReveal 950ms
-              cubic-bezier(0.22, 1, 0.36, 1) both;
-          }
-
-          .banner-image {
-            animation: none;
-          }
-
-          .banner-light::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(
-              110deg,
-              transparent 0%,
-              transparent 35%,
-              rgba(255, 255, 255, 0.18) 48%,
-              rgba(214, 170, 72, 0.22) 50%,
-              rgba(255, 255, 255, 0.14) 52%,
-              transparent 65%,
-              transparent 100%
-            );
-            transform: translateX(-120%) skewX(-12deg);
-            animation: bannerLightSweep 1150ms ease-out 120ms both;
-          }
-
-          @media (min-width: 640px) {
-            .banner-image {
-              animation: bannerImageZoom 4200ms ease-out both;
-            }
-          }
-
-          @keyframes bannerReveal {
-            0% {
-              opacity: 0;
-              filter: blur(10px);
-              clip-path: inset(0 0 0 16%);
-            }
-
-            55% {
-              opacity: 1;
-              filter: blur(0);
-            }
-
-            100% {
-              opacity: 1;
-              filter: blur(0);
-              clip-path: inset(0 0 0 0);
-            }
-          }
-
-          @keyframes bannerImageZoom {
-            0% {
-              transform: scale(1.08);
-            }
-
-            100% {
-              transform: scale(1);
-            }
-          }
-
-          @keyframes bannerLightSweep {
-            0% {
-              transform: translateX(-120%) skewX(-12deg);
-              opacity: 0;
-            }
-
-            20% {
-              opacity: 1;
-            }
-
-            100% {
-              transform: translateX(120%) skewX(-12deg);
-              opacity: 0;
-            }
-          }
-
-          @media (prefers-reduced-motion: reduce) {
-            .banner-reveal,
-            .banner-image,
-            .banner-light::before {
-              animation: none;
-            }
-          }
-        `}</style>
+        </div>
       </div>
-    </div>
+
+      {banners.length > 1 && (
+        <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 sm:bottom-7">
+          {banners.map((banner, index) => (
+            <button
+              key={banner.id || index}
+              type="button"
+              aria-label={`نمایش بنر ${index + 1}`}
+              onClick={(event) => handleDotClick(event, index)}
+              className={`
+                h-2
+                rounded-full
+                transition-all
+                duration-300
+                ${
+                  index === currentIndex
+                    ? "w-8 bg-white shadow-md"
+                    : "w-2 bg-white/50 hover:bg-white/80"
+                }
+              `}
+            />
+          ))}
+        </div>
+      )}
+    </section>
   );
 };
 

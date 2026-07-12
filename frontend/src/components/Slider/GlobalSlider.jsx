@@ -5,7 +5,16 @@ import ProductCard from "./ProductCart";
 import ProductFinderBox from "../OrderOnWhatsApp/ProductFinderBox";
 import BrandScroller from "../HorizentalScroll/BrandScroller";
 
-const GlobalSlider = ({ myQuery, header, title, navigateLink, limit }) => {
+const GlobalSlider = ({
+  myQuery,
+  header,
+  title,
+  navigateLink,
+  limit,
+  infiniteScroll = true,
+  scrollOnMobile = false,
+  scrollOnLaptop = false,
+}) => {
   const [shoes, setShoes] = useState([]);
   const [error, setError] = useState("");
 
@@ -25,10 +34,11 @@ const GlobalSlider = ({ myQuery, header, title, navigateLink, limit }) => {
         header={header}
         title={title}
         navigateLink={navigateLink}
-        scrollOnMobile={limit !== undefined}
         apiUrl="/api/v1/shoes"
         limit={limit}
-        infiniteScroll={false}
+        infiniteScroll={infiniteScroll}
+        scrollOnMobile={scrollOnMobile}
+        scrollOnLaptop={scrollOnLaptop}
       />
     </div>
   );

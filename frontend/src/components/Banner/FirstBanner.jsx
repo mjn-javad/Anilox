@@ -191,7 +191,7 @@ const FirstBanner = ({ gender }) => {
         />
       ))}
 
-      <div className="absolute inset-0 bg-gradient-to-r from-white/75 via-white/5 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-white/5 to-transparent" />
 
       <div className="absolute inset-0 flex items-center">
         <div className="w-full px-6 sm:px-10 md:px-16 lg:px-20">

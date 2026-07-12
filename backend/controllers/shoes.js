@@ -202,6 +202,7 @@ exports.getAllProducts = async (req, res, next) => {
     } = req.query;
 
     const allowedSortFields = ["price", "created_at", "name"];
+
     if (!allowedSortFields.includes(sort)) {
       sort = "created_at";
     }
@@ -225,6 +226,7 @@ exports.getAllProducts = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       data: result.data,
+      brands: result.brands,
       pagination: result.pagination,
     });
   } catch (err) {

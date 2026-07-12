@@ -124,6 +124,9 @@ const getAll = async ({
   let conditions = [];
   let values = [];
 
+  let brandConditionIndex = -1;
+  let brandValueIndex = -1;
+
   // 🔎 search
   if (search) {
     conditions.push("(s.name LIKE ? OR s.brand LIKE ? OR s.model LIKE ?)");
@@ -149,6 +152,9 @@ const getAll = async ({
 
   // 🏷 brand filter
   if (brand) {
+    brandConditionIndex = conditions.length;
+    brandValueIndex = values.length;
+
     conditions.push("s.brand = ?");
     values.push(brand);
   }
@@ -182,6 +188,31 @@ const getAll = async ({
 
   const whereClause =
     conditions.length > 0 ? "WHERE " + conditions.join(" AND ") : "";
+
+  // ساخت شرط برندها بدون فیلتر brand
+  const brandsConditions = [...conditions];
+  const brandsValues = [...values];
+
+  if (brandConditionIndex !== -1) {
+    brandsConditions.splice(brandConditionIndex, 1);
+    brandsValues.splice(brandValueIndex, 1);
+  }
+
+  brandsConditions.push("s.brand IS NOT NULL");
+  brandsConditions.push("TRIM(s.brand) != ''");
+
+  const brandsWhereClause = "WHERE " + brandsConditions.join(" AND ");
+
+  // گرفتن تمام برندهای مربوط به فیلترها به‌جز فیلتر brand
+  const [brands] = await db.execute(
+    `
+    SELECT DISTINCT s.brand AS name
+    FROM shoes s
+    ${brandsWhereClause}
+    ORDER BY s.brand ASC
+    `,
+    brandsValues,
+  );
 
   // 📊 گرفتن تعداد کل
   const countQuery = `
@@ -222,6 +253,7 @@ const getAll = async ({
   if (rows.length === 0) {
     return {
       data: [],
+      brands,
       pagination: {
         total,
         page: pageNumber,
@@ -308,6 +340,7 @@ const getAll = async ({
 
   return {
     data,
+    brands,
     pagination: {
       total,
       page: pageNumber,

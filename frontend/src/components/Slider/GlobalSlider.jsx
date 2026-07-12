@@ -1,5 +1,6 @@
 import React from "react";
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import apiClientShoes from "../../services/api-client_shoes";
 import ProductCard from "./ProductCart";
 import ProductFinderBox from "../OrderOnWhatsApp/ProductFinderBox";
@@ -16,19 +17,42 @@ const GlobalSlider = ({
   scrollOnLaptop = false,
 }) => {
   const [shoes, setShoes] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [error, setError] = useState("");
 
+  const { search } = useLocation();
+
   useEffect(() => {
+    const [path, queryString = ""] = myQuery.split("?");
+
+    const params = new URLSearchParams(queryString);
+    const currentParams = new URLSearchParams(search);
+
+    currentParams.forEach((value, key) => {
+      params.set(key, value);
+    });
+
+    const finalQuery = params.toString();
+    const requestQuery = finalQuery ? `${path}?${finalQuery}` : path;
+
     apiClientShoes
-      .get(myQuery)
-      .then((res) => setShoes(res.data.data))
-      .catch((err) => setError("err: ", err));
-  }, [myQuery]);
+      .get(requestQuery)
+      .then((res) => {
+        setShoes(res.data?.data || []);
+        setBrands(res.data?.brands || []);
+      })
+      .catch((err) => {
+        console.error(err);
+        setError("Failed to load products");
+      });
+  }, [myQuery, search]);
 
   return (
     <div className="container">
       {limit === undefined && <ProductFinderBox />}
-      {limit === undefined && <BrandScroller />}
+
+      {limit === undefined && <BrandScroller brands={brands} />}
+
       <ProductCard
         shoes={shoes}
         header={header}

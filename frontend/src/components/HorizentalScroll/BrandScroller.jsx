@@ -30,12 +30,14 @@ const formatBrand = (name) =>
     .join("");
 
 const BrandScroller = ({
+  brands: receivedBrands,
   navigatePath = "/slider-shoes",
   defaultType = "",
 }) => {
   const [brands, setBrands] = useState([]);
   const [error, setError] = useState("");
   const [canScroll, setCanScroll] = useState(false);
+  const [isLooping, setIsLooping] = useState(false);
   const [activeIndex, setActiveIndex] = useState(null);
 
   const navigate = useNavigate();
@@ -66,20 +68,30 @@ const BrandScroller = ({
     return path === "/men" || path.startsWith("/men/") ? "male" : "female";
   }, [pathname, search]);
 
-  const movingBrands = useMemo(
-    () => (brands.length ? [...brands, ...brands, ...brands] : []),
-    [brands],
-  );
+  const movingBrands = useMemo(() => {
+    if (!brands.length) return [];
+
+    return isLooping ? [...brands, ...brands, ...brands] : brands;
+  }, [brands, isLooping]);
 
   useEffect(() => {
+    if (Array.isArray(receivedBrands)) {
+      setBrands(receivedBrands);
+      setError("");
+      return;
+    }
+
     apiClientBrand
       .get("")
-      .then((res) => setBrands(res.data?.data || []))
+      .then((res) => {
+        setBrands(res.data?.data || []);
+        setError("");
+      })
       .catch((err) => {
         console.error("Get brands error:", err);
         setError("Failed to load brands");
       });
-  }, []);
+  }, [receivedBrands]);
 
   const pauseAuto = () => {
     scrollState.current.paused = true;
@@ -101,18 +113,28 @@ const BrandScroller = ({
     if (!element || !brands.length) return;
 
     const initialize = () => {
-      const middle = element.scrollWidth / 3;
+      const originalWidth = isLooping
+        ? element.scrollWidth / 3
+        : element.scrollWidth;
 
-      if (middle) {
-        element.scrollLeft = middle;
-        scrollState.current.position = middle;
+      const needsLoop = originalWidth > element.clientWidth + 5;
+
+      if (needsLoop !== isLooping) {
+        setIsLooping(needsLoop);
+        return;
       }
 
-      setCanScroll(element.scrollWidth > element.clientWidth + 5);
-    };
+      setCanScroll(needsLoop);
 
-    const updateSize = () => {
-      setCanScroll(element.scrollWidth > element.clientWidth + 5);
+      if (needsLoop) {
+        const middle = element.scrollWidth / 3;
+
+        element.scrollLeft = middle;
+        scrollState.current.position = middle;
+      } else {
+        element.scrollLeft = 0;
+        scrollState.current.position = 0;
+      }
     };
 
     const frameId = requestAnimationFrame(() =>
@@ -121,21 +143,21 @@ const BrandScroller = ({
 
     const observer =
       typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(updateSize)
+        ? new ResizeObserver(initialize)
         : null;
 
     observer?.observe(element);
-    window.addEventListener("resize", updateSize);
+    window.addEventListener("resize", initialize);
 
     return () => {
       cancelAnimationFrame(frameId);
       observer?.disconnect();
-      window.removeEventListener("resize", updateSize);
+      window.removeEventListener("resize", initialize);
     };
-  }, [brands.length]);
+  }, [brands, isLooping]);
 
   useEffect(() => {
-    if (!brands.length) return;
+    if (!brands.length || !isLooping) return;
 
     const speed = 42;
 
@@ -147,24 +169,16 @@ const BrandScroller = ({
 
       state.lastTime = time;
 
-      if (element && element.scrollWidth > element.clientWidth) {
-        if (!state.paused && !state.dragging) {
-          const onePart = element.scrollWidth / 3;
+      if (element && !state.paused && !state.dragging) {
+        const onePart = element.scrollWidth / 3;
 
-          state.position += (speed * elapsed) / 1000;
+        state.position += (speed * elapsed) / 1000;
 
-          if (state.position >= onePart * 2) {
-            state.position -= onePart;
-          }
-
-          if (state.position <= onePart * 0.2) {
-            state.position += onePart;
-          }
-
-          element.scrollLeft = state.position;
-        } else {
-          state.position = element.scrollLeft;
+        if (state.position > onePart * 1.5) {
+          state.position -= onePart;
         }
+
+        element.scrollLeft = state.position;
       }
 
       animationRef.current = requestAnimationFrame(move);
@@ -177,7 +191,34 @@ const BrandScroller = ({
       cancelAnimationFrame(animationRef.current);
       clearTimeout(timerRef.current);
     };
-  }, [brands.length]);
+  }, [brands.length, isLooping]);
+
+  const normalizeInfiniteScroll = () => {
+    const element = scrollRef.current;
+    const state = scrollState.current;
+
+    if (!element) return;
+
+    let position = element.scrollLeft;
+
+    if (isLooping) {
+      const onePart = element.scrollWidth / 3;
+
+      while (position < onePart * 0.5) {
+        position += onePart;
+      }
+
+      while (position > onePart * 1.5) {
+        position -= onePart;
+      }
+
+      if (position !== element.scrollLeft) {
+        element.scrollLeft = position;
+      }
+    }
+
+    state.position = position;
+  };
 
   const handlePointerDown = (event) => {
     const element = scrollRef.current;
@@ -192,10 +233,6 @@ const BrandScroller = ({
     state.startX = event.clientX;
     state.startScroll = element.scrollLeft;
     state.position = element.scrollLeft;
-
-    if (event.pointerType === "mouse") {
-      event.currentTarget.setPointerCapture?.(event.pointerId);
-    }
   };
 
   const handlePointerMove = (event) => {
@@ -206,11 +243,15 @@ const BrandScroller = ({
 
     const difference = event.clientX - state.startX;
 
-    if (Math.abs(difference) > 8) {
+    if (Math.abs(difference) > 8 && !state.dragged) {
       state.dragged = true;
+
+      if (event.pointerType === "mouse") {
+        event.currentTarget.setPointerCapture?.(event.pointerId);
+      }
     }
 
-    if (event.pointerType === "mouse") {
+    if (event.pointerType === "mouse" && state.dragged) {
       state.position = state.startScroll - difference;
       element.scrollLeft = state.position;
     }
@@ -233,6 +274,7 @@ const BrandScroller = ({
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
 
+    normalizeInfiniteScroll();
     resumeAuto();
 
     setTimeout(() => {
@@ -240,7 +282,7 @@ const BrandScroller = ({
     }, 180);
   };
 
-  const handleBrandClick = (brandName, index) => {
+  const handleBrandClick = (brand, index) => {
     if (scrollState.current.dragged) return;
 
     const params = new URLSearchParams(search);
@@ -253,7 +295,7 @@ const BrandScroller = ({
       params.set("type", defaultType);
     }
 
-    params.set("brand", formatBrand(brandName));
+    params.set("brand", brand.slug || formatBrand(brand.name));
 
     setActiveIndex(index);
     navigate(`${navigatePath}?${params.toString()}`);
@@ -307,18 +349,14 @@ const BrandScroller = ({
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
-          onScroll={() => {
-            const state = scrollState.current;
-
-            if (state.paused || state.dragging) {
-              state.position = scrollRef.current?.scrollLeft || 0;
-            }
-          }}
+          onScroll={normalizeInfiniteScroll}
           onWheel={() => {
             pauseAuto();
             resumeAuto();
           }}
-          className="no-scrollbar flex cursor-grab select-none gap-3 overflow-x-auto overscroll-x-contain px-1 py-3 active:cursor-grabbing md:gap-5 md:py-5"
+          className={`no-scrollbar flex cursor-grab select-none gap-3 overflow-x-auto overscroll-x-contain px-1 py-3 active:cursor-grabbing md:gap-5 md:py-5 ${
+            !isLooping ? "justify-center" : ""
+          }`}
           style={{
             WebkitOverflowScrolling: "touch",
             touchAction: "pan-x",
@@ -332,7 +370,7 @@ const BrandScroller = ({
                 <button
                   key={`${brand.id || brand.name}-${index}`}
                   type="button"
-                  onClick={() => handleBrandClick(brand.name, originalIndex)}
+                  onClick={() => handleBrandClick(brand, originalIndex)}
                   className={`group/brand relative flex-none transition-transform duration-300 hover:scale-105 active:scale-95 ${
                     activeIndex === originalIndex ? "scale-105" : ""
                   }`}

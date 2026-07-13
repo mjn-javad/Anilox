@@ -152,7 +152,7 @@ const EditBanner = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const requiredFields = ["title1", "bannerLink"];
+    const requiredFields = ["bannerLink"];
 
     const hasEmptyField = requiredFields.some(
       (fieldName) => !String(form[fieldName] || "").trim(),
@@ -252,7 +252,7 @@ const EditBanner = () => {
           label="Title 1"
           value={form.title1}
           onChange={handleChange}
-          required={true}
+          // required={true}
           placeholder="Enter first title"
         />
 

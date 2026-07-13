@@ -81,14 +81,27 @@ const BannerButton = ({ title, link, secondary = false }) => {
   );
 };
 
-const GlobalBanner = ({ sort_order }) => {
+const GlobalBanner = ({ mobileSortOrder, laptopSortOrder }) => {
   const navigate = useNavigate();
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [banners, setBanners] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showText, setShowText] = useState(false);
+
+  const sort_order = isMobile ? mobileSortOrder : laptopSortOrder;
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (sort_order === undefined || sort_order === null) {
@@ -180,7 +193,6 @@ const GlobalBanner = ({ sort_order }) => {
 
     if (isExternalLink(currentBanner.bannerLink)) {
       window.open(currentBanner.bannerLink, "_blank", "noopener,noreferrer");
-
       return;
     }
 

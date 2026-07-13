@@ -9,27 +9,28 @@ exports.createProduct = async (req, res, next) => {
     const {
       type,
       brand,
-      model, // اضافه شده: مدل کفش
-      category = "", // اضافه شده: دسته‌بندی کفش
+      model,
+      category,
       gender,
       price,
       discount_price,
       description,
-      colors, // ساده شده: یک رشته مثل "قرمز, آبی, مشکی"
+      colors,
     } = req.body;
 
-    // اعتبارسنجی فیلدهای الزامی
     if (!price || !model) {
       return res.status(403).json({
         success: false,
-        message: "Price, model can not be empty",
+        message: "Price and model can not be empty",
       });
     }
 
-    const name = model + " - " + colors;
+    const processedModel = model.trim().replace(/\s+/g, " ").toUpperCase();
 
-    // بررسی وجود برند
+    const name = processedModel + (colors ? ` - ${colors}` : "");
+
     const isBrandExist = await BrandPopular.findBySlug(null, brand);
+
     if (!isBrandExist) {
       return res.status(403).json({
         success: false,
@@ -37,67 +38,51 @@ exports.createProduct = async (req, res, next) => {
       });
     }
 
-    const slug = await generateSlug(name, model, colors);
+    const slug = await generateSlug(name, processedModel, colors);
 
-    // بررسی عدم تکراری بودن slug
     const hasSlugUsed = await ShoesRepository.findBySlug(null, slug);
+
     if (hasSlugUsed) {
       return res.status(403).json({
         success: false,
         message:
-          "This Product with this model and color used before,This slug has been used before",
+          "This product with this model and color has already been created",
       });
     }
 
-    // پردازش model: حذف فاصله‌های اضافی و تبدیل به حروف بزرگ
-    let processedModel = model
-      .trim() // حذف فاصله از اول و آخر
-      .replace(/\s+/g, " ") // تبدیل چند فاصله به یک فاصله
-      .toUpperCase(); // تبدیل به حروف بزرگ
-
-    // استخراج نام فایل‌ها از req.files
     let imageNames = [];
-    if (req.files && req.files.length > 0) {
+
+    if (req.files?.length > 0) {
       imageNames = req.files.map((file) => file.filename);
     }
 
-    // پردازش colors (به صورت رشته ساده)
     let colorsString = null;
-    if (colors) {
-      // اگر colors به صورت آرایه آمده، آن را به رشته تبدیل کن
-      if (Array.isArray(colors)) {
-        colorsString = colors.join(", ");
-      }
-      // اگر به صورت رشته است، فاصله‌های اضافی را حذف کن
-      else if (typeof colors === "string") {
-        colorsString = colors.trim().replace(/\s*,\s*/g, ", "); // استانداردسازی کاماها
-      }
-      // اگر به صورت آبجکت است (برای سازگاری با کلاینت‌های قدیمی)
-      else if (typeof colors === "object") {
-        if (colors.name) {
-          colorsString = colors.name;
-        } else if (Array.isArray(colors)) {
-          colorsString = colors.map((c) => c.name || c).join(", ");
-        }
-      }
+
+    if (Array.isArray(colors)) {
+      colorsString = colors.join(", ");
+    } else if (typeof colors === "string" && colors.trim()) {
+      colorsString = colors.trim().replace(/\s*,\s*/g, ", ");
+    } else if (colors && typeof colors === "object" && colors.name) {
+      colorsString = colors.name;
     }
 
-    // ایجاد کفش جدید
+    const processedCategory =
+      typeof category === "string" && category.trim() ? category.trim() : null;
+
     const shoeId = await ShoesRepository.create({
       type,
       name,
       slug,
       brand,
-      model: processedModel, // مدل پردازش شده
-      category, // دسته‌بندی
+      model: processedModel,
+      category: processedCategory,
       gender,
       price,
       discount_price: discount_price || null,
-      description: description || null,
-      colors: colorsString, // رنگ به صورت رشته ساده
+      description: description?.trim() || null,
+      colors: colorsString,
     });
 
-    // ذخیره نام فایل‌ها در دیتابیس
     if (imageNames.length > 0) {
       await ShoesRepository.addImages(shoeId, imageNames);
     }
@@ -107,10 +92,11 @@ exports.createProduct = async (req, res, next) => {
       message: "Product created successfully",
       data: {
         shoeId,
-        model: processedModel, // برگرداندن مدل پردازش شده برای اطلاع کلاینت
+        model: processedModel,
       },
     });
   } catch (err) {
+    console.error("CREATE PRODUCT ERROR:", err);
     next(err);
   }
 };

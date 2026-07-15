@@ -199,7 +199,7 @@ const ProductCard = ({
                       </>
                     ) : (
                       <span className="text-sm font-medium text-gray-900">
-                        ${shoe.price?.toLocaleString()}
+                        {shoe.price?.toLocaleString()} AED
                       </span>
                     )}
                   </div>

@@ -186,14 +186,15 @@ const ProductCard = ({
                   </p>
 
                   <div className="flex items-baseline gap-2">
-                    {shoe.discount_price ? (
+                    {shoe.discount_price &&
+                    shoe.discount_price !== shoe.price ? (
                       <>
                         <span className="text-sm font-medium text-gray-900">
-                          ${shoe.discount_price?.toLocaleString()}
+                          {shoe.discount_price?.toLocaleString()} AED
                         </span>
 
                         <span className="text-xs text-gray-400 line-through">
-                          ${shoe.price?.toLocaleString()}
+                          {shoe.price?.toLocaleString()} AED
                         </span>
                       </>
                     ) : (

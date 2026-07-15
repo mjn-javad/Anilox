@@ -33,7 +33,6 @@ const ShoeInfoForm = ({ shoeInfo, onChange, onUpdate, updating }) => {
           value={shoeInfo.brand}
           onChange={onChange}
           required={true}
-          disabled={true}
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-400 bg-gray-100 cursor-not-allowed"
         />
 

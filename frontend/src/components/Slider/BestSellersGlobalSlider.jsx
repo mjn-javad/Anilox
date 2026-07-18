@@ -55,9 +55,9 @@ const BestSellersGlobalSlider = ({
         header={header}
         title={title}
         navigateLink={navigateLink}
-        apiUrl="/api/v1/shoes"
+        apiUrl="/api/v1/brandPopular/bestSellers"
         limit={limit}
-        infiniteScroll={true}
+        infiniteScroll={false}
         scrollOnMobile={false}
         scrollOnLaptop={false}
       />

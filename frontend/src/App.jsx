@@ -18,7 +18,6 @@ import ResetPassword from "./components/Login/ResetPassword";
 import SingleShoe from "./components/Slider/SingleShoe";
 import SliderShoes from "./components/Slider/SliderShoes";
 import SliderNewArrivels from "./components/Slider/SliderNewArrivels";
-import SliderBestSellers from "./components/Slider/SliderBestSellers";
 
 import Basket from "./components/Basket/Basket";
 import AddressPage from "./components/AddressPage/AddressPage";
@@ -37,6 +36,7 @@ import ScrollToTop from "./components/ScrollToTop/ScrollToTop";
 import "./App.css";
 import BannerManager from "./components/Banner/BannerManager";
 import EditBanner from "./components/Banner/EditBanner";
+import BestSellersGlobalSlider from "./components/Slider/BestSellersGlobalSlider";
 
 function App() {
   return (
@@ -54,7 +54,7 @@ function App() {
           <Route path="shoe/:id" element={<SingleShoe />} />
           <Route path="slider-shoes" element={<SliderShoes />} />
           <Route path="new-arrivals" element={<SliderNewArrivels />} />
-          <Route path="bestSellers" element={<SliderBestSellers />} />
+          <Route path="bestSellers" element={<BestSellersGlobalSlider />} />
 
           {/* Auth Pages */}
           <Route path="LoginLogout" element={<Login />} />

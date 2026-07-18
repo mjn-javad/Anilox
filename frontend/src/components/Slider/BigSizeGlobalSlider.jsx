@@ -98,7 +98,7 @@ const NewArivelsGlobalSlider = ({
           <img
             src={getImageUrl(banner.image)}
             alt={banner.title1 || "New arrivals banner"}
-            className="block aspect-[16/5] w-full object-cover"
+            className="block aspect-[16/5] w-full object-contain"
             onError={(event) => {
               console.error("Banner image failed:", event.currentTarget.src);
             }}

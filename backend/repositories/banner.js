@@ -70,6 +70,7 @@ class BannerRepository {
         image,
         is_active,
         sort_order,
+        second_sort_order,
         created_at,
         updated_at
       FROM banners
@@ -95,6 +96,7 @@ class BannerRepository {
         image,
         is_active,
         sort_order,
+        second_sort_order,
         created_at,
         updated_at
       FROM banners

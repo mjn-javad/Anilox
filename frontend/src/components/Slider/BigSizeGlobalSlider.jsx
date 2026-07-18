@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
 import apiClientBrandPopular from "../../services/api-client";
+import apiClientBanner from "../../services/api-client_banner";
 import ProductCard from "./ProductCart";
-import ProductFinderBox from "../OrderOnWhatsApp/ProductFinderBox";
-import BrandScroller from "../HorizentalScroll/BrandScroller";
 
-const BigSizeGlobalSlider = ({
+const NewArivelsGlobalSlider = ({
   myQuery = "",
   header,
   title,
@@ -12,33 +11,52 @@ const BigSizeGlobalSlider = ({
   limit,
 }) => {
   const [shoes, setShoes] = useState([]);
+  const [banner, setBanner] = useState(null);
   const [error, setError] = useState("");
+  const BigSizeBannerStOrd = 11;
 
   useEffect(() => {
-    fetchNewArrivels();
+    const fetchData = async () => {
+      try {
+        setError("");
+
+        const [shoesRes, bannerRes] = await Promise.all([
+          apiClientBrandPopular.get(`/newArrivels${myQuery}`),
+          apiClientBanner.get(`/${BigSizeBannerStOrd}`),
+        ]);
+
+        setShoes(shoesRes.data?.data || []);
+
+        const bannerResult = bannerRes.data?.data || bannerRes.data;
+
+        setBanner(
+          Array.isArray(bannerResult)
+            ? bannerResult[0] || null
+            : bannerResult || null,
+        );
+      } catch (err) {
+        console.error("New arrivals error:", err);
+        setError("Failed to load new arrivals");
+      }
+    };
+
+    fetchData();
   }, [myQuery]);
-
-  const fetchNewArrivels = async () => {
-    try {
-      setError("");
-
-      const res = await apiClientBrandPopular.get(`/newArrivels${myQuery}`);
-
-      setShoes(res.data?.data || []);
-    } catch (err) {
-      console.error("Get new arrivels error:", err);
-      setError("Failed to load new arrivals");
-    }
-  };
 
   return (
     <div className="container">
-      {limit === undefined && <ProductFinderBox />}
-
-      {/* <BrandScroller /> */}
-
       {error && (
-        <p className="text-center text-red-500 text-sm my-4">{error}</p>
+        <p className="my-4 text-center text-sm text-red-500">{error}</p>
+      )}
+
+      {banner?.image && (
+        <div className="mb-0 hidden overflow-hidden rounded-2xl lg:block">
+          <img
+            src={`/api/images/banners/${banner.image}`}
+            alt={banner.title || "New arrivals banner"}
+            className="block aspect-[16/5] w-full object-cover"
+          />
+        </div>
       )}
 
       <ProductCard
@@ -55,4 +73,4 @@ const BigSizeGlobalSlider = ({
   );
 };
 
-export default BigSizeGlobalSlider;
+export default NewArivelsGlobalSlider;

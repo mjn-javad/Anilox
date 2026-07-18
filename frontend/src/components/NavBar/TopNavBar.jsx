@@ -41,6 +41,7 @@ export default function TopNavbar({ handelOrderPopup }) {
 
   const isMen = useMemo(() => {
     const g = new URLSearchParams(search).get("gender");
+
     return pathname === "/men" || g === "men" || g === "male";
   }, [pathname, search]);
 
@@ -49,8 +50,17 @@ export default function TopNavbar({ handelOrderPopup }) {
   const section = isMen ? "Men" : "Women";
 
   const link = (params = {}) => {
-    const q = new URLSearchParams({ gender, ...params });
-    Object.keys(params).forEach((k) => !params[k] && q.delete(k));
+    const q = new URLSearchParams({
+      gender,
+      ...params,
+    });
+
+    Object.keys(params).forEach((key) => {
+      if (!params[key]) {
+        q.delete(key);
+      }
+    });
+
     return `/slider-shoes?${q}`;
   };
 
@@ -83,7 +93,10 @@ export default function TopNavbar({ handelOrderPopup }) {
 
   useEffect(() => {
     document.body.style.overflow = mobile ? "hidden" : "unset";
-    return () => (document.body.style.overflow = "unset");
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
   }, [mobile]);
 
   const logout = async () => {
@@ -98,11 +111,19 @@ export default function TopNavbar({ handelOrderPopup }) {
 
   const active = (itemLink, type) => {
     const params = new URLSearchParams(search);
-    if (itemLink === "/women")
+
+    if (itemLink === "/women") {
       return !isMen && ["/", "/women"].includes(pathname);
-    if (itemLink === "/men") return isMen && pathname === "/men";
-    if (type)
+    }
+
+    if (itemLink === "/men") {
+      return isMen && pathname === "/men";
+    }
+
+    if (type) {
       return pathname === "/slider-shoes" && params.get("type") === type;
+    }
+
     return pathname + search === itemLink;
   };
 
@@ -148,6 +169,7 @@ export default function TopNavbar({ handelOrderPopup }) {
                   <div key={name} className="group relative">
                     <div className="flex items-center gap-2">
                       <SimpleLink name={name} to={to} type={type} />
+
                       <FaCaretDown className="text-xs text-neutral-500 transition group-hover:rotate-180" />
                     </div>
 
@@ -160,7 +182,10 @@ export default function TopNavbar({ handelOrderPopup }) {
                         {shoeTypes.map(([label, category]) => (
                           <Link
                             key={category}
-                            to={link({ type: "shoe", category })}
+                            to={link({
+                              type: "shoe",
+                              category,
+                            })}
                             className="block rounded-xl px-3 py-2 text-sm text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"
                           >
                             {label}
@@ -177,7 +202,7 @@ export default function TopNavbar({ handelOrderPopup }) {
               {user?.role === "admin" && (
                 <div className="group relative">
                   <button className="flex items-center gap-2 text-sm uppercase tracking-[0.18em] text-neutral-500 hover:text-neutral-950">
-                    Admin{" "}
+                    Admin
                     <FaCaretDown className="text-xs transition group-hover:rotate-180" />
                   </button>
 
@@ -199,6 +224,26 @@ export default function TopNavbar({ handelOrderPopup }) {
             </nav>
 
             <div className="flex items-center gap-3">
+              <div className="flex items-center rounded-full border bg-neutral-50 p-1 md:hidden">
+                {[
+                  ["Women", "/women", !isMen],
+                  ["Men", "/men", isMen],
+                ].map(([name, to, isActive]) => (
+                  <Link
+                    key={name}
+                    to={to}
+                    className={cls(
+                      "rounded-full px-3 py-2 text-[9px] uppercase tracking-[0.12em] transition",
+                      isActive
+                        ? "bg-neutral-950 text-white"
+                        : "text-neutral-500",
+                    )}
+                  >
+                    {name}
+                  </Link>
+                ))}
+              </div>
+
               <div className="hidden items-center rounded-full border bg-neutral-50 p-1 md:flex">
                 {[
                   ["Women", "/women", !isMen],
@@ -236,7 +281,9 @@ export default function TopNavbar({ handelOrderPopup }) {
                 ) : user ? (
                   <div className="relative">
                     <button
-                      onClick={() => setUserOpen((p) => !p)}
+                      onClick={() => {
+                        setUserOpen((prev) => !prev);
+                      }}
                       className="rounded-full bg-neutral-950 px-5 py-2 text-sm text-white"
                     >
                       {user.name || user.username || "Account"}
@@ -248,6 +295,7 @@ export default function TopNavbar({ handelOrderPopup }) {
                           <p className="font-medium">
                             {user.name || user.username}
                           </p>
+
                           <p className="mt-1 truncate text-xs text-neutral-500">
                             {user.email}
                           </p>
@@ -308,6 +356,7 @@ export default function TopNavbar({ handelOrderPopup }) {
               <p className="text-xs uppercase tracking-[0.22em] text-neutral-400">
                 {section}
               </p>
+
               <h2 className="text-xl font-semibold uppercase tracking-[0.25em]">
                 Anilox
               </h2>
@@ -342,6 +391,7 @@ export default function TopNavbar({ handelOrderPopup }) {
           {user && (
             <div className="border-b bg-neutral-50 px-5 py-4">
               <p className="font-medium">{user.name || user.username}</p>
+
               <p className="truncate text-sm text-neutral-500">{user.email}</p>
             </div>
           )}
@@ -360,7 +410,9 @@ export default function TopNavbar({ handelOrderPopup }) {
                     </Link>
 
                     <button
-                      onClick={() => setShoeOpen((p) => !p)}
+                      onClick={() => {
+                        setShoeOpen((prev) => !prev);
+                      }}
                       className="px-5"
                     >
                       <FaCaretDown
@@ -374,7 +426,10 @@ export default function TopNavbar({ handelOrderPopup }) {
                       {shoeTypes.map(([label, category]) => (
                         <Link
                           key={category}
-                          to={link({ type: "shoe", category })}
+                          to={link({
+                            type: "shoe",
+                            category,
+                          })}
                           onClick={closeAll}
                           className="block py-2 text-sm text-neutral-600"
                         >
@@ -392,7 +447,9 @@ export default function TopNavbar({ handelOrderPopup }) {
             {user?.role === "admin" && (
               <div className="border-b">
                 <button
-                  onClick={() => setAdminOpen((p) => !p)}
+                  onClick={() => {
+                    setAdminOpen((prev) => !prev);
+                  }}
                   className="flex w-full items-center justify-between px-5 py-4 text-sm uppercase tracking-[0.16em] text-neutral-700"
                 >
                   Admin Panel

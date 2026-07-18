@@ -15,25 +15,27 @@ class BannerRepository {
       image,
       is_active,
       sort_order,
+      second_sort_order,
     } = data;
 
     const query = `
-      INSERT INTO banners (
-        title1,
-        title2,
-        btnTitle1,
-        btnLink1,
-        btnTitle2,
-        btnLink2,
-        bannerLink,
-        image,
-        is_active,
-        sort_order,
-        created_at,
-        updated_at
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-    `;
+    INSERT INTO banners (
+      title1,
+      title2,
+      btnTitle1,
+      btnLink1,
+      btnTitle2,
+      btnLink2,
+      bannerLink,
+      image,
+      is_active,
+      sort_order,
+      second_sort_order,
+      created_at,
+      updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+  `;
 
     const values = [
       title1,
@@ -46,6 +48,7 @@ class BannerRepository {
       image,
       is_active,
       sort_order,
+      second_sort_order,
     ];
 
     const [result] = await db.execute(query, values);
@@ -118,11 +121,18 @@ class BannerRepository {
       image,
       is_active,
       sort_order,
+      second_sort_order,
       created_at,
       updated_at
     FROM banners
     WHERE sort_order = ?
-    ORDER BY id ASC
+    ORDER BY
+      CASE
+        WHEN second_sort_order = 0 THEN 1
+        ELSE 0
+      END ASC,
+      second_sort_order ASC,
+      id ASC
   `;
 
     const [rows] = await db.execute(query, [sortOrder]);
@@ -142,6 +152,7 @@ class BannerRepository {
       "image",
       "is_active",
       "sort_order",
+      "second_sort_order",
     ];
 
     const updateFields = [];
@@ -159,12 +170,12 @@ class BannerRepository {
     }
 
     const query = `
-      UPDATE banners
-      SET
-        ${updateFields.join(", ")},
-        updated_at = NOW()
-      WHERE id = ?
-    `;
+    UPDATE banners
+    SET
+      ${updateFields.join(", ")},
+      updated_at = NOW()
+    WHERE id = ?
+  `;
 
     values.push(id);
 

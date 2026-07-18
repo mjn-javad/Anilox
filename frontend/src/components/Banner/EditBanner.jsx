@@ -13,6 +13,7 @@ const initialForm = {
   btnLink2: "",
   bannerLink: "",
   sort_order: 0,
+  second_sort_order: 0,
 };
 
 const EditBanner = () => {
@@ -49,6 +50,7 @@ const EditBanner = () => {
       btnLink2: banner.btnLink2 || "",
       bannerLink: banner.bannerLink || "",
       sort_order: Number(banner.sort_order) || 0,
+      second_sort_order: Number(banner.second_sort_order) || 0,
     });
 
     setOldImage(banner.image || "");
@@ -181,6 +183,7 @@ const EditBanner = () => {
 
       formData.append("bannerLink", form.bannerLink.trim());
       formData.append("sort_order", String(form.sort_order));
+      formData.append("second_sort_order", String(form.second_sort_order));
 
       if (file) {
         formData.append("image", file);
@@ -333,6 +336,14 @@ const EditBanner = () => {
           label="Sort Order"
           type="number"
           value={form.sort_order}
+          onChange={handleChange}
+          placeholder="0 = highest priority"
+        />
+        <InputField
+          name="second_sort_order"
+          label="Second Sort Order"
+          type="number"
+          value={form.second_sort_order}
           onChange={handleChange}
           placeholder="0 = highest priority"
         />

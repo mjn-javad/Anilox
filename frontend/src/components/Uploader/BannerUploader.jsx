@@ -12,6 +12,7 @@ const initialForm = {
   btnLink2: "",
   bannerLink: "",
   sort_order: 1,
+  second_sort_order: 1,
 };
 
 const BannerUploader = () => {
@@ -97,6 +98,8 @@ const BannerUploader = () => {
 
       formData.append("bannerLink", form.bannerLink.trim());
       formData.append("sort_order", String(form.sort_order));
+      formData.append("second_sort_order", String(form.second_sort_order));
+
       formData.append("image", file);
 
       const response = await apiClientBanner.post("/", formData);
@@ -243,7 +246,14 @@ const BannerUploader = () => {
           onChange={handleChange}
           placeholder="0 = highest priority"
         />
-
+        <InputField
+          name="second_sort_order"
+          label="Second Sort Order"
+          type="number"
+          value={form.second_sort_order}
+          onChange={handleChange}
+          placeholder="0 = highest priority"
+        />
         <div className="flex flex-col gap-2">
           <label
             htmlFor="banner-image"

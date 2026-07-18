@@ -15,8 +15,6 @@ const WomenHome = () => {
 
       <BestSellersBanner gender={"female"} />
 
-      <GlobalBanner mobileSortOrder={7} laptopSortOrder={8} />
-
       {/* <BigSizeGlobalSlider
         myQuery={"?limit=20&gender=female"}
         limit={20}
@@ -33,6 +31,9 @@ const WomenHome = () => {
         scrollOnMobile={true}
         scrollOnLaptop={true}
       />
+
+      <GlobalBanner mobileSortOrder={7} laptopSortOrder={8} />
+
       <ProductFinderBox />
     </>
   );

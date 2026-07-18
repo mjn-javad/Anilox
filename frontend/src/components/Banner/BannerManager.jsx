@@ -3,6 +3,20 @@ import { useNavigate } from "react-router-dom";
 import apiClientBanner from "../../services/api-client_banner";
 import MessageAlert from "../Shared/MessageAlert";
 
+const bannerLocations = {
+  1: "Women Mobile",
+  2: "Women Laptop",
+  3: "Men Mobile",
+  4: "Men Laptop",
+  5: "Women Best Seller",
+  6: "Men Best Seller",
+  7: "Men Navigation Mobile",
+  8: "Men Navigation Laptop",
+  9: "Women Navigation Mobile",
+  10: "Women Navigation Laptop",
+  11: "Big Size",
+};
+
 const BannerManager = () => {
   const navigate = useNavigate();
 
@@ -154,8 +168,9 @@ const BannerManager = () => {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
 
-                <div className="absolute top-3 left-3 bg-black/70 text-white text-xs px-3 py-1 rounded-full">
-                  Sort: {banner.sort_order}
+                <div className="absolute top-3 left-3 rounded-full bg-black/70 px-3 py-1 text-xs text-white">
+                  {bannerLocations[banner.sort_order] ||
+                    `Sort: ${banner.sort_order}`}
                 </div>
               </div>
 

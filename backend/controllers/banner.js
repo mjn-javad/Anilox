@@ -42,6 +42,7 @@ exports.createBanner = async (req, res, next) => {
       btnLink2,
       bannerLink,
       sort_order = 0,
+      second_sort_order = 0,
       is_active = true,
     } = req.body;
 
@@ -76,17 +77,14 @@ exports.createBanner = async (req, res, next) => {
     const newBanner = {
       title1: title1.trim(),
       title2: title2.trim(),
-
       btnTitle1: btnTitle1.trim(),
       btnLink1: btnLink1.trim(),
-
       btnTitle2: btnTitle2.trim(),
       btnLink2: btnLink2.trim(),
-
       bannerLink: bannerLink.trim(),
-
       image: imageName,
       sort_order: normalizeSortOrder(sort_order),
+      second_sort_order: normalizeSortOrder(second_sort_order),
       is_active: normalizeBoolean(is_active, true),
     };
 
@@ -180,6 +178,7 @@ exports.updateBanner = async (req, res, next) => {
       bannerLink,
       is_active,
       sort_order,
+      second_sort_order,
     } = req.body;
 
     const currentBanner = await Banner.getById(id);
@@ -213,13 +212,10 @@ exports.updateBanner = async (req, res, next) => {
     const updateData = {
       title1: title1.trim(),
       title2: title2.trim(),
-
       btnTitle1: btnTitle1.trim(),
       btnLink1: btnLink1.trim(),
-
       btnTitle2: btnTitle2.trim(),
       btnLink2: btnLink2.trim(),
-
       bannerLink: bannerLink.trim(),
     };
 
@@ -233,6 +229,10 @@ exports.updateBanner = async (req, res, next) => {
 
     if (sort_order !== undefined) {
       updateData.sort_order = normalizeSortOrder(sort_order);
+    }
+
+    if (second_sort_order !== undefined) {
+      updateData.second_sort_order = normalizeSortOrder(second_sort_order);
     }
 
     await Banner.update(id, updateData);

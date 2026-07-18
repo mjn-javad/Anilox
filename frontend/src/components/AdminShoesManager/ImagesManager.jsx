@@ -107,7 +107,7 @@ const ImageGallery = ({
 
             <button
               onClick={() => onDeleteImage(image)}
-              className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+              className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-100 transition-opacity hover:bg-red-600"
               aria-label="Delete image"
             >
               🗑️

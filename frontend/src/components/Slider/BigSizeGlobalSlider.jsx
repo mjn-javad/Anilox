@@ -3,6 +3,18 @@ import apiClientBrandPopular from "../../services/api-client";
 import apiClientBanner from "../../services/api-client_banner";
 import ProductCard from "./ProductCart";
 
+const IMAGE_BASE_URL = "/api/images/banners/";
+
+const getImageUrl = (image) => {
+  if (!image) return "";
+
+  if (image.startsWith("http://") || image.startsWith("https://")) {
+    return image;
+  }
+
+  return `${IMAGE_BASE_URL}${image}`;
+};
+
 const NewArivelsGlobalSlider = ({
   myQuery = "",
   header,
@@ -13,34 +25,66 @@ const NewArivelsGlobalSlider = ({
   const [shoes, setShoes] = useState([]);
   const [banner, setBanner] = useState(null);
   const [error, setError] = useState("");
+
   const BigSizeBannerStOrd = 11;
 
   useEffect(() => {
-    const fetchData = async () => {
+    let isMounted = true;
+
+    const fetchShoes = async () => {
       try {
-        setError("");
-
-        const [shoesRes, bannerRes] = await Promise.all([
-          apiClientBrandPopular.get(`/newArrivels${myQuery}`),
-          apiClientBanner.get(`/${BigSizeBannerStOrd}`),
-        ]);
-
-        setShoes(shoesRes.data?.data || []);
-
-        const bannerResult = bannerRes.data?.data || bannerRes.data;
-
-        setBanner(
-          Array.isArray(bannerResult)
-            ? bannerResult[0] || null
-            : bannerResult || null,
+        const shoesRes = await apiClientBrandPopular.get(
+          `/newArrivels${myQuery}`,
         );
+
+        if (isMounted) {
+          setShoes(shoesRes.data?.data || []);
+        }
       } catch (err) {
-        console.error("New arrivals error:", err);
-        setError("Failed to load new arrivals");
+        console.error("New arrivals request error:", err);
+
+        if (isMounted) {
+          setShoes([]);
+          setError("Failed to load new arrivals");
+        }
       }
     };
 
-    fetchData();
+    const fetchBanner = async () => {
+      try {
+        const bannerRes = await apiClientBanner.get(`/${BigSizeBannerStOrd}`);
+
+        console.log("Banner request URL:", bannerRes.config?.url);
+        console.log("Banner response:", bannerRes.data);
+
+        const bannerResult = bannerRes.data?.data || bannerRes.data;
+
+        const selectedBanner = Array.isArray(bannerResult)
+          ? bannerResult[0] || null
+          : bannerResult || null;
+
+        if (isMounted) {
+          setBanner(selectedBanner);
+
+          console.log("Banner image URL:", getImageUrl(selectedBanner?.image));
+        }
+      } catch (err) {
+        console.error("Banner request error:", err);
+
+        if (isMounted) {
+          setBanner(null);
+        }
+      }
+    };
+
+    setError("");
+
+    fetchShoes();
+    fetchBanner();
+
+    return () => {
+      isMounted = false;
+    };
   }, [myQuery]);
 
   return (
@@ -50,11 +94,14 @@ const NewArivelsGlobalSlider = ({
       )}
 
       {banner?.image && (
-        <div className="mb-0 hidden overflow-hidden rounded-2xl lg:block">
+        <div className="mb-0 w-full overflow-hidden rounded-2xl">
           <img
-            src={`/api/images/banners/${banner.image}`}
-            alt={banner.title || "New arrivals banner"}
+            src={getImageUrl(banner.image)}
+            alt={banner.title1 || "New arrivals banner"}
             className="block aspect-[16/5] w-full object-cover"
+            onError={(event) => {
+              console.error("Banner image failed:", event.currentTarget.src);
+            }}
           />
         </div>
       )}

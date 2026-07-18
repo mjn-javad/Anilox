@@ -457,7 +457,7 @@ const getAllBestSellers = async ({ gender }) => {
 
   const bestSellers = rows.map((shoe) => ({
     ...shoe,
-    images_name: imagesMap[shoe.id] || [],
+    images: imagesMap[shoe.id] || [],
   }));
 
   return {

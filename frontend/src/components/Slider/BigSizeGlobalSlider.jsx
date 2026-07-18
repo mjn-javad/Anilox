@@ -94,18 +94,24 @@ const NewArivelsGlobalSlider = ({
       )}
 
       {banner?.image && (
-        <div className="mb-0 w-full overflow-hidden rounded-2xl">
+        <div className="mb-0 w-full overflow-hidden rounded-2xl lg:aspect-[16/5]">
           <img
             src={getImageUrl(banner.image)}
             alt={banner.title1 || "New arrivals banner"}
-            className="block aspect-[16/5] w-full object-contain"
+            className="
+        block
+        h-auto
+        w-full
+        lg:h-full
+        lg:object-cover
+        lg:object-center
+      "
             onError={(event) => {
               console.error("Banner image failed:", event.currentTarget.src);
             }}
           />
         </div>
       )}
-
       <ProductCard
         shoes={shoes}
         header={header}

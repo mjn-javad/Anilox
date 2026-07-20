@@ -283,13 +283,15 @@ const SingleShoe = () => {
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-lg font-bold">Select Size (EU)</h3>
 
-                <button
-                  type="button"
-                  onClick={() => setShowSizeGuide((prev) => !prev)}
-                  className="text-sm font-medium text-blue-600 underline underline-offset-4"
-                >
-                  Size Guide
-                </button>
+                {shoe.type === "shoe" && (
+                  <button
+                    type="button"
+                    onClick={() => setShowSizeGuide((prev) => !prev)}
+                    className="text-sm font-medium text-blue-600 underline underline-offset-4"
+                  >
+                    Size Guide
+                  </button>
+                )}
               </div>
 
               {showSizeGuide && shoe.type === "shoe" && (

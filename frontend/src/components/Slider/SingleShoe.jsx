@@ -27,6 +27,7 @@ const SingleShoe = () => {
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartMessage, setCartMessage] = useState({ type: "", text: "" });
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
 
   const images = shoe?.images || [];
   const sizes = (shoe?.sizes || []).filter((item) => item.quantity > 0);
@@ -226,7 +227,7 @@ const SingleShoe = () => {
           </div>
 
           <div>
-            {shoe.discount_price ? (
+            {shoe.discount_price && shoe.discount_price !== shoe.price ? (
               <>
                 <p className="text-2xl text-gray-500 line-through">
                   {shoe.price?.toLocaleString()} AED
@@ -236,7 +237,7 @@ const SingleShoe = () => {
                 </p>
               </>
             ) : (
-              <p className="text-3xl font-bold text-gray-800">
+              <p className="text-3xl font-bold text-green-600">
                 {shoe.price?.toLocaleString()} AED
               </p>
             )}
@@ -279,17 +280,63 @@ const SingleShoe = () => {
           {/* Sizes */}
           {sizes.length > 0 && (
             <div>
-              <h3 className="font-bold text-lg mb-3">Select Size</h3>
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-lg font-bold">Select Size (EU)</h3>
+
+                <button
+                  type="button"
+                  onClick={() => setShowSizeGuide((prev) => !prev)}
+                  className="text-sm font-medium text-blue-600 underline underline-offset-4"
+                >
+                  Size Guide
+                </button>
+              </div>
+
+              {showSizeGuide && (
+                <div className="mb-4 overflow-x-auto rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+                  <table className="w-full min-w-[750px] text-center text-sm">
+                    <tbody>
+                      {[
+                        [
+                          "EU",
+                          Array.from({ length: 14 }, (_, index) => index + 35),
+                        ],
+                        [
+                          "UK",
+                          Array.from({ length: 14 }, (_, index) => index + 1),
+                        ],
+                        [
+                          "US",
+                          Array.from({ length: 14 }, (_, index) => index + 2),
+                        ],
+                      ].map(([system, values]) => (
+                        <tr key={system} className="border-b last:border-b-0">
+                          <th className="sticky left-0 bg-neutral-50 px-3 py-3 text-left font-bold">
+                            {system}
+                          </th>
+
+                          {values.map((size) => (
+                            <td key={size} className="px-3 py-3">
+                              {size}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
               <div className="flex flex-wrap gap-3">
                 {sizes.map((item) => (
                   <button
+                    type="button"
                     key={item.id || item.size}
                     onClick={() => setSelectedSize(item.size)}
-                    className={`w-12 h-12 border-2 rounded-lg transition-all font-medium ${
-                      selectedSize === item.size
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "border-gray-300 hover:border-blue-500 hover:bg-blue-50"
+                    className={`h-12 w-12 rounded-lg border-2 font-medium transition-all ${
+                      String(selectedSize) === String(item.size)
+                        ? "border-neutral-950 bg-neutral-950 text-white"
+                        : "border-neutral-300 text-neutral-800 hover:border-neutral-950 hover:bg-neutral-100"
                     }`}
                   >
                     {item.size}
@@ -343,7 +390,7 @@ const SingleShoe = () => {
             className={`w-full py-3 rounded-lg transition-all text-lg mt-6 ${
               addingToCart || sizes.length === 0
                 ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700 text-white"
+                : "bg-neutral-950 hover:bg-neutral-600 text-white"
             }`}
           >
             {addingToCart

@@ -292,7 +292,7 @@ const SingleShoe = () => {
                 </button>
               </div>
 
-              {showSizeGuide && (
+              {showSizeGuide && shoe.type === "shoe" && (
                 <div className="mb-4 overflow-x-auto rounded-xl border border-neutral-200 bg-neutral-50 p-3">
                   <table className="w-full min-w-[750px] text-center text-sm">
                     <tbody>

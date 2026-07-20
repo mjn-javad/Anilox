@@ -135,32 +135,32 @@ exports.increaseStock = async (req, res, next) => {
     const { shoeId } = req.params;
     const { size, quantity } = req.body;
 
-    // اعتبارسنجی
-    if (!shoeId || !size || !quantity) {
-      return res.status(403).json({
+    if (
+      !shoeId ||
+      size === undefined ||
+      quantity === undefined ||
+      Number(quantity) < 0
+    ) {
+      return res.status(400).json({
         success: false,
-        message: "shoeId, size, quantity are required",
+        message: "shoeId, size and quantity are required",
       });
     }
 
-    // if (quantity <= 0) {
-    //   return res.status(403).json({
-    //     success: false,
-    //     message: "Quantity must be greater than 0",
-    //   });
-    // }
+    const shoe = await ShoesRepository.findById(shoeId);
 
-    // بررسی وجود کفش
-    const isShoeIdValid = await ShoesRepository.findById(shoeId);
-    if (!isShoeIdValid) {
-      return res.status(403).json({
+    if (!shoe) {
+      return res.status(404).json({
         success: false,
         message: "Cannot find a shoe with this id",
       });
     }
 
-    // اگر رکورد وجود نداشت، آن را ایجاد کن
-    await ShoesRepository.addSize(shoeId, size, quantity);
+    await ShoesRepository.increaseStock(
+      Number(shoeId),
+      Number(size),
+      Number(quantity),
+    );
 
     return res.status(200).json({
       success: true,
@@ -170,7 +170,6 @@ exports.increaseStock = async (req, res, next) => {
     next(err);
   }
 };
-
 exports.getAllProducts = async (req, res, next) => {
   try {
     let {

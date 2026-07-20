@@ -63,17 +63,22 @@ const remove = async (id) => {
   return result.affectedRows > 0;
 };
 
-// const increaseStock = async (shoeId, size, colorCode, quantity) => {
-//   const query = `
-//     UPDATE shoes_sizes
-//     SET quantity = quantity + ?
-//     WHERE shoes_id = ? AND size = ? AND color_code = ?
-//   `;
+const increaseStock = async (shoeId, size, quantity) => {
+  const query = `
+    INSERT INTO shoes_sizes (
+      shoes_id,
+      size,
+      quantity
+    )
+    VALUES (?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+      quantity = quantity + VALUES(quantity)
+  `;
 
-//   const [result] = await db.execute(query, [quantity, shoeId, size, colorCode]);
+  const [result] = await db.execute(query, [shoeId, size, quantity]);
 
-//   return result.affectedRows > 0;
-// };
+  return result.affectedRows > 0;
+};
 
 const findById = async (id) => {
   const [shoes] = await db.execute("SELECT * FROM shoes WHERE id = ?", [id]);

@@ -659,4 +659,5 @@ module.exports = {
   deleteImagesByNames,
   updateImageSortOrder,
   findImageByName,
+  increaseStock,
 };

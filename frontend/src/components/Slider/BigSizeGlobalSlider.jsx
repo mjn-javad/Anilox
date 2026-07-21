@@ -117,10 +117,11 @@ const NewArivelsGlobalSlider = ({
         header={header}
         title={title}
         navigateLink={navigateLink}
-        scrollOnMobile={limit !== undefined}
         apiUrl={`/api/v1/brandPopular/newArrivels${myQuery}`}
         limit={limit}
         infiniteScroll={false}
+        scrollOnMobile={true}
+        scrollOnLaptop={true}
       />
     </div>
   );

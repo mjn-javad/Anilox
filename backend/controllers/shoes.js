@@ -135,12 +135,7 @@ exports.increaseStock = async (req, res, next) => {
     const { shoeId } = req.params;
     const { size, quantity } = req.body;
 
-    if (
-      !shoeId ||
-      size === undefined ||
-      quantity === undefined ||
-      Number(quantity) < 0
-    ) {
+    if (!shoeId || size === undefined || quantity === undefined) {
       return res.status(400).json({
         success: false,
         message: "shoeId, size and quantity are required",

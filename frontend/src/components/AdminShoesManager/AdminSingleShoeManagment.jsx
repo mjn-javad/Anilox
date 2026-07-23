@@ -240,7 +240,7 @@ const AdminSingleShoeManagement = () => {
       1,
     );
 
-    if (!addedStock || isNaN(addedStock) || parseInt(addedStock) <= 0) {
+    if (!addedStock || isNaN(addedStock)) {
       showError("Please enter a valid quantity");
       return;
     }
@@ -284,8 +284,7 @@ const AdminSingleShoeManagement = () => {
     if (
       newSizeData.quantity === "" ||
       newSizeData.quantity === null ||
-      isNaN(newSizeData.quantity) ||
-      parseInt(newSizeData.quantity) < 0
+      isNaN(newSizeData.quantity)
     ) {
       showError("Please enter a valid quantity");
       return;

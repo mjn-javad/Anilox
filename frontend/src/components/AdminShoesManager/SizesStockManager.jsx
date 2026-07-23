@@ -13,7 +13,7 @@ const SizeItem = ({ size, quantity, onAddStock }) => (
       onClick={() => onAddStock(size, quantity)}
       className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors"
     >
-      ➕ Add Stock
+      ➕ ➖ Add Or Delete Stock
     </button>
   </div>
 );

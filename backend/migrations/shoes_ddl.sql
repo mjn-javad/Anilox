@@ -4,7 +4,7 @@ CREATE TABLE shoes (
     slug VARCHAR(255) NOT NULL UNIQUE,
     brand VARCHAR(255) NOT NULL,
     model VARCHAR(255) NOT NULL COMMENT 'مدل کفش از برند مربوطه (مثلاً Air Max 97, Superstar, etc.)',
-    category ENUM('sneaker', 'loafer', 'formal', 'boot', 'sandal', 'sport', 'classic', 'other') NOT NULL DEFAULT 'other' COMMENT 'دسته‌بندی کفش',
+    category ENUM('sneaker', 'loafer', 'formal', 'boot', 'sandal', 'sport', 'classic', 'flat','other') NULL DEFAULT NULL COMMENT 'دسته‌بندی کفش',
     gender ENUM('male', 'female', 'genderless') NOT NULL,
     type ENUM('shoe', 'belt', 'bag', 'luggage', 'glasses', 'watch') NOT NULL DEFAULT 'shoe' COMMENT 'نوع محصول: کفش، کمربند، کیف، صندوق مسافرتی یا عینک',
     price DECIMAL(10,2) NOT NULL,

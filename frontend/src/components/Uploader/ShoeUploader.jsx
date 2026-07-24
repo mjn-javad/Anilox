@@ -132,7 +132,7 @@ const ShoeUploader = () => {
               className="bg-gray-200 mx-2 rounded-sm text-sm"
               required
             >
-              <option value="">Select Category</option>
+              <option value={null}>Select Category</option>
               <option value="sneaker">Sneaker</option>
               <option value="loafer">Loafer</option>
               <option value="formal">Formal</option>
@@ -141,6 +141,7 @@ const ShoeUploader = () => {
               <option value="sport">Sport</option>
               <option value="classic">Classic</option>
               <option value="heels">Heels</option>
+              <option value="flat">Flat</option>
               <option value="other">Other</option>
             </select>
           </div>

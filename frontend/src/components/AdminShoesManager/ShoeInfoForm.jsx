@@ -64,6 +64,8 @@ const ShoeInfoForm = ({ shoeInfo, onChange, onUpdate, updating }) => {
               <option value="sandal">Sandal</option>
               <option value="sport">Sport</option>
               <option value="classic">Classic</option>
+              <option value="heels">Heels</option>
+              <option value="flat">Flat</option>
               <option value="other">Other</option>
             </select>
           </div>

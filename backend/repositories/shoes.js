@@ -46,6 +46,18 @@ const addImages = async (shoeId, images) => {
   }
 };
 
+const hasOrders = async (id) => {
+  const [rows] = await db.execute(
+    `SELECT 1
+         FROM order_items
+         WHERE shoes_id = ?
+         LIMIT 1`,
+    [id],
+  );
+
+  return rows.length > 0;
+};
+
 const addSize = async (shoeId, size, quantity) => {
   const query = `
     INSERT INTO shoes_sizes (shoes_id, size, quantity) 
@@ -660,4 +672,5 @@ module.exports = {
   updateImageSortOrder,
   findImageByName,
   increaseStock,
+  hasOrders,
 };

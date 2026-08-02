@@ -166,6 +166,26 @@ const AdminSingleShoeManagement = () => {
     }
   };
 
+  const handleDeleteProduct = async () => {
+    if (!window.confirm(`Delete "${shoeInfo.name}"?`)) return;
+
+    try {
+      setUpdating(true);
+
+      const { data } = await apiClientShoes.delete(`/${shoeId}`);
+
+      showSuccess(data.message);
+
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
+    } catch (err) {
+      showError(err.response?.data?.message || "Failed to delete product");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const handleUpdateInfo = async () => {
     if (!shoeInfo.name.trim()) {
       showError("Product name is required");
@@ -446,57 +466,62 @@ const AdminSingleShoeManagement = () => {
       <div className="flex flex-col gap-4 mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Edit Product</h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <button
-            type="button"
-            onClick={handleAddToBigSize}
-            disabled={updating}
-            className="
-              bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300
-              text-white px-5 py-2.5 rounded-lg transition-colors
-              font-medium shadow-sm
-            "
-          >
-            {updating ? "Please wait..." : "Add to Big Size"}
-          </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="border rounded-lg p-3">
+            <p className="font-semibold mb-2">Big Size</p>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={handleAddToBigSize}
+                disabled={updating}
+                className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white py-2 rounded-lg"
+              >
+                {updating ? "..." : "Add"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleRemoveFromBigSize}
+                disabled={updating}
+                className="bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white py-2 rounded-lg"
+              >
+                {updating ? "..." : "Remove"}
+              </button>
+            </div>
+          </div>
+
+          <div className="border rounded-lg p-3">
+            <p className="font-semibold mb-2">Best Seller</p>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={handleAddToBestSellers}
+                disabled={updating}
+                className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white py-2 rounded-lg"
+              >
+                {updating ? "..." : "Add"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleRemoveFromBestSellers}
+                disabled={updating}
+                className="bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white py-2 rounded-lg"
+              >
+                {updating ? "..." : "Remove"}
+              </button>
+            </div>
+          </div>
 
           <button
             type="button"
-            onClick={handleRemoveFromBigSize}
+            onClick={handleDeleteProduct}
             disabled={updating}
-            className="
-              bg-red-600 hover:bg-red-700 disabled:bg-red-300
-              text-white px-5 py-2.5 rounded-lg transition-colors
-              font-medium shadow-sm
-            "
+            className="sm:col-span-2 bg-red-700 hover:bg-red-800 disabled:bg-red-300 text-white px-5 py-2.5 rounded-lg font-medium"
           >
-            {updating ? "Please wait..." : "Remove Big Size"}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleAddToBestSellers}
-            disabled={updating}
-            className="
-              bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-300
-              text-white px-5 py-2.5 rounded-lg transition-colors
-              font-medium shadow-sm
-            "
-          >
-            {updating ? "Please wait..." : "Add Best Seller"}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleRemoveFromBestSellers}
-            disabled={updating}
-            className="
-              bg-gray-800 hover:bg-black disabled:bg-gray-400
-              text-white px-5 py-2.5 rounded-lg transition-colors
-              font-medium shadow-sm
-            "
-          >
-            {updating ? "Please wait..." : "Remove Best Seller"}
+            {updating ? "Please wait..." : "Delete Product"}
           </button>
         </div>
       </div>

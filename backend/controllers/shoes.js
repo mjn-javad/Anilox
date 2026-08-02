@@ -105,25 +105,28 @@ exports.deleteProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    // const isShoeIdValid = await ShoesRepository.findById(id);
-    // if (!isShoeIdValid) {
-    //   return res
-    //     .status(403)
-    //     .json({ success: false, message: "Can not find a shoe with this id" });
-    // }
+    const hasOrders = await ShoesRepository.hasOrders(id);
+
+    if (hasOrders) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "This product has already been purchased by customers, and deleting it would sever the link between the orders and the product. To preserve order data, this product cannot be deleted.",
+      });
+    }
 
     const deleted = await ShoesRepository.remove(id);
 
     if (!deleted) {
       return res.status(404).json({
         success: false,
-        message: "Shoe not found",
+        message: "Product Not Found.",
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: "Shoe deleted successfully",
+      message: "Product Deleted Succissfully.",
     });
   } catch (err) {
     next(err);

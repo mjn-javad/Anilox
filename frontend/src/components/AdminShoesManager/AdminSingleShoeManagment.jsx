@@ -407,6 +407,63 @@ const AdminSingleShoeManagement = () => {
     }
   };
 
+  const handleGroupSizes = async (selectedSizes, quantity) => {
+    const amount = Number(quantity);
+
+    if (!selectedSizes.length || !Number.isInteger(amount) || amount < 1) {
+      showError("Select sizes and enter a valid quantity");
+      return false;
+    }
+
+    try {
+      setUpdating(true);
+
+      for (const item of selectedSizes) {
+        const size = String(item);
+
+        await apiClientShoes.patch(`/${shoeId}/stock/${size}`, {
+          size,
+          quantity: amount,
+        });
+      }
+
+      setSizes((previous) => {
+        const updated = [...previous];
+
+        selectedSizes.forEach((item) => {
+          const size = String(item);
+
+          const index = updated.findIndex((row) => String(row.size) === size);
+
+          if (index >= 0) {
+            updated[index] = {
+              ...updated[index],
+              quantity: Number(updated[index].quantity) + amount,
+            };
+          } else {
+            updated.push({
+              size,
+              quantity: amount,
+            });
+          }
+        });
+
+        return updated;
+      });
+
+      showSuccess(`${selectedSizes.length} sizes added successfully`);
+      return true;
+    } catch (error) {
+      console.error("Error adding group sizes:", error);
+
+      showError(error.response?.data?.message || "Failed to add group sizes");
+
+      return false;
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files || []);
 
@@ -596,10 +653,12 @@ const AdminSingleShoeManagement = () => {
         />
 
         <SizesStockManager
+          type={shoeInfo.type}
           sizes={sizes}
           onChangeStock={handleChangeStock}
           onDeleteSize={handleDeleteSize}
           onAddNewSize={handleAddNewSize}
+          onAddGroupSizes={handleGroupSizes}
           updating={updating}
         />
 

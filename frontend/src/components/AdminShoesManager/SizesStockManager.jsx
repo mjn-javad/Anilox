@@ -9,134 +9,72 @@ const SizeItem = ({
   onDeleteSize,
   updating,
 }) => {
-  const [changeAmount, setChangeAmount] = useState(1);
+  const [amount, setAmount] = useState(1);
+  const stock = Number(quantity) || 0;
 
-  const currentQuantity = Number(quantity) || 0;
-  const numericAmount = Number(changeAmount);
+  const changeStock = async (value) => {
+    const number = Number(amount);
 
-  const validateAmount = () => {
-    if (!Number.isInteger(numericAmount) || numericAmount < 1) {
-      alert("Please enter a valid quantity");
-      return false;
+    if (!Number.isInteger(number) || number < 1) {
+      return alert("Please enter a valid quantity");
     }
 
-    return true;
+    if (value < 0 && number > stock) {
+      return alert(`Current stock is ${stock}`);
+    }
+
+    const success = await onChangeStock(size, number * value);
+
+    if (success !== false) setAmount(1);
   };
 
-  const handleIncrease = async (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    if (updating || !validateAmount()) return;
-
-    const success = await onChangeStock(size, numericAmount);
-
-    if (success) {
-      setChangeAmount(1);
-    }
-  };
-
-  const handleDecrease = async (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    if (updating || !validateAmount()) return;
-
-    if (numericAmount > currentQuantity) {
-      alert(
-        `You cannot reduce more than the current stock (${currentQuantity})`,
-      );
-      return;
-    }
-
-    const success = await onChangeStock(size, -numericAmount);
-
-    if (success) {
-      setChangeAmount(1);
-    }
-  };
-
-  const handleDelete = async (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    if (updating) return;
-
-    const confirmed = window.confirm(
-      `Do you want to delete size ${size} completely?`,
-    );
-
-    if (!confirmed) return;
-
+  const deleteSize = async () => {
+    if (!window.confirm(`Delete size ${size} completely?`)) return;
     await onDeleteSize(size);
   };
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg bg-gray-50 p-4">
-      <div className="flex items-center justify-between">
-        <span className="font-semibold text-gray-800">Size {size}</span>
-
-        <span className="text-gray-600">
-          Stock:
-          <span className="ml-1 font-bold text-gray-900">
-            {currentQuantity}
-          </span>
+    <div className="space-y-3 rounded-lg bg-gray-50 p-4">
+      <div className="flex justify-between">
+        <strong>Size {size}</strong>
+        <span>
+          Stock: <strong>{stock}</strong>
         </span>
       </div>
 
       <input
         type="number"
         min="1"
-        step="1"
-        value={changeAmount}
+        value={amount}
         disabled={updating}
-        placeholder="Enter quantity"
-        onChange={(event) => setChangeAmount(event.target.value)}
-        onClick={(event) => event.stopPropagation()}
-        className="
-          w-full rounded-lg border border-gray-300 px-3 py-2
-          focus:border-blue-500 focus:outline-none
-          focus:ring-2 focus:ring-blue-200
-          disabled:cursor-not-allowed disabled:bg-gray-100
-        "
+        onChange={(e) => setAmount(e.target.value)}
+        className="w-full rounded-lg border px-3 py-2"
       />
 
       <div className="grid grid-cols-3 gap-2">
         <button
           type="button"
-          onClick={handleIncrease}
           disabled={updating}
-          className="
-            rounded-lg bg-green-500 px-3 py-2 text-white
-            transition-colors hover:bg-green-600
-            disabled:cursor-not-allowed disabled:bg-gray-400
-          "
+          onClick={() => changeStock(1)}
+          className="rounded-lg bg-green-500 py-2 text-white disabled:bg-gray-400"
         >
           + Add
         </button>
 
         <button
           type="button"
-          onClick={handleDecrease}
-          disabled={updating || currentQuantity <= 0}
-          className="
-            rounded-lg bg-orange-500 px-3 py-2 text-white
-            transition-colors hover:bg-orange-600
-            disabled:cursor-not-allowed disabled:bg-gray-400
-          "
+          disabled={updating || stock <= 0}
+          onClick={() => changeStock(-1)}
+          className="rounded-lg bg-orange-500 py-2 text-white disabled:bg-gray-400"
         >
           − Reduce
         </button>
 
         <button
           type="button"
-          onClick={handleDelete}
           disabled={updating}
-          className="
-            rounded-lg bg-red-500 px-3 py-2 text-white
-            transition-colors hover:bg-red-600
-            disabled:cursor-not-allowed disabled:bg-gray-400
-          "
+          onClick={deleteSize}
+          className="rounded-lg bg-red-500 py-2 text-white disabled:bg-gray-400"
         >
           Delete
         </button>
@@ -146,139 +84,198 @@ const SizeItem = ({
 };
 
 const AddNewSizeForm = ({ onAddSize, updating }) => {
-  const [newSize, setNewSize] = useState({
-    size: "",
-    quantity: 1,
-  });
+  const [form, setForm] = useState({ size: "", quantity: 1 });
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    event.stopPropagation();
+  const submit = async (e) => {
+    e.preventDefault();
 
-    const size = String(newSize.size).trim();
-    const quantity = Number(newSize.quantity);
+    const size = String(form.size).trim();
+    const quantity = Number(form.quantity);
 
-    if (!size) {
-      alert("Please enter a size");
-      return;
+    if (!size || !Number.isInteger(quantity) || quantity < 1) {
+      return alert("Enter valid size and quantity");
     }
 
-    if (!Number.isInteger(quantity) || quantity < 1) {
-      alert("Quantity must be at least 1");
-      return;
-    }
+    const success = await onAddSize({ size, quantity });
 
-    const success = await onAddSize({
-      size,
-      quantity,
-    });
-
-    if (success) {
-      setNewSize({
-        size: "",
-        quantity: 1,
-      });
+    if (success !== false) {
+      setForm({ size: "", quantity: 1 });
     }
   };
 
   return (
-    <div className="border-t pt-4">
-      <h3 className="mb-3 text-lg font-semibold text-gray-700">Add New Size</h3>
+    <form onSubmit={submit} className="space-y-3 border-t pt-4">
+      <h3 className="text-lg font-semibold">Add New Size</h3>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <input
-            type="text"
-            placeholder="Size (e.g. 40, 41, 42)"
-            value={newSize.size}
-            disabled={updating}
-            onChange={(event) =>
-              setNewSize((previous) => ({
-                ...previous,
-                size: event.target.value,
-              }))
-            }
-            className="
-              rounded-lg border border-gray-300 px-3 py-2
-              focus:outline-none focus:ring-2 focus:ring-blue-500
-              disabled:bg-gray-100
-            "
-          />
+      <div className="grid gap-3 md:grid-cols-2">
+        <input
+          placeholder="Size"
+          value={form.size}
+          disabled={updating}
+          onChange={(e) => setForm({ ...form, size: e.target.value })}
+          className="rounded-lg border px-3 py-2"
+        />
 
-          <input
-            type="number"
-            min="1"
-            step="1"
-            placeholder="Quantity"
-            value={newSize.quantity}
+        <input
+          type="number"
+          min="1"
+          value={form.quantity}
+          disabled={updating}
+          onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+          className="rounded-lg border px-3 py-2"
+        />
+      </div>
+
+      <button
+        disabled={updating}
+        className="w-full rounded-lg bg-blue-500 py-2 text-white disabled:bg-gray-400"
+      >
+        Add New Size
+      </button>
+    </form>
+  );
+};
+
+const GroupSizeForm = ({ onAddGroupSizes, updating, onClose }) => {
+  const availableSizes = Array.from({ length: 11 }, (_, index) => index + 35);
+
+  const [selected, setSelected] = useState([]);
+  const [quantity, setQuantity] = useState(20);
+
+  const toggleSize = (size) => {
+    setSelected((previous) =>
+      previous.includes(size)
+        ? previous.filter((item) => item !== size)
+        : [...previous, size],
+    );
+  };
+
+  const handleSubmit = async () => {
+    const amount = Number(quantity);
+
+    if (!selected.length) {
+      alert("Select at least one size");
+      return;
+    }
+
+    if (!Number.isInteger(amount) || amount < 1) {
+      alert("Enter a valid quantity");
+      return;
+    }
+
+    const success = await onAddGroupSizes(selected, amount);
+
+    if (success) {
+      setSelected([]);
+      setQuantity(20);
+      onClose();
+    }
+  };
+
+  return (
+    <div className="space-y-4 rounded-lg border bg-gray-50 p-4">
+      <h3 className="font-semibold">Add Group Sizes</h3>
+
+      <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+        {availableSizes.map((size) => (
+          <button
+            key={size}
+            type="button"
             disabled={updating}
-            onChange={(event) =>
-              setNewSize((previous) => ({
-                ...previous,
-                quantity: event.target.value,
-              }))
-            }
-            className="
-              rounded-lg border border-gray-300 px-3 py-2
-              focus:outline-none focus:ring-2 focus:ring-blue-500
-              disabled:bg-gray-100
-            "
-          />
-        </div>
+            onClick={() => toggleSize(size)}
+            className={`rounded-lg border py-2 ${
+              selected.includes(size) ? "bg-blue-500 text-white" : "bg-white"
+            }`}
+          >
+            {size}
+          </button>
+        ))}
+      </div>
+
+      <input
+        type="number"
+        min="1"
+        value={quantity}
+        disabled={updating}
+        onChange={(event) => setQuantity(event.target.value)}
+        className="w-full rounded-lg border px-3 py-2"
+      />
+
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          disabled={updating}
+          onClick={handleSubmit}
+          className="rounded-lg bg-green-500 py-2 text-white disabled:bg-gray-400"
+        >
+          {updating ? "Adding..." : `Add ${selected.length} Sizes`}
+        </button>
 
         <button
-          type="submit"
-          disabled={updating || !String(newSize.size).trim()}
-          className="
-            w-full rounded-lg bg-blue-500 px-4 py-2 text-white
-            transition-colors hover:bg-blue-600
-            disabled:cursor-not-allowed disabled:bg-gray-400
-          "
+          type="button"
+          disabled={updating}
+          onClick={onClose}
+          className="rounded-lg bg-gray-500 py-2 text-white"
         >
-          {updating ? "Updating..." : "Add New Size"}
+          Cancel
         </button>
-      </form>
+      </div>
     </div>
   );
 };
 
 const SizesStockManager = ({
+  type,
   sizes = [],
   onChangeStock,
   onDeleteSize,
   onAddNewSize,
+  onAddGroupSizes,
   updating = false,
 }) => {
+  const [showGroupSizes, setShowGroupSizes] = useState(false);
   const normalizedSizes = Array.isArray(sizes) ? sizes : [];
 
   return (
-    <div className="rounded-lg bg-white p-6 shadow">
-      <h2 className="mb-4 text-xl font-bold text-gray-800">
-        Sizes & Stock Management
-      </h2>
+    <div className="space-y-6 rounded-lg bg-white p-6 shadow">
+      <h2 className="text-xl font-bold">Sizes & Stock Management</h2>
 
-      <div className="mb-6">
-        <h3 className="mb-3 text-lg font-semibold text-gray-700">
-          Current Inventory
-        </h3>
+      <div className="max-h-96 space-y-3 overflow-y-auto">
+        {normalizedSizes.map((item) => (
+          <SizeItem
+            key={item.size}
+            size={item.size}
+            quantity={item.quantity}
+            onChangeStock={onChangeStock}
+            onDeleteSize={onDeleteSize}
+            updating={updating}
+          />
+        ))}
 
-        <div className="max-h-96 space-y-3 overflow-y-auto">
-          {normalizedSizes.map((sizeItem) => (
-            <SizeItem
-              key={String(sizeItem.size)}
-              size={sizeItem.size}
-              quantity={sizeItem.quantity}
-              onChangeStock={onChangeStock}
-              onDeleteSize={onDeleteSize}
-              updating={updating}
-            />
-          ))}
-
-          {normalizedSizes.length === 0 && (
-            <p className="py-4 text-center text-gray-500">No sizes available</p>
-          )}
-        </div>
+        {!normalizedSizes.length && (
+          <p className="py-4 text-center text-gray-500">No sizes available</p>
+        )}
       </div>
+
+      {type === "shoe" && (
+        <>
+          <button
+            type="button"
+            onClick={() => setShowGroupSizes((previous) => !previous)}
+            className="w-full rounded-lg bg-purple-500 py-2 text-white"
+          >
+            Group Size
+          </button>
+
+          {showGroupSizes && (
+            <GroupSizeForm
+              onAddGroupSizes={onAddGroupSizes}
+              updating={updating}
+              onClose={() => setShowGroupSizes(false)}
+            />
+          )}
+        </>
+      )}
 
       <AddNewSizeForm onAddSize={onAddNewSize} updating={updating} />
     </div>

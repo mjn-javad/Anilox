@@ -46,6 +46,17 @@ const addImages = async (shoeId, images) => {
   }
 };
 
+const addSize = async (shoeId, size, quantity) => {
+  const query = `
+    INSERT INTO shoes_sizes (shoes_id, size, quantity) 
+    VALUES (?, ?, ?)
+  `;
+
+  const [result] = await db.execute(query, [shoeId, size, quantity]);
+
+  return result.insertId;
+};
+
 const hasOrders = async (id) => {
   const [rows] = await db.execute(
     `SELECT 1
@@ -56,17 +67,6 @@ const hasOrders = async (id) => {
   );
 
   return rows.length > 0;
-};
-
-const addSize = async (shoeId, size, quantity) => {
-  const query = `
-    INSERT INTO shoes_sizes (shoes_id, size, quantity) 
-    VALUES (?, ?, ?)
-  `;
-
-  const [result] = await db.execute(query, [shoeId, size, quantity]);
-
-  return result.insertId;
 };
 
 const remove = async (id) => {
@@ -657,6 +657,29 @@ const updateImageSortOrder = async (shoeId, imageName, sortOrder) => {
   }
 };
 
+const changeStock = async (shoeId, size, quantityChange) => {
+  const query = `
+    INSERT INTO shoes_sizes (shoes_id, size, quantity)
+    VALUES (?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+      quantity = GREATEST(quantity + VALUES(quantity), 0)
+  `;
+
+  await db.execute(query, [shoeId, size, quantityChange]);
+
+  await db.execute(
+    `
+      DELETE FROM shoes_sizes
+      WHERE shoes_id = ?
+        AND size = ?
+        AND quantity <= 0
+    `,
+    [shoeId, size],
+  );
+
+  return true;
+};
+
 module.exports = {
   updateShoeInfo,
   getAll,
@@ -673,4 +696,5 @@ module.exports = {
   findImageByName,
   increaseStock,
   hasOrders,
+  changeStock,
 };

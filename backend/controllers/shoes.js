@@ -9,28 +9,27 @@ exports.createProduct = async (req, res, next) => {
     const {
       type,
       brand,
-      model,
-      category,
+      model, // اضافه شده: مدل کفش
+      category = "", // اضافه شده: دسته‌بندی کفش
       gender,
       price,
       discount_price,
       description,
-      colors,
+      colors, // ساده شده: یک رشته مثل "قرمز, آبی, مشکی"
     } = req.body;
 
+    // اعتبارسنجی فیلدهای الزامی
     if (!price || !model) {
       return res.status(403).json({
         success: false,
-        message: "Price and model can not be empty",
+        message: "Price, model can not be empty",
       });
     }
 
-    const processedModel = model.trim().replace(/\s+/g, " ").toUpperCase();
+    const name = model + " - " + colors;
 
-    const name = processedModel + (colors ? ` - ${colors}` : "");
-
+    // بررسی وجود برند
     const isBrandExist = await BrandPopular.findBySlug(null, brand);
-
     if (!isBrandExist) {
       return res.status(403).json({
         success: false,
@@ -38,51 +37,67 @@ exports.createProduct = async (req, res, next) => {
       });
     }
 
-    const slug = await generateSlug(name, processedModel, colors);
+    const slug = await generateSlug(name, model, colors);
 
+    // بررسی عدم تکراری بودن slug
     const hasSlugUsed = await ShoesRepository.findBySlug(null, slug);
-
     if (hasSlugUsed) {
       return res.status(403).json({
         success: false,
         message:
-          "This product with this model and color has already been created",
+          "This Product with this model and color used before,This slug has been used before",
       });
     }
 
-    let imageNames = [];
+    // پردازش model: حذف فاصله‌های اضافی و تبدیل به حروف بزرگ
+    let processedModel = model
+      .trim() // حذف فاصله از اول و آخر
+      .replace(/\s+/g, " ") // تبدیل چند فاصله به یک فاصله
+      .toUpperCase(); // تبدیل به حروف بزرگ
 
-    if (req.files?.length > 0) {
+    // استخراج نام فایل‌ها از req.files
+    let imageNames = [];
+    if (req.files && req.files.length > 0) {
       imageNames = req.files.map((file) => file.filename);
     }
 
+    // پردازش colors (به صورت رشته ساده)
     let colorsString = null;
-
-    if (Array.isArray(colors)) {
-      colorsString = colors.join(", ");
-    } else if (typeof colors === "string" && colors.trim()) {
-      colorsString = colors.trim().replace(/\s*,\s*/g, ", ");
-    } else if (colors && typeof colors === "object" && colors.name) {
-      colorsString = colors.name;
+    if (colors) {
+      // اگر colors به صورت آرایه آمده، آن را به رشته تبدیل کن
+      if (Array.isArray(colors)) {
+        colorsString = colors.join(", ");
+      }
+      // اگر به صورت رشته است، فاصله‌های اضافی را حذف کن
+      else if (typeof colors === "string") {
+        colorsString = colors.trim().replace(/\s*,\s*/g, ", "); // استانداردسازی کاماها
+      }
+      // اگر به صورت آبجکت است (برای سازگاری با کلاینت‌های قدیمی)
+      else if (typeof colors === "object") {
+        if (colors.name) {
+          colorsString = colors.name;
+        } else if (Array.isArray(colors)) {
+          colorsString = colors.map((c) => c.name || c).join(", ");
+        }
+      }
     }
 
-    const processedCategory =
-      typeof category === "string" && category.trim() ? category.trim() : null;
-
+    // ایجاد کفش جدید
     const shoeId = await ShoesRepository.create({
       type,
       name,
       slug,
       brand,
-      model: processedModel,
-      category: processedCategory,
+      model: processedModel, // مدل پردازش شده
+      category, // دسته‌بندی
       gender,
       price,
       discount_price: discount_price || null,
-      description: description?.trim() || null,
-      colors: colorsString,
+      description: description || null,
+      colors: colorsString, // رنگ به صورت رشته ساده
     });
 
+    // ذخیره نام فایل‌ها در دیتابیس
     if (imageNames.length > 0) {
       await ShoesRepository.addImages(shoeId, imageNames);
     }
@@ -92,11 +107,10 @@ exports.createProduct = async (req, res, next) => {
       message: "Product created successfully",
       data: {
         shoeId,
-        model: processedModel,
+        model: processedModel, // برگرداندن مدل پردازش شده برای اطلاع کلاینت
       },
     });
   } catch (err) {
-    console.error("CREATE PRODUCT ERROR:", err);
     next(err);
   }
 };
@@ -133,41 +147,53 @@ exports.deleteProduct = async (req, res, next) => {
   }
 };
 
-exports.increaseStock = async (req, res, next) => {
+exports.updateShoeStock = async (req, res) => {
   try {
     const { shoeId } = req.params;
     const { size, quantity } = req.body;
 
-    if (!shoeId || size === undefined || quantity === undefined) {
+    if (!size) {
       return res.status(400).json({
         success: false,
-        message: "shoeId, size and quantity are required",
+        message: "Size is required",
       });
     }
 
-    const shoe = await ShoesRepository.findById(shoeId);
+    const quantityChange = Number(quantity);
 
-    if (!shoe) {
+    if (!Number.isInteger(quantityChange) || quantityChange === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Quantity must be a non-zero integer",
+      });
+    }
+
+    const updated = await changeStock(shoeId, size, quantityChange);
+
+    if (!updated) {
       return res.status(404).json({
         success: false,
-        message: "Cannot find a shoe with this id",
+        message: "Shoe size was not found",
       });
     }
-
-    await ShoesRepository.increaseStock(
-      Number(shoeId),
-      Number(size),
-      Number(quantity),
-    );
 
     return res.status(200).json({
       success: true,
-      message: "Stock updated successfully",
+      message:
+        quantityChange > 0
+          ? "Stock increased successfully"
+          : "Stock decreased successfully",
     });
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    console.error("Update shoe stock error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update shoe stock",
+    });
   }
 };
+
 exports.getAllProducts = async (req, res, next) => {
   try {
     let {
@@ -573,4 +599,28 @@ const generateSlug = (name, model, colors) => {
     .replace(/-+/g, "-"); // تبدیل چند خط تیره به یک خط تیره
 
   return slug;
+};
+
+const changeStock = async (shoeId, size, quantityChange) => {
+  const parsedShoeId = Number(shoeId);
+  const parsedQuantity = Number(quantityChange);
+  const normalizedSize = String(size).trim();
+
+  if (!Number.isInteger(parsedShoeId) || parsedShoeId <= 0) {
+    throw new Error("Invalid shoe ID");
+  }
+
+  if (!normalizedSize) {
+    throw new Error("Size is required");
+  }
+
+  if (!Number.isInteger(parsedQuantity) || parsedQuantity === 0) {
+    throw new Error("Quantity must be a non-zero integer");
+  }
+
+  return ShoesRepository.changeStock(
+    parsedShoeId,
+    normalizedSize,
+    parsedQuantity,
+  );
 };

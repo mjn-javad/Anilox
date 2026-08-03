@@ -254,15 +254,29 @@ const AdminSingleShoeManagement = () => {
     }
   };
 
-  const handleAddStock = async (size, currentQuantity) => {
-    const addedStock = prompt(
-      `Current stock for size ${size}: ${currentQuantity}\nEnter the stock amount you want to add:`,
-      1,
+  const handleChangeStock = async (size, quantityChange) => {
+    const change = Number(quantityChange);
+
+    if (!Number.isInteger(change) || change === 0) {
+      showError("Please enter a valid quantity");
+      return false;
+    }
+
+    const selectedSize = sizes.find(
+      (item) => String(item.size) === String(size),
     );
 
-    if (!addedStock || isNaN(addedStock)) {
-      showError("Please enter a valid quantity");
-      return;
+    if (!selectedSize) {
+      showError(`Size ${size} not found`);
+      return false;
+    }
+
+    const currentQuantity = Number(selectedSize.quantity) || 0;
+    const updatedQuantity = currentQuantity + change;
+
+    if (updatedQuantity < 0) {
+      showError("Stock cannot be less than zero");
+      return false;
     }
 
     try {
@@ -270,14 +284,12 @@ const AdminSingleShoeManagement = () => {
 
       await apiClientShoes.patch(`/${shoeId}/stock/${size}`, {
         size,
-        quantity: parseInt(addedStock),
+        quantity: change,
       });
 
-      const updatedQuantity = parseInt(currentQuantity) + parseInt(addedStock);
-
-      setSizes((prev) =>
-        prev.map((item) =>
-          item.size === size
+      setSizes((previousSizes) =>
+        previousSizes.map((item) =>
+          String(item.size) === String(size)
             ? {
                 ...item,
                 quantity: updatedQuantity,
@@ -287,58 +299,109 @@ const AdminSingleShoeManagement = () => {
       );
 
       showSuccess(`Stock for size ${size} updated to ${updatedQuantity}`);
-    } catch (err) {
-      console.error("Error updating stock:", err);
-      showError(err.response?.data?.message || "Failed to update stock");
+
+      return true;
+    } catch (error) {
+      console.error("Error updating stock:", error);
+
+      showError(error.response?.data?.message || "Failed to update stock");
+
+      return false;
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleDeleteSize = async (size) => {
+    const selectedSize = sizes.find(
+      (item) => String(item.size) === String(size),
+    );
+
+    if (!selectedSize) {
+      showError(`Size ${size} not found`);
+      return false;
+    }
+
+    const currentQuantity = Number(selectedSize.quantity) || 0;
+
+    try {
+      setUpdating(true);
+
+      /*
+      تمام موجودی فعلی منفی می‌شود.
+      مثلاً اگر موجودی 5 باشد، quantity برابر -5 ارسال می‌شود.
+    */
+      if (currentQuantity > 0) {
+        await apiClientShoes.patch(`/${shoeId}/stock/${size}`, {
+          size,
+          quantity: -currentQuantity,
+        });
+      }
+
+      setSizes((previousSizes) =>
+        previousSizes.filter((item) => String(item.size) !== String(size)),
+      );
+
+      showSuccess(`Size ${size} deleted successfully`);
+
+      return true;
+    } catch (error) {
+      console.error("Error deleting size:", error);
+
+      showError(error.response?.data?.message || "Failed to delete size");
+
+      return false;
     } finally {
       setUpdating(false);
     }
   };
 
   const handleAddNewSize = async (newSizeData) => {
-    if (!newSizeData.size) {
+    const size = String(newSizeData.size || "").trim();
+    const quantity = Number(newSizeData.quantity);
+
+    if (!size) {
       showError("Please enter a size");
-      return;
+      return false;
     }
 
-    if (
-      newSizeData.quantity === "" ||
-      newSizeData.quantity === null ||
-      isNaN(newSizeData.quantity)
-    ) {
-      showError("Please enter a valid quantity");
-      return;
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      showError("Quantity must be at least 1");
+      return false;
     }
 
-    const exists = sizes.some(
-      (item) => String(item.size) === String(newSizeData.size),
-    );
+    const exists = sizes.some((item) => String(item.size) === size);
 
     if (exists) {
-      showError(`Size ${newSizeData.size} already exists`);
-      return;
+      showError(`Size ${size} already exists`);
+      return false;
     }
 
     try {
       setUpdating(true);
 
-      await apiClientShoes.patch(`/${shoeId}/stock/${newSizeData.size}`, {
-        size: newSizeData.size,
-        quantity: parseInt(newSizeData.quantity),
+      await apiClientShoes.patch(`/${shoeId}/stock/${size}`, {
+        size,
+        quantity,
       });
 
-      setSizes((prev) => [
-        ...prev,
+      setSizes((previousSizes) => [
+        ...previousSizes,
         {
-          size: newSizeData.size,
-          quantity: parseInt(newSizeData.quantity),
+          size,
+          quantity,
         },
       ]);
 
-      showSuccess(`New size ${newSizeData.size} added successfully`);
-    } catch (err) {
-      console.error("Error adding new size:", err);
-      showError(err.response?.data?.message || "Failed to add new size");
+      showSuccess(`New size ${size} added successfully`);
+
+      return true;
+    } catch (error) {
+      console.error("Error adding new size:", error);
+
+      showError(error.response?.data?.message || "Failed to add new size");
+
+      return false;
     } finally {
       setUpdating(false);
     }
@@ -395,12 +458,7 @@ const AdminSingleShoeManagement = () => {
       return;
     }
 
-    if (
-      newSortOrder === "" ||
-      newSortOrder === null ||
-      isNaN(newSortOrder) ||
-      parseInt(newSortOrder) < 0
-    ) {
+    if (newSortOrder === "" || newSortOrder === null || isNaN(newSortOrder)) {
       showError("Please enter a valid sort order");
       return;
     }
@@ -484,7 +542,7 @@ const AdminSingleShoeManagement = () => {
                 type="button"
                 onClick={handleRemoveFromBigSize}
                 disabled={updating}
-                className="bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white py-2 rounded-lg"
+                className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-300 text-white py-2 rounded-lg"
               >
                 {updating ? "..." : "Remove"}
               </button>
@@ -508,7 +566,7 @@ const AdminSingleShoeManagement = () => {
                 type="button"
                 onClick={handleRemoveFromBestSellers}
                 disabled={updating}
-                className="bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white py-2 rounded-lg"
+                className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-300 text-white py-2 rounded-lg"
               >
                 {updating ? "..." : "Remove"}
               </button>
@@ -539,7 +597,8 @@ const AdminSingleShoeManagement = () => {
 
         <SizesStockManager
           sizes={sizes}
-          onAddStock={handleAddStock}
+          onChangeStock={handleChangeStock}
+          onDeleteSize={handleDeleteSize}
           onAddNewSize={handleAddNewSize}
           updating={updating}
         />

@@ -107,7 +107,7 @@ router.patch(
   "/:shoeId/stock/:size",
   authMiddleware,
   isAdminMiddleware,
-  controller.increaseStock,
+  controller.updateShoeStock,
 );
 
 module.exports = router;

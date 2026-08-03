@@ -6,98 +6,167 @@ const { date } = require("yup");
 
 exports.createProduct = async (req, res, next) => {
   try {
+    const allowedTypes = ["shoe", "belt", "bag", "luggage", "glasses", "watch"];
+
+    const allowedGenders = ["male", "female", "genderless"];
+
+    const allowedCategories = [
+      "sneaker",
+      "loafer",
+      "formal",
+      "boot",
+      "sandal",
+      "sport",
+      "classic",
+      "flat",
+      "heels",
+      "other",
+    ];
+
     const {
-      type,
+      type = "shoe",
       brand,
-      model, // اضافه شده: مدل کفش
-      category = "", // اضافه شده: دسته‌بندی کفش
+      model,
+      category,
       gender,
       price,
       discount_price,
       description,
-      colors, // ساده شده: یک رشته مثل "قرمز, آبی, مشکی"
+      colors,
     } = req.body;
 
-    // اعتبارسنجی فیلدهای الزامی
-    if (!price || !model) {
-      return res.status(403).json({
+    const normalizedType = String(type).trim().toLowerCase();
+    const normalizedGender = String(gender || "")
+      .trim()
+      .toLowerCase();
+
+    const normalizedCategory =
+      category === undefined ||
+      category === null ||
+      String(category).trim() === ""
+        ? null
+        : String(category).trim().toLowerCase();
+
+    if (!model || price === undefined || price === null || price === "") {
+      return res.status(400).json({
         success: false,
-        message: "Price, model can not be empty",
+        message: "Price and model cannot be empty",
       });
     }
 
-    const name = model + " - " + colors;
-
-    // بررسی وجود برند
-    const isBrandExist = await BrandPopular.findBySlug(null, brand);
-    if (!isBrandExist) {
-      return res.status(403).json({
+    if (!allowedTypes.includes(normalizedType)) {
+      return res.status(400).json({
         success: false,
-        message: "Can not find this brand",
+        message: `Invalid product type. Allowed values: ${allowedTypes.join(
+          ", ",
+        )}`,
       });
     }
 
-    const slug = await generateSlug(name, model, colors);
-
-    // بررسی عدم تکراری بودن slug
-    const hasSlugUsed = await ShoesRepository.findBySlug(null, slug);
-    if (hasSlugUsed) {
-      return res.status(403).json({
+    if (!allowedGenders.includes(normalizedGender)) {
+      return res.status(400).json({
         success: false,
-        message:
-          "This Product with this model and color used before,This slug has been used before",
+        message: `Invalid gender. Allowed values: ${allowedGenders.join(", ")}`,
       });
     }
 
-    // پردازش model: حذف فاصله‌های اضافی و تبدیل به حروف بزرگ
-    let processedModel = model
-      .trim() // حذف فاصله از اول و آخر
-      .replace(/\s+/g, " ") // تبدیل چند فاصله به یک فاصله
-      .toUpperCase(); // تبدیل به حروف بزرگ
-
-    // استخراج نام فایل‌ها از req.files
-    let imageNames = [];
-    if (req.files && req.files.length > 0) {
-      imageNames = req.files.map((file) => file.filename);
+    if (normalizedCategory && !allowedCategories.includes(normalizedCategory)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid category. Allowed values: ${allowedCategories.join(
+          ", ",
+        )}`,
+      });
     }
 
-    // پردازش colors (به صورت رشته ساده)
+    const numericPrice = Number(price);
+    const numericDiscountPrice =
+      discount_price === undefined ||
+      discount_price === null ||
+      discount_price === ""
+        ? null
+        : Number(discount_price);
+
+    if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Price must be a valid positive number",
+      });
+    }
+
+    if (
+      numericDiscountPrice !== null &&
+      (!Number.isFinite(numericDiscountPrice) || numericDiscountPrice < 0)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Discount price must be a valid number",
+      });
+    }
+
+    const processedModel = String(model)
+      .trim()
+      .replace(/\s+/g, " ")
+      .toUpperCase();
+
     let colorsString = null;
-    if (colors) {
-      // اگر colors به صورت آرایه آمده، آن را به رشته تبدیل کن
-      if (Array.isArray(colors)) {
-        colorsString = colors.join(", ");
-      }
-      // اگر به صورت رشته است، فاصله‌های اضافی را حذف کن
-      else if (typeof colors === "string") {
-        colorsString = colors.trim().replace(/\s*,\s*/g, ", "); // استانداردسازی کاماها
-      }
-      // اگر به صورت آبجکت است (برای سازگاری با کلاینت‌های قدیمی)
-      else if (typeof colors === "object") {
-        if (colors.name) {
-          colorsString = colors.name;
-        } else if (Array.isArray(colors)) {
-          colorsString = colors.map((c) => c.name || c).join(", ");
-        }
-      }
+
+    if (Array.isArray(colors)) {
+      colorsString = colors
+        .map((color) => (typeof color === "object" ? color.name : color))
+        .filter(Boolean)
+        .join(", ");
+    } else if (typeof colors === "string") {
+      colorsString = colors.trim().replace(/\s*,\s*/g, ", ") || null;
+    } else if (colors && typeof colors === "object" && colors.name) {
+      colorsString = String(colors.name).trim();
     }
 
-    // ایجاد کفش جدید
+    const name = colorsString
+      ? `${processedModel} - ${colorsString}`
+      : processedModel;
+
+    const isBrandExist = await BrandPopular.findBySlug(null, brand);
+
+    if (!isBrandExist) {
+      return res.status(404).json({
+        success: false,
+        message: "Cannot find this brand",
+      });
+    }
+
+    const slug = await generateSlug(name, processedModel, colorsString || "");
+
+    const hasSlugUsed = await ShoesRepository.findBySlug(null, slug);
+
+    if (hasSlugUsed) {
+      return res.status(409).json({
+        success: false,
+        message: "A product with this model and color already exists",
+      });
+    }
+
+    const imageNames = Array.isArray(req.files)
+      ? req.files.map((file) => file.filename)
+      : [];
+
     const shoeId = await ShoesRepository.create({
-      type,
+      type: normalizedType,
       name,
       slug,
       brand,
-      model: processedModel, // مدل پردازش شده
-      category, // دسته‌بندی
-      gender,
-      price,
-      discount_price: discount_price || null,
-      description: description || null,
-      colors: colorsString, // رنگ به صورت رشته ساده
+      model: processedModel,
+
+      // برای محصولات غیر کفش category ذخیره نمی‌شود
+      category: normalizedType === "shoe" ? normalizedCategory : null,
+
+      gender: normalizedGender,
+      price: numericPrice,
+      discount_price: numericDiscountPrice,
+      description: description?.trim() || null,
+      colors: colorsString,
     });
 
-    // ذخیره نام فایل‌ها در دیتابیس
     if (imageNames.length > 0) {
       await ShoesRepository.addImages(shoeId, imageNames);
     }
@@ -107,11 +176,11 @@ exports.createProduct = async (req, res, next) => {
       message: "Product created successfully",
       data: {
         shoeId,
-        model: processedModel, // برگرداندن مدل پردازش شده برای اطلاع کلاینت
+        model: processedModel,
       },
     });
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 };
 

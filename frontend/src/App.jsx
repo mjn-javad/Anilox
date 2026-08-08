@@ -37,6 +37,7 @@ import "./App.css";
 import BannerManager from "./components/Banner/BannerManager";
 import EditBanner from "./components/Banner/EditBanner";
 import BestSellersGlobalSlider from "./components/Slider/BestSellersGlobalSlider";
+import GenderLanding from "./pages/GenderLanding";
 
 function App() {
   return (
@@ -46,7 +47,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Layout />}>
           {/* Home Pages */}
-          <Route index element={<WomenHome />} />
+          <Route index element={<GenderLanding />} />
           <Route path="women" element={<WomenHome />} />
           <Route path="men" element={<MenHome />} />
 

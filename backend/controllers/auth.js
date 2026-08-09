@@ -627,8 +627,10 @@ exports.forgotPassword = async (req, res, next) => {
     await PasswordReset.create(email, hashedToken, expiresAt);
 
     // Create reset link
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}&email=${email}`;
-
+    const resetLink =
+      `${process.env.FRONTEND_URL}/reset-password` +
+      `?token=${encodeURIComponent(resetToken)}` +
+      `&email=${encodeURIComponent(email)}`;
     // Send email
     await emailService.sendPasswordResetEmail(email, resetLink, user.name);
 

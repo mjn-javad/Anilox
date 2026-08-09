@@ -1,77 +1,70 @@
-import React, { useState } from "react";
-import apiClientAuth from "../../services/api-client_auth";
-import { Link } from "react-router-dom";
-import MessageAlert from "../Shared/MessageAlert";
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    console.log("1 - forgotPassword started");
 
-const ForgotPassword = () => {
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+    const { email } = req.body;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setMessage("");
-
-    try {
-      const res = await apiClientAuth.post("/forgot-password", { email });
-      setMessage(res.data.message);
-      setEmail("");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to send reset email");
-    } finally {
-      setLoading(false);
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
     }
-  };
 
-  return (
-    <div className="container text-center my-5">
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-col gap-y-4 max-w-md mx-auto"
-      >
-        <h2 className="text-2xl font-bold mb-4">Forgot Password</h2>
+    console.log("2 - searching user");
 
-        <p className="text-gray-600 mb-4">
-          Enter your email address and we'll send you a link to reset your
-          password.
-        </p>
+    const user = await Users.findByUsernameOrEmail({
+      username: "",
+      email,
+    });
 
-        <div className="flex flex-col gap-y-2">
-          <label className="text-left">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="bg-gray-200 px-3 py-2 rounded-sm"
-            placeholder="Enter your email"
-            required
-          />
-        </div>
+    console.log("3 - user search finished", !!user);
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-blue-500 text-white py-2 rounded-xl hover:bg-blue-400 transition-colors disabled:bg-blue-300"
-        >
-          {loading ? "Sending..." : "Send Reset Link"}
-        </button>
+    if (!user) {
+      return res.status(200).json({
+        message: "If your email is registered, you will receive a reset link",
+      });
+    }
 
-        <Link
-          to="/loginlogout"
-          className="text-shadow-amber-50 opacity-25 hover:opacity-70 duration-100"
-        >
-          Back to Login
-        </Link>
+    console.log("4 - deleting old tokens");
 
-        {message && <MessageAlert message={message} type="success" />}
+    await PasswordReset.deleteByEmail(email);
 
-        {error && <MessageAlert message={error} type="error" />}
-      </form>
-    </div>
-  );
+    console.log("5 - old tokens deleted");
+
+    const resetToken = jwt.sign(
+      { email: user.email, user_id: user.id },
+      configs.auth.resetPassTokenSecretKey,
+      { expiresIn: "1h" },
+    );
+
+    console.log("6 - jwt created");
+
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    console.log("7 - saving reset token");
+
+    await PasswordReset.create(email, hashedToken, expiresAt);
+
+    console.log("8 - reset token saved");
+
+    const resetLink =
+      `${process.env.FRONTEND_URL}/reset-password` +
+      `?token=${resetToken}&email=${encodeURIComponent(email)}`;
+
+    console.log("9 - sending email");
+
+    await emailService.sendPasswordResetEmail(email, resetLink, user.name);
+
+    console.log("10 - email sent");
+
+    return res.status(200).json({
+      message: "Password reset link sent to your email",
+    });
+  } catch (err) {
+    console.error("FORGOT PASSWORD ERROR:", err);
+    next(err);
+  }
 };
-
-export default ForgotPassword;

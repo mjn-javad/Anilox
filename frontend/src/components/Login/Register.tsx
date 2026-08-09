@@ -115,8 +115,8 @@ const Register = () => {
           type="password"
         />
         <InputField
-          name="password"
-          label="Password"
+          name="confirmPassword"
+          label="Confirm Password"
           value={form.confirmPassword}
           onChange={handleChange}
           required={true}

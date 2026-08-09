@@ -5,7 +5,7 @@ class EmailService {
   constructor() {
     this.resend = new Resend(process.env.RESEND_API_KEY);
 
-    this.from = "Anilox <no-reply@admin.aniloxhub.com>";
+    this.from = "Anilox <no-reply@aniloxhub.com>";
   }
 
   async sendVerificationCode(email, code) {

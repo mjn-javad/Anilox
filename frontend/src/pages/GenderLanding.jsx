@@ -32,7 +32,6 @@ function GenderLanding() {
           className={`
             relative min-h-0 flex-1 overflow-hidden
             transition-all duration-500 ease-out
-            ${gender === "women" ? "bg-[#040404]" : "bg-[#f0e4d6]"}
             ${
               selected === gender
                 ? "z-10 scale-[1.015]"

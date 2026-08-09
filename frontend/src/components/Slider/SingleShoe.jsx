@@ -184,6 +184,15 @@ const SingleShoe = () => {
             {images[selectedImage] ? (
               <img
                 src={getImageSrc(images[selectedImage], 960)}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+
+                  const image = images[selectedImage];
+                  const imageName =
+                    typeof image === "string" ? image : image?.image_name;
+
+                  e.currentTarget.src = `${IMG_URL}${imageName}`;
+                }}
                 alt={shoe.name}
                 className="w-full h-full object-contain"
               />
@@ -206,6 +215,14 @@ const SingleShoe = () => {
                 >
                   <img
                     src={getImageSrc(image, 320)}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+
+                      const imageName =
+                        typeof image === "string" ? image : image?.image_name;
+
+                      e.currentTarget.src = `${IMG_URL}${imageName}`;
+                    }}
                     alt={`${shoe.name} - ${index + 1}`}
                     loading="lazy"
                     className="w-full aspect-square object-cover"
@@ -275,6 +292,17 @@ const SingleShoe = () => {
                     >
                       <img
                         src={getImageSrc(color?.images?.[0], 320)}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+
+                          const image = color?.images?.[0];
+                          const imageName =
+                            typeof image === "string"
+                              ? image
+                              : image?.image_name;
+
+                          e.currentTarget.src = `${IMG_URL}${imageName}`;
+                        }}
                         alt={color.name}
                         loading="lazy"
                         className="w-full h-full object-cover rounded"

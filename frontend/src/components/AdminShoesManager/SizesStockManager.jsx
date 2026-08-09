@@ -137,7 +137,7 @@ const AddNewSizeForm = ({ onAddSize, updating }) => {
 };
 
 const GroupSizeForm = ({ onAddGroupSizes, updating, onClose }) => {
-  const availableSizes = Array.from({ length: 11 }, (_, index) => index + 35);
+  const availableSizes = Array.from({ length: 14 }, (_, index) => index + 35);
 
   const [selected, setSelected] = useState([]);
   const [quantity, setQuantity] = useState(20);

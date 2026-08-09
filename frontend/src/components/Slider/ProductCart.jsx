@@ -162,6 +162,11 @@ const ProductCard = ({
                         /\.[^/.]+$/,
                         "",
                       )}-640.webp`}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+
+                        e.currentTarget.src = `/api/images/posts/${shoe.images[0].image_name}`;
+                      }}
                       alt={shoe.name}
                       loading="lazy"
                       className="aspect-square w-full object-cover transition-opacity duration-300 group-hover:opacity-90"

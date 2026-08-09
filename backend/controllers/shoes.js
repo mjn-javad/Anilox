@@ -188,6 +188,7 @@ exports.deleteProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
 
+    // بررسی اینکه محصول سفارش دارد یا نه
     const hasOrders = await ShoesRepository.hasOrders(id);
 
     if (hasOrders) {
@@ -198,6 +199,20 @@ exports.deleteProduct = async (req, res, next) => {
       });
     }
 
+    // قبل از حذف محصول، اطلاعات تصاویر را بگیر
+    const product = await ShoesRepository.findById(id);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product Not Found.",
+      });
+    }
+
+    // اسم تصاویر را نگه دار
+    const images = Array.isArray(product.images) ? product.images : [];
+
+    // حذف محصول از دیتابیس
     const deleted = await ShoesRepository.remove(id);
 
     if (!deleted) {
@@ -207,9 +222,18 @@ exports.deleteProduct = async (req, res, next) => {
       });
     }
 
+    // بعد از حذف موفق از دیتابیس، فایل‌ها را از سرور حذف کن
+    for (const image of images) {
+      const imageName = typeof image === "string" ? image : image?.image_name;
+
+      if (imageName) {
+        await deleteImageFiles(imageName);
+      }
+    }
+
     return res.status(200).json({
       success: true,
-      message: "Product Deleted Succissfully.",
+      message: "Product Deleted Successfully.",
     });
   } catch (err) {
     next(err);
@@ -514,24 +538,24 @@ exports.updateProductPicture = async (req, res, next) => {
     const { deletedImages } = req.body;
     const newImages = req.files || [];
 
-    // اعتبارسنجی وجود id
     if (!id) {
       if (newImages.length > 0) {
         await deleteUploadedFiles(newImages);
       }
+
       return res.status(400).json({
         success: false,
         message: "Shoe ID is required",
       });
     }
 
-    // بررسی وجود کفش از طریق ریپازیتوری
     const shoeExists = await ShoesRepository.findById(id);
 
     if (!shoeExists) {
       if (newImages.length > 0) {
         await deleteUploadedFiles(newImages);
       }
+
       return res.status(404).json({
         success: false,
         message: "Shoe not found",
@@ -540,82 +564,54 @@ exports.updateProductPicture = async (req, res, next) => {
 
     let deletedImagesList = [];
 
-    // پردازش تصاویر حذف شده
     if (deletedImages) {
       try {
-        // اگر string بود parse کن
         if (typeof deletedImages === "string") {
           deletedImagesList = JSON.parse(deletedImages);
         } else if (Array.isArray(deletedImages)) {
           deletedImagesList = deletedImages;
-        } else {
-          deletedImagesList = [];
         }
 
-        // تمیز کردن و استخراج image_name اگر object است
         deletedImagesList = deletedImagesList
-          .filter((img) => img != null && img !== undefined)
-          .map((img) => {
-            // اگر object است و property image_name دارد
-            if (typeof img === "object" && img.image_name) {
-              return img.image_name;
-            }
-            // اگر string است
-            if (typeof img === "string") {
-              return img;
-            }
-            return null;
-          })
-          .filter((img) => img && typeof img === "string");
-      } catch (e) {
-        console.error("Error parsing deletedImages:", e);
+          .map((img) => (typeof img === "object" ? img?.image_name : img))
+          .filter((img) => typeof img === "string" && img.trim());
+      } catch (err) {
+        console.error("Error parsing deletedImages:", err);
+
         deletedImagesList = [];
       }
-
-      // حذف تصاویر از دیتابیس
-      if (deletedImagesList.length > 0) {
-        await ShoesRepository.deleteImagesByNames(id, deletedImagesList);
-      }
     }
 
-    // اضافه کردن تصاویر جدید
-    let addedImages = [];
-    if (newImages && newImages.length > 0) {
-      addedImages = await ShoesRepository.addImages(id, newImages);
+    // حذف از دیتابیس
+    if (deletedImagesList.length > 0) {
+      await ShoesRepository.deleteImagesByNames(id, deletedImagesList);
     }
 
-    // حذف فایل‌های فیزیکی از سرور (بعد از موفقیت دیتابیس)
+    // اضافه کردن عکس‌های جدید
+    if (newImages.length > 0) {
+      await ShoesRepository.addImages(id, newImages);
+    }
+
+    // حذف فایل اصلی + نسخه‌های 320 / 640 / 960
     if (deletedImagesList.length > 0) {
       for (const imageName of deletedImagesList) {
-        // اطمینان از اینکه imageName string است
-        if (typeof imageName === "string" && imageName.trim()) {
-          const imagePath = path.join(
-            __dirname,
-            "../public/images/posts",
-            imageName,
-          );
-          try {
-            await fs.unlink(imagePath);
-            // console.log(`Deleted file: ${imageName}`);
-          } catch (err) {
-            console.error(`Failed to delete image file: ${imageName}`, err);
-          }
-        } else {
-          console.error(`Invalid image name: ${imageName}`);
-        }
+        await deleteImageFiles(imageName);
       }
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Shoe images updated successfully",
     });
   } catch (err) {
-    // پاک کردن فایل‌های آپلود شده در صورت خطا
-    if (req.files && req.files.length > 0) {
+    // اگر عملیات DB شکست خورد،
+    // تصاویر جدیدی که آپلود شده‌اند پاک شوند
+    if (req.files?.length > 0) {
       await deleteUploadedFiles(req.files);
     }
+
     console.error("Error in updateShoePicture:", err);
+
     next(err);
   }
 };
@@ -632,8 +628,7 @@ async function deleteUploadedFiles(files) {
         file.filename,
       );
 
-      await fs.unlink(filePath);
-
+      await deleteImageFiles(file.filename);
       // console.log("Deleted:", file.filename);
     } catch (err) {
       console.error(
@@ -692,4 +687,32 @@ const changeStock = async (shoeId, size, quantityChange) => {
     normalizedSize,
     parsedQuantity,
   );
+};
+
+const deleteImageFiles = async (imageName) => {
+  if (!imageName) return;
+
+  const imagesDir = path.join(__dirname, "../public/images/posts");
+
+  const parsed = path.parse(imageName);
+
+  const files = [
+    imageName,
+    `${parsed.name}-320.webp`,
+    `${parsed.name}-640.webp`,
+    `${parsed.name}-960.webp`,
+  ];
+
+  for (const file of files) {
+    try {
+      await fs.unlink(path.join(imagesDir, file));
+
+      console.log(`Deleted: ${file}`);
+    } catch (err) {
+      // اگر فایل وجود نداشت مشکلی نیست
+      if (err.code !== "ENOENT") {
+        console.error(`Error deleting ${file}:`, err.message);
+      }
+    }
+  }
 };

@@ -1,6 +1,8 @@
 const multer = require("multer");
 const fs = require("fs");
+const fsPromises = require("fs/promises");
 const path = require("path");
+const sharp = require("sharp");
 
 const IMAGE_MIME_TYPES = [
   "image/jpg",
@@ -15,9 +17,55 @@ const IMAGE_MIME_TYPES = [
 
 const IMAGE_EXTENSIONS = /jpg|jpeg|png|webp|avif|dng|heic|heif/i;
 
+// سایزهایی که می‌خواهیم تولید شوند
+const IMAGE_SIZES = [320, 640, 960];
+
+/* ================================
+   ساخت نسخه‌های مختلف تصویر
+================================ */
+
+const createImageVersions = async (file) => {
+  const inputPath = file.path;
+
+  const parsed = path.parse(file.filename);
+
+  const generatedImages = [];
+
+  for (const width of IMAGE_SIZES) {
+    const filename = `${parsed.name}-${width}.webp`;
+
+    const outputPath = path.join(file.destination, filename);
+
+    await sharp(inputPath)
+      .rotate()
+      .resize({
+        width,
+        withoutEnlargement: true,
+      })
+      .webp({
+        quality: 80,
+      })
+      .toFile(outputPath);
+
+    generatedImages.push({
+      width,
+      filename,
+      path: outputPath,
+    });
+  }
+
+  return generatedImages;
+};
+
+/* ================================
+   Multer Storage
+================================ */
+
 exports.multerStorage = (destination) => {
   if (!fs.existsSync(destination)) {
-    fs.mkdirSync(destination, { recursive: true });
+    fs.mkdirSync(destination, {
+      recursive: true,
+    });
   }
 
   const storage = multer.diskStorage({
@@ -27,13 +75,16 @@ exports.multerStorage = (destination) => {
 
     filename(req, file, cb) {
       const unique = Date.now() + "_" + Math.floor(Math.random() * 1e9);
+
       const ext = path.extname(file.originalname).toLowerCase();
+
       cb(null, unique + ext);
     },
   });
 
   const fileFilter = (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase().replace(".", "");
+
     const mime = file.mimetype?.toLowerCase();
 
     console.log("Uploaded file:", {
@@ -43,6 +94,7 @@ exports.multerStorage = (destination) => {
     });
 
     const isValidExt = IMAGE_EXTENSIONS.test(ext);
+
     const isValidMime =
       IMAGE_MIME_TYPES.includes(mime) ||
       (mime === "application/octet-stream" && ["heic", "heif"].includes(ext));
@@ -56,12 +108,18 @@ exports.multerStorage = (destination) => {
 
   return multer({
     storage,
+
     limits: {
       fileSize: 10 * 1024 * 1024,
     },
+
     fileFilter,
   });
 };
+
+/* ================================
+   Upload + Generate Images
+================================ */
 
 exports.uploadWithErrorHandler = ({
   uploader,
@@ -74,7 +132,11 @@ exports.uploadWithErrorHandler = ({
       ? uploader.array(fieldName, maxCount)
       : uploader.single(fieldName);
 
-    uploadFn(req, res, (err) => {
+    uploadFn(req, res, async (err) => {
+      /* =========================
+         Multer Errors
+      ========================= */
+
       if (err) {
         console.log("Multer error:", err);
 
@@ -106,16 +168,49 @@ exports.uploadWithErrorHandler = ({
         });
       }
 
-      const hasFile = multiple ? req.files?.length > 0 : !!req.file;
+      /* =========================
+         Check File
+      ========================= */
 
-      if (!hasFile) {
+      const files = multiple ? req.files : req.file ? [req.file] : [];
+
+      if (!files.length) {
         return res.status(400).json({
           success: false,
           message: "لطفاً حداقل یک فایل تصویر انتخاب کنید",
         });
       }
 
-      next();
+      /* =========================
+         Generate 320 / 640 / 960
+      ========================= */
+
+      try {
+        const generatedImages = [];
+
+        for (const file of files) {
+          const versions = await createImageVersions(file);
+
+          generatedImages.push({
+            original: file.filename,
+            versions,
+          });
+        }
+
+        // در Controller هم قابل استفاده است
+        req.generatedImages = generatedImages;
+
+        console.log("Generated images:", generatedImages);
+
+        next();
+      } catch (error) {
+        console.error("Sharp processing error:", error);
+
+        return res.status(500).json({
+          success: false,
+          message: "خطا در ساخت نسخه‌های مختلف تصویر",
+        });
+      }
     });
   };
 };

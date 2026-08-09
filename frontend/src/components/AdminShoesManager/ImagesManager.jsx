@@ -57,8 +57,12 @@ const ImageGallery = ({
         {images.map((image, idx) => (
           <div key={idx} className="relative group">
             <img
-              src={`${imageBaseUrl}${image.image_name || image}`}
+              src={`${imageBaseUrl}${(image.image_name || image).replace(
+                /\.[^/.]+$/,
+                "",
+              )}-960.webp`}
               alt={`Shoe ${idx + 1}`}
+              loading="lazy"
               className="w-full h-48 object-cover rounded-lg"
             />
 

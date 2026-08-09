@@ -39,9 +39,16 @@ const SingleShoe = () => {
 
   const isAdmin = user?.role === "admin";
 
-  const getImageSrc = (image) => {
+  const getImageSrc = (image, size = 960) => {
     if (!image) return "";
-    return IMG_URL + (typeof image === "string" ? image : image.image_name);
+
+    const imageName = typeof image === "string" ? image : image.image_name;
+
+    if (!imageName) return "";
+
+    const imageBaseName = imageName.replace(/\.[^/.]+$/, "");
+
+    return `${IMG_URL}${imageBaseName}-${size}.webp`;
   };
 
   useEffect(() => {
@@ -176,7 +183,7 @@ const SingleShoe = () => {
           <div className="border rounded-lg overflow-hidden bg-gray-100 h-[450px] flex items-center justify-center">
             {images[selectedImage] ? (
               <img
-                src={getImageSrc(images[selectedImage])}
+                src={getImageSrc(images[selectedImage], 960)}
                 alt={shoe.name}
                 className="w-full h-full object-contain"
               />
@@ -198,8 +205,9 @@ const SingleShoe = () => {
                   }`}
                 >
                   <img
-                    src={getImageSrc(image)}
+                    src={getImageSrc(image, 320)}
                     alt={`${shoe.name} - ${index + 1}`}
+                    loading="lazy"
                     className="w-full aspect-square object-cover"
                   />
                 </button>
@@ -266,8 +274,9 @@ const SingleShoe = () => {
                       }`}
                     >
                       <img
-                        src={getImageSrc(color?.images?.[0])}
+                        src={getImageSrc(color?.images?.[0], 320)}
                         alt={color.name}
+                        loading="lazy"
                         className="w-full h-full object-cover rounded"
                       />
                     </Link>

@@ -55,8 +55,6 @@ const uploadImages = (req, res, next) => {
 // گرفتن همه کفش‌ها
 router.get("/", controller.getAllProducts);
 
-router.get("/share/:id", controller.getSingleProductMeta);
-
 // گرفتن یک کفش خاص
 router.get("/:id", controller.getSingleProduct);
 

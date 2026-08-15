@@ -348,18 +348,12 @@ exports.getSingleProductMeta = async (req, res, next) => {
 
     const productId = shoe.id || shoe._id;
 
+    const frontendUrl = `https://aniloxhub.com/shoe/${productId}`;
+
     const firstImage = shoe.images?.[0];
 
     const imageName =
       typeof firstImage === "string" ? firstImage : firstImage?.image_name;
-
-    // آدرس HTTPS عکس
-    const imageUrl = imageName
-      ? `https://aniloxhub.com/api/images/posts/${imageName}`
-      : "";
-
-    // آدرس واقعی محصول در React
-    const frontendUrl = `https://aniloxhub.com/shoe/${productId}`;
 
     const price = shoe.discount_price || shoe.price;
 
@@ -373,31 +367,42 @@ exports.getSingleProductMeta = async (req, res, next) => {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 
+    /*
+      تشخیص crawler
+
+      اگر WhatsApp/Meta باشد:
+      HTML متادیتا را می‌دهیم.
+
+      اگر مرورگر عادی باشد:
+      مستقیم می‌فرستیم صفحه محصول.
+    */
+    const userAgent = req.get("user-agent") || "";
+
+    const isCrawler = /facebookexternalhit|Facebot|WhatsApp/i.test(userAgent);
+
+    if (!isCrawler) {
+      return res.redirect(302, frontendUrl);
+    }
+
+    // فعلاً پایین درباره imageUrl توضیح داده‌ام
+    const imageUrl = imageName
+      ? `https://aniloxhub.com/api/images/posts/${imageName}`
+      : "";
+
     res.setHeader("Content-Type", "text/html; charset=utf-8");
 
     return res.status(200).send(`
       <!DOCTYPE html>
+
       <html lang="en">
-
         <head>
-
           <meta charset="UTF-8" />
 
-          <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1.0"
-          />
-
-          <title>
-            ${escapeHtml(shoe.name)}
-          </title>
-
-
-          <!-- Open Graph -->
+          <title>${escapeHtml(shoe.name)}</title>
 
           <meta
             property="og:type"
-            content="product"
+            content="website"
           />
 
           <meta
@@ -411,82 +416,38 @@ exports.getSingleProductMeta = async (req, res, next) => {
           />
 
           <meta
-            property="og:image"
-            content="${imageUrl}"
-          />
-
-          <meta
-            property="og:image:secure_url"
-            content="${imageUrl}"
-          />
-
-          <meta
-            property="og:image:type"
-            content="image/webp"
-          />
-
-          <meta
-            property="og:image:alt"
-            content="${escapeHtml(shoe.name)}"
-          />
-
-          <meta
             property="og:url"
             content="https://aniloxhub.com/api/v1/shoes/share/${productId}"
           />
+
+          ${
+            imageUrl
+              ? `
+                <meta
+                  property="og:image"
+                  content="${imageUrl}"
+                />
+
+                <meta
+                  property="og:image:secure_url"
+                  content="${imageUrl}"
+                />
+
+                <meta
+                  property="og:image:alt"
+                  content="${escapeHtml(shoe.name)}"
+                />
+              `
+              : ""
+          }
 
           <meta
             property="og:site_name"
             content="Anilox Hub"
           />
-
-
-          <!-- Twitter -->
-
-          <meta
-            name="twitter:card"
-            content="summary_large_image"
-          />
-
-          <meta
-            name="twitter:title"
-            content="${escapeHtml(shoe.name)}"
-          />
-
-          <meta
-            name="twitter:description"
-            content="${escapeHtml(description)}"
-          />
-
-          <meta
-            name="twitter:image"
-            content="${imageUrl}"
-          />
-
-
-          <!-- Redirect browser user to React -->
-
-          <meta
-            http-equiv="refresh"
-            content="1; URL=${frontendUrl}"
-          />
-
         </head>
 
-        <body>
-
-          <p>
-            Redirecting to product...
-          </p>
-
-          <p>
-            <a href="${frontendUrl}">
-              Open product
-            </a>
-          </p>
-
-        </body>
-
+        <body></body>
       </html>
     `);
   } catch (err) {

@@ -336,6 +336,140 @@ exports.getAllProducts = async (req, res, next) => {
   }
 };
 
+exports.getSingleProductMeta = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const shoe = await ShoesRepository.findById(id);
+
+    if (!shoe) {
+      return res.status(404).send("Shoe not found");
+    }
+
+    const images = shoe.images || [];
+    const firstImage = images[0];
+
+    const imageName =
+      typeof firstImage === "string" ? firstImage : firstImage?.image_name;
+
+    let imageUrl = "";
+
+    if (imageName) {
+      const imageBaseName = imageName.replace(/\.[^/.]+$/, "");
+
+      imageUrl =
+        `http://31.56.178.10/api/images/posts/` + `${imageBaseName}-320.webp`;
+    }
+
+    const productId = shoe.id || shoe._id;
+
+    // آدرس واقعی صفحه محصول در Frontend
+    const frontendUrl = `https://YOUR-FRONTEND-DOMAIN.com/shoe/${productId}`;
+
+    const price = shoe.discount_price || shoe.price;
+
+    const description = shoe.description || `${shoe.name} - ${price} AED`;
+
+    const escapeHtml = (value = "") =>
+      String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+
+    return res.status(200).send(`
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+
+          <title>${escapeHtml(shoe.name)}</title>
+
+          <meta
+            name="description"
+            content="${escapeHtml(description)}"
+          />
+
+          <meta
+            property="og:type"
+            content="product"
+          />
+
+          <meta
+            property="og:title"
+            content="${escapeHtml(shoe.name)}"
+          />
+
+          <meta
+            property="og:description"
+            content="${escapeHtml(description)}"
+          />
+
+          <meta
+            property="og:image"
+            content="${imageUrl}"
+          />
+
+          <meta
+            property="og:url"
+            content="${frontendUrl}"
+          />
+
+          <meta
+            property="og:site_name"
+            content="Anilox Hub"
+          />
+
+          <meta
+            property="og:image:alt"
+            content="${escapeHtml(shoe.name)}"
+          />
+
+          <meta
+            name="twitter:card"
+            content="summary_large_image"
+          />
+
+          <meta
+            name="twitter:title"
+            content="${escapeHtml(shoe.name)}"
+          />
+
+          <meta
+            name="twitter:description"
+            content="${escapeHtml(description)}"
+          />
+
+          <meta
+            name="twitter:image"
+            content="${imageUrl}"
+          />
+
+          <meta
+            http-equiv="refresh"
+            content="0;url=${frontendUrl}"
+          />
+        </head>
+
+        <body>
+          <p>Redirecting...</p>
+
+          <script>
+            window.location.replace(
+              ${JSON.stringify(frontendUrl)}
+            );
+          </script>
+        </body>
+      </html>
+    `);
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.getSingleProduct = async (req, res, next) => {
   try {
     const { id } = req.params;

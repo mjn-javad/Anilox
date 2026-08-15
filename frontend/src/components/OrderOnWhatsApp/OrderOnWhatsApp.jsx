@@ -6,6 +6,7 @@ const OrderOnWhatsApp = ({
   productName = "",
   productPrice = "",
   productId = "",
+  shareUrl = "",
   phoneNumber = "971566425118",
 }) => {
   const [currentUrl, setCurrentUrl] = useState("");
@@ -28,21 +29,24 @@ const OrderOnWhatsApp = ({
   }, []);
 
   const handleOrder = () => {
-    let message = `Hello! I would like to order this product 🛍️`;
+    let message = `Hello! I would like to buy this product:`;
 
     if (productName) {
       message += `\n\nProduct: ${productName}`;
     }
 
     if (productPrice) {
-      message += `\nPrice: ${productPrice}`;
+      message += `\nPrice: ${productPrice} AED`;
     }
 
     if (productId) {
       message += `\nProduct ID: ${productId}`;
     }
 
-    message += `\n\n${currentUrl}`;
+    // مهم:
+    // برای WhatsApp لینک بک‌اند را می‌فرستیم
+    // چون Open Graph metadata داخل این URL قرار دارد
+    message += `\n\n${shareUrl || currentUrl}`;
 
     const encodedMessage = encodeURIComponent(message);
 

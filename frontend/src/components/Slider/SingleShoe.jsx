@@ -9,6 +9,7 @@ import MessageAlert from "../Shared/MessageAlert";
 import LoadingSpinner from "../Shared/LoadingSpinner";
 import OrderOnWhatsApp from "../OrderOnWhatsApp/OrderOnWhatsApp";
 import ProductFinderBox from "../OrderOnWhatsApp/ProductFinderBox";
+import { Helmet } from "react-helmet-async";
 
 const IMG_URL = "/api/images/posts/";
 

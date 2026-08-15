@@ -168,279 +168,331 @@ const SingleShoe = () => {
   if (error) return <MessageAlert message={error} type="error" />;
   if (!shoe) return <div className="text-center py-10">Shoes not found</div>;
 
+  const firstImage = images?.[0];
+
+  const firstImagePath = firstImage ? getImageSrc(firstImage, 960) : "";
+
+  const firstImageUrl = firstImagePath
+    ? new URL(firstImagePath, window.location.origin).href
+    : "";
+
+  const productUrl = window.location.href;
+
+  const productPrice = shoe.discount_price || shoe.price;
+
+  const metaDescription =
+    shoe.description ||
+    `${shoe.brand || ""} ${shoe.name} - ${productPrice} AED`;
+
   return (
-    <div className="container mx-auto my-0 p-4">
-      <ProductFinderBox />
-      <OrderOnWhatsApp
-        productName={shoe.name}
-        productPrice={shoe.discount_price || shoe.price}
-        productId={getId(shoe)}
-      />
+    <>
+      <Helmet>
+        <title>{shoe.name}</title>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Images */}
-        <div className="space-y-4">
-          <div className="border rounded-lg overflow-hidden bg-gray-100 h-[450px] flex items-center justify-center">
-            {images[selectedImage] ? (
-              <img
-                src={getImageSrc(images[selectedImage], 960)}
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
+        <meta name="description" content={metaDescription} />
 
-                  const image = images[selectedImage];
-                  const imageName =
-                    typeof image === "string" ? image : image?.image_name;
+        <meta property="og:type" content="product" />
 
-                  e.currentTarget.src = `${IMG_URL}${imageName}`;
-                }}
-                alt={shoe.name}
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <span className="text-gray-400">No image available</span>
-            )}
-          </div>
+        <meta property="og:title" content={shoe.name} />
 
-          {images.length > 1 && (
-            <div className="grid grid-cols-4 gap-2">
-              {images.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImage(index)}
-                  className={`border-2 rounded-lg overflow-hidden bg-gray-50 transition-all ${
-                    selectedImage === index
-                      ? "border-blue-500 shadow-lg ring-2 ring-blue-200"
-                      : "border-gray-200 hover:border-gray-400"
-                  }`}
-                >
-                  <img
-                    src={getImageSrc(image, 320)}
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
+        <meta property="og:description" content={metaDescription} />
 
-                      const imageName =
-                        typeof image === "string" ? image : image?.image_name;
+        {firstImageUrl && <meta property="og:image" content={firstImageUrl} />}
 
-                      e.currentTarget.src = `${IMG_URL}${imageName}`;
-                    }}
-                    alt={`${shoe.name} - ${index + 1}`}
-                    loading="lazy"
-                    className="w-full aspect-square object-cover"
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <meta property="og:url" content={productUrl} />
 
-        {/* Info */}
-        <div className="space-y-4">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold">{shoe.name}</h1>
-              <p className="text-gray-600 text-lg">{shoe.brand}</p>
-            </div>
+        <meta property="og:site_name" content="Anilox" />
 
-            {isAdmin && (
-              <Link
-                to={`/admin/dashboard/editShoe/${getId(shoe)}`}
-                className="shrink-0 rounded-full border border-gray-300 px-4 py-2 text-xs font-medium uppercase tracking-widest text-gray-700 transition hover:bg-black hover:text-white"
-              >
-                Edit
-              </Link>
-            )}
-          </div>
+        {firstImageUrl && <meta property="og:image:alt" content={shoe.name} />}
 
-          <div>
-            {shoe.discount_price && shoe.discount_price !== shoe.price ? (
-              <>
-                <p className="text-2xl text-gray-500 line-through">
-                  {shoe.price?.toLocaleString()} AED
-                </p>
-                <p className="text-3xl font-bold text-green-600">
-                  {shoe.discount_price?.toLocaleString()} AED
-                </p>
-              </>
-            ) : (
-              <p className="text-3xl font-bold text-green-600">
-                {shoe.price?.toLocaleString()} AED
-              </p>
-            )}
-          </div>
+        <meta name="twitter:card" content="summary_large_image" />
 
-          <p className="text-gray-700 leading-relaxed">{shoe.description}</p>
+        <meta name="twitter:title" content={shoe.name} />
 
-          {/* Colors */}
-          {colors.length > 0 && (
-            <div>
-              <h3 className="font-bold text-lg mb-3">Select Color</h3>
+        <meta name="twitter:description" content={metaDescription} />
 
-              <div className="flex flex-wrap gap-3">
-                {colors.map((color) => {
-                  const colorId = getId(color);
-                  const isActive = String(colorId) === String(id);
+        {firstImageUrl && <meta name="twitter:image" content={firstImageUrl} />}
+      </Helmet>
 
-                  return (
-                    <Link
-                      key={colorId}
-                      to={`/shoe/${colorId}`}
-                      className={`w-14 h-14 p-1 rounded-lg border-2 transition-all ${
-                        isActive
-                          ? "border-blue-600 bg-blue-50 ring-2 ring-blue-200"
-                          : "border-gray-200 hover:border-blue-400 hover:bg-gray-50"
-                      }`}
-                    >
-                      <img
-                        src={getImageSrc(color?.images?.[0], 320)}
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
+      <div className="container mx-auto my-0 p-4">
+        {" "}
+        <ProductFinderBox />
+        <OrderOnWhatsApp
+          productName={shoe.name}
+          productPrice={shoe.discount_price || shoe.price}
+          productId={getId(shoe)}
+        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Images */}
+          <div className="space-y-4">
+            <div className="border rounded-lg overflow-hidden bg-gray-100 h-[450px] flex items-center justify-center">
+              {images[selectedImage] ? (
+                <img
+                  src={getImageSrc(images[selectedImage], 960)}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
 
-                          const image = color?.images?.[0];
-                          const imageName =
-                            typeof image === "string"
-                              ? image
-                              : image?.image_name;
+                    const image = images[selectedImage];
+                    const imageName =
+                      typeof image === "string" ? image : image?.image_name;
 
-                          e.currentTarget.src = `${IMG_URL}${imageName}`;
-                        }}
-                        alt={color.name}
-                        loading="lazy"
-                        className="w-full h-full object-cover rounded"
-                      />
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Sizes */}
-          {sizes.length > 0 && (
-            <div>
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-lg font-bold">Select Size (EU)</h3>
-
-                {shoe.type === "shoe" && (
-                  <button
-                    type="button"
-                    onClick={() => setShowSizeGuide((prev) => !prev)}
-                    className="text-sm font-medium text-blue-600 underline underline-offset-4"
-                  >
-                    Size Guide
-                  </button>
-                )}
-              </div>
-
-              {showSizeGuide && shoe.type === "shoe" && (
-                <div className="mb-4 overflow-x-auto rounded-xl border border-neutral-200 bg-neutral-50 p-3">
-                  <table className="w-full min-w-[750px] text-center text-sm">
-                    <tbody>
-                      {[
-                        [
-                          "EU",
-                          Array.from({ length: 14 }, (_, index) => index + 35),
-                        ],
-                        [
-                          "UK",
-                          Array.from({ length: 14 }, (_, index) => index + 1),
-                        ],
-                        [
-                          "US",
-                          Array.from({ length: 14 }, (_, index) => index + 2),
-                        ],
-                      ].map(([system, values]) => (
-                        <tr key={system} className="border-b last:border-b-0">
-                          <th className="sticky left-0 bg-neutral-50 px-3 py-3 text-left font-bold">
-                            {system}
-                          </th>
-
-                          {values.map((size) => (
-                            <td key={size} className="px-3 py-3">
-                              {size}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    e.currentTarget.src = `${IMG_URL}${imageName}`;
+                  }}
+                  alt={shoe.name}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <span className="text-gray-400">No image available</span>
               )}
+            </div>
 
-              <div className="flex flex-wrap gap-3">
-                {sizes.map((item) => (
+            {images.length > 1 && (
+              <div className="grid grid-cols-4 gap-2">
+                {images.map((image, index) => (
                   <button
-                    type="button"
-                    key={item.id || item.size}
-                    onClick={() => setSelectedSize(item.size)}
-                    className={`h-12 w-12 rounded-lg border-2 font-medium transition-all ${
-                      String(selectedSize) === String(item.size)
-                        ? "border-neutral-950 bg-neutral-950 text-white"
-                        : "border-neutral-300 text-neutral-800 hover:border-neutral-950 hover:bg-neutral-100"
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`border-2 rounded-lg overflow-hidden bg-gray-50 transition-all ${
+                      selectedImage === index
+                        ? "border-blue-500 shadow-lg ring-2 ring-blue-200"
+                        : "border-gray-200 hover:border-gray-400"
                     }`}
                   >
-                    {item.size}
+                    <img
+                      src={getImageSrc(image, 320)}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+
+                        const imageName =
+                          typeof image === "string" ? image : image?.image_name;
+
+                        e.currentTarget.src = `${IMG_URL}${imageName}`;
+                      }}
+                      alt={`${shoe.name} - ${index + 1}`}
+                      loading="lazy"
+                      className="w-full aspect-square object-cover"
+                    />
                   </button>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* Quantity */}
-          {selectedSize && (
-            <div className="flex items-center gap-4 mb-4">
-              <label className="font-bold">Quantity:</label>
-
-              <div className="flex items-center border rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
-                  disabled={quantity <= 1}
-                  className="w-10 h-10 text-xl font-bold bg-gray-50 hover:bg-gray-200 disabled:opacity-50"
-                >
-                  -
-                </button>
-
-                <input
-                  type="number"
-                  min="1"
-                  value={quantity}
-                  onChange={(e) =>
-                    setQuantity(Math.max(1, Number(e.target.value) || 1))
-                  }
-                  className="w-16 text-center py-2 focus:outline-none [appearance:textfield]"
-                />
-
-                <button
-                  onClick={() => setQuantity((prev) => prev + 1)}
-                  className="w-10 h-10 text-xl font-bold bg-gray-50 hover:bg-gray-200"
-                >
-                  +
-                </button>
+          {/* Info */}
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold">{shoe.name}</h1>
+                <p className="text-gray-600 text-lg">{shoe.brand}</p>
               </div>
+
+              {isAdmin && (
+                <Link
+                  to={`/admin/dashboard/editShoe/${getId(shoe)}`}
+                  className="shrink-0 rounded-full border border-gray-300 px-4 py-2 text-xs font-medium uppercase tracking-widest text-gray-700 transition hover:bg-black hover:text-white"
+                >
+                  Edit
+                </Link>
+              )}
             </div>
-          )}
 
-          {cartMessage.text && (
-            <MessageAlert message={cartMessage.text} type={cartMessage.type} />
-          )}
+            <div>
+              {shoe.discount_price && shoe.discount_price !== shoe.price ? (
+                <>
+                  <p className="text-2xl text-gray-500 line-through">
+                    {shoe.price?.toLocaleString()} AED
+                  </p>
+                  <p className="text-3xl font-bold text-green-600">
+                    {shoe.discount_price?.toLocaleString()} AED
+                  </p>
+                </>
+              ) : (
+                <p className="text-3xl font-bold text-green-600">
+                  {shoe.price?.toLocaleString()} AED
+                </p>
+              )}
+            </div>
 
-          <button
-            onClick={handleAddToCart}
-            disabled={addingToCart || sizes.length === 0}
-            className={`w-full py-3 rounded-lg transition-all text-lg mt-6 ${
-              addingToCart || sizes.length === 0
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-neutral-950 hover:bg-neutral-600 text-white"
-            }`}
-          >
-            {addingToCart
-              ? "Adding..."
-              : sizes.length === 0
-                ? "Out of stock"
-                : "Add to basket"}
-          </button>
+            <p className="text-gray-700 leading-relaxed">{shoe.description}</p>
+
+            {/* Colors */}
+            {colors.length > 0 && (
+              <div>
+                <h3 className="font-bold text-lg mb-3">Select Color</h3>
+
+                <div className="flex flex-wrap gap-3">
+                  {colors.map((color) => {
+                    const colorId = getId(color);
+                    const isActive = String(colorId) === String(id);
+
+                    return (
+                      <Link
+                        key={colorId}
+                        to={`/shoe/${colorId}`}
+                        className={`w-14 h-14 p-1 rounded-lg border-2 transition-all ${
+                          isActive
+                            ? "border-blue-600 bg-blue-50 ring-2 ring-blue-200"
+                            : "border-gray-200 hover:border-blue-400 hover:bg-gray-50"
+                        }`}
+                      >
+                        <img
+                          src={getImageSrc(color?.images?.[0], 320)}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+
+                            const image = color?.images?.[0];
+                            const imageName =
+                              typeof image === "string"
+                                ? image
+                                : image?.image_name;
+
+                            e.currentTarget.src = `${IMG_URL}${imageName}`;
+                          }}
+                          alt={color.name}
+                          loading="lazy"
+                          className="w-full h-full object-cover rounded"
+                        />
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Sizes */}
+            {sizes.length > 0 && (
+              <div>
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-lg font-bold">Select Size (EU)</h3>
+
+                  {shoe.type === "shoe" && (
+                    <button
+                      type="button"
+                      onClick={() => setShowSizeGuide((prev) => !prev)}
+                      className="text-sm font-medium text-blue-600 underline underline-offset-4"
+                    >
+                      Size Guide
+                    </button>
+                  )}
+                </div>
+
+                {showSizeGuide && shoe.type === "shoe" && (
+                  <div className="mb-4 overflow-x-auto rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+                    <table className="w-full min-w-[750px] text-center text-sm">
+                      <tbody>
+                        {[
+                          [
+                            "EU",
+                            Array.from(
+                              { length: 14 },
+                              (_, index) => index + 35,
+                            ),
+                          ],
+                          [
+                            "UK",
+                            Array.from({ length: 14 }, (_, index) => index + 1),
+                          ],
+                          [
+                            "US",
+                            Array.from({ length: 14 }, (_, index) => index + 2),
+                          ],
+                        ].map(([system, values]) => (
+                          <tr key={system} className="border-b last:border-b-0">
+                            <th className="sticky left-0 bg-neutral-50 px-3 py-3 text-left font-bold">
+                              {system}
+                            </th>
+
+                            {values.map((size) => (
+                              <td key={size} className="px-3 py-3">
+                                {size}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-3">
+                  {sizes.map((item) => (
+                    <button
+                      type="button"
+                      key={item.id || item.size}
+                      onClick={() => setSelectedSize(item.size)}
+                      className={`h-12 w-12 rounded-lg border-2 font-medium transition-all ${
+                        String(selectedSize) === String(item.size)
+                          ? "border-neutral-950 bg-neutral-950 text-white"
+                          : "border-neutral-300 text-neutral-800 hover:border-neutral-950 hover:bg-neutral-100"
+                      }`}
+                    >
+                      {item.size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Quantity */}
+            {selectedSize && (
+              <div className="flex items-center gap-4 mb-4">
+                <label className="font-bold">Quantity:</label>
+
+                <div className="flex items-center border rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                    disabled={quantity <= 1}
+                    className="w-10 h-10 text-xl font-bold bg-gray-50 hover:bg-gray-200 disabled:opacity-50"
+                  >
+                    -
+                  </button>
+
+                  <input
+                    type="number"
+                    min="1"
+                    value={quantity}
+                    onChange={(e) =>
+                      setQuantity(Math.max(1, Number(e.target.value) || 1))
+                    }
+                    className="w-16 text-center py-2 focus:outline-none [appearance:textfield]"
+                  />
+
+                  <button
+                    onClick={() => setQuantity((prev) => prev + 1)}
+                    className="w-10 h-10 text-xl font-bold bg-gray-50 hover:bg-gray-200"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {cartMessage.text && (
+              <MessageAlert
+                message={cartMessage.text}
+                type={cartMessage.type}
+              />
+            )}
+
+            <button
+              onClick={handleAddToCart}
+              disabled={addingToCart || sizes.length === 0}
+              className={`w-full py-3 rounded-lg transition-all text-lg mt-6 ${
+                addingToCart || sizes.length === 0
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-neutral-950 hover:bg-neutral-600 text-white"
+              }`}
+            >
+              {addingToCart
+                ? "Adding..."
+                : sizes.length === 0
+                  ? "Out of stock"
+                  : "Add to basket"}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

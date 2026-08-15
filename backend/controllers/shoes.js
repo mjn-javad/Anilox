@@ -346,25 +346,20 @@ exports.getSingleProductMeta = async (req, res, next) => {
       return res.status(404).send("Shoe not found");
     }
 
-    const images = shoe.images || [];
-    const firstImage = images[0];
+    const productId = shoe.id || shoe._id;
+
+    const firstImage = shoe.images?.[0];
 
     const imageName =
       typeof firstImage === "string" ? firstImage : firstImage?.image_name;
 
-    let imageUrl = "";
+    // آدرس HTTPS عکس
+    const imageUrl = imageName
+      ? `https://aniloxhub.com/api/images/posts/${imageName}`
+      : "";
 
-    if (imageName) {
-      const imageBaseName = imageName.replace(/\.[^/.]+$/, "");
-
-      imageUrl =
-        `http://31.56.178.10/api/images/posts/` + `${imageBaseName}-320.webp`;
-    }
-
-    const productId = shoe.id || shoe._id;
-
-    // آدرس واقعی صفحه محصول در Frontend
-    const frontendUrl = `https://YOUR-FRONTEND-DOMAIN.com/shoe/${productId}`;
+    // آدرس واقعی محصول در React
+    const frontendUrl = `https://aniloxhub.com/shoe/${productId}`;
 
     const price = shoe.discount_price || shoe.price;
 
@@ -383,15 +378,22 @@ exports.getSingleProductMeta = async (req, res, next) => {
     return res.status(200).send(`
       <!DOCTYPE html>
       <html lang="en">
+
         <head>
+
           <meta charset="UTF-8" />
 
-          <title>${escapeHtml(shoe.name)}</title>
-
           <meta
-            name="description"
-            content="${escapeHtml(description)}"
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
           />
+
+          <title>
+            ${escapeHtml(shoe.name)}
+          </title>
+
+
+          <!-- Open Graph -->
 
           <meta
             property="og:type"
@@ -414,8 +416,23 @@ exports.getSingleProductMeta = async (req, res, next) => {
           />
 
           <meta
+            property="og:image:secure_url"
+            content="${imageUrl}"
+          />
+
+          <meta
+            property="og:image:type"
+            content="image/webp"
+          />
+
+          <meta
+            property="og:image:alt"
+            content="${escapeHtml(shoe.name)}"
+          />
+
+          <meta
             property="og:url"
-            content="${frontendUrl}"
+            content="https://aniloxhub.com/api/v1/shoes/share/${productId}"
           />
 
           <meta
@@ -423,10 +440,8 @@ exports.getSingleProductMeta = async (req, res, next) => {
             content="Anilox Hub"
           />
 
-          <meta
-            property="og:image:alt"
-            content="${escapeHtml(shoe.name)}"
-          />
+
+          <!-- Twitter -->
 
           <meta
             name="twitter:card"
@@ -448,21 +463,30 @@ exports.getSingleProductMeta = async (req, res, next) => {
             content="${imageUrl}"
           />
 
+
+          <!-- Redirect browser user to React -->
+
           <meta
             http-equiv="refresh"
-            content="0;url=${frontendUrl}"
+            content="1; URL=${frontendUrl}"
           />
+
         </head>
 
         <body>
-          <p>Redirecting...</p>
 
-          <script>
-            window.location.replace(
-              ${JSON.stringify(frontendUrl)}
-            );
-          </script>
+          <p>
+            Redirecting to product...
+          </p>
+
+          <p>
+            <a href="${frontendUrl}">
+              Open product
+            </a>
+          </p>
+
         </body>
+
       </html>
     `);
   } catch (err) {

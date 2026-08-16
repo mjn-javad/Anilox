@@ -194,20 +194,24 @@ const ProductCard = ({
                   </p>
 
                   <div className="flex items-baseline gap-2">
-                    {shoe.discount_price &&
-                    shoe.discount_price !== shoe.price ? (
+                    {Number(shoe.price) === 1 ? (
+                      <span className="text-xs font-medium text-green-600">
+                        Price on WhatsApp
+                      </span>
+                    ) : shoe.discount_price &&
+                      Number(shoe.discount_price) !== Number(shoe.price) ? (
                       <>
                         <span className="text-sm font-medium text-gray-900">
-                          {shoe.discount_price?.toLocaleString()} AED
+                          {Number(shoe.discount_price).toLocaleString()} AED
                         </span>
 
                         <span className="text-xs text-gray-400 line-through">
-                          {shoe.price?.toLocaleString()} AED
+                          {Number(shoe.price).toLocaleString()} AED
                         </span>
                       </>
                     ) : (
                       <span className="text-sm font-medium text-gray-900">
-                        {shoe.price?.toLocaleString()} AED
+                        {Number(shoe.price).toLocaleString()} AED
                       </span>
                     )}
                   </div>

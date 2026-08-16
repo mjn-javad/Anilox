@@ -253,18 +253,24 @@ const SingleShoe = () => {
           </div>
 
           <div>
-            {shoe.discount_price && shoe.discount_price !== shoe.price ? (
+            {Number(shoe.price) === 1 ? (
+              <p className="text-2xl font-bold text-green-600">
+                Price on WhatsApp
+              </p>
+            ) : shoe.discount_price &&
+              Number(shoe.discount_price) !== Number(shoe.price) ? (
               <>
                 <p className="text-2xl text-gray-500 line-through">
-                  {shoe.price?.toLocaleString()} AED
+                  {Number(shoe.price).toLocaleString()} AED
                 </p>
+
                 <p className="text-3xl font-bold text-green-600">
-                  {shoe.discount_price?.toLocaleString()} AED
+                  {Number(shoe.discount_price).toLocaleString()} AED
                 </p>
               </>
             ) : (
               <p className="text-3xl font-bold text-green-600">
-                {shoe.price?.toLocaleString()} AED
+                {Number(shoe.price).toLocaleString()} AED
               </p>
             )}
           </div>

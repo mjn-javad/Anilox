@@ -397,6 +397,43 @@ export default function TopNavbar({ handelOrderPopup }) {
           )}
 
           <nav className="flex-1 overflow-y-auto">
+            {user?.role === "admin" && (
+              <div className="border-b">
+                <Link
+                  key={"Add Brand"}
+                  to={"/admin/dashboard/brand-upload"}
+                  className="block rounded-xl px-4 py-3 text-sm text-neutral-600 hover:bg-neutral-100"
+                >
+                  {"Add Brand"}
+                </Link>
+                <button
+                  onClick={() => {
+                    setAdminOpen((prev) => !prev);
+                  }}
+                  className="flex w-full items-center justify-between px-5 py-4 text-sm uppercase tracking-[0.16em] text-neutral-700"
+                >
+                  Admin Panel
+                  <FaCaretDown
+                    className={cls("transition", adminOpen && "rotate-180")}
+                  />
+                </button>
+
+                {adminOpen && (
+                  <div className="bg-neutral-50 py-2">
+                    {adminLinks.map(([label, to]) => (
+                      <Link
+                        key={label}
+                        to={to}
+                        onClick={closeAll}
+                        className="block px-8 py-3 text-sm text-neutral-600"
+                      >
+                        {label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {mainLinks.map(([name, to]) =>
               name === "Shoes" ? (
                 <div key={name} className="border-b">
@@ -442,37 +479,6 @@ export default function TopNavbar({ handelOrderPopup }) {
               ) : (
                 <MobileLink key={name} name={name} to={to} />
               ),
-            )}
-
-            {user?.role === "admin" && (
-              <div className="border-b">
-                <button
-                  onClick={() => {
-                    setAdminOpen((prev) => !prev);
-                  }}
-                  className="flex w-full items-center justify-between px-5 py-4 text-sm uppercase tracking-[0.16em] text-neutral-700"
-                >
-                  Admin Panel
-                  <FaCaretDown
-                    className={cls("transition", adminOpen && "rotate-180")}
-                  />
-                </button>
-
-                {adminOpen && (
-                  <div className="bg-neutral-50 py-2">
-                    {adminLinks.map(([label, to]) => (
-                      <Link
-                        key={label}
-                        to={to}
-                        onClick={closeAll}
-                        className="block px-8 py-3 text-sm text-neutral-600"
-                      >
-                        {label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
             )}
           </nav>
 

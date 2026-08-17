@@ -400,11 +400,11 @@ export default function TopNavbar({ handelOrderPopup }) {
             {user?.role === "admin" && (
               <div className="border-b">
                 <Link
-                  key={"Add Brand"}
-                  to={"/admin/dashboard/brand-upload"}
+                  key={"Add New Product"}
+                  to={"/admin/dashboard/shoe-upload"}
                   className="block rounded-xl px-4 py-3 text-sm text-neutral-600 hover:bg-neutral-100"
                 >
-                  {"Add Brand"}
+                  {"Add New Product"}
                 </Link>
                 <button
                   onClick={() => {

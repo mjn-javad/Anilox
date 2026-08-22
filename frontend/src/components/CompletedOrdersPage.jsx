@@ -76,10 +76,7 @@ const CompletedOrdersPage = () => {
                     <span className="text-gray-500 mx-2">|</span>
                     <span>Size: {item.size}</span>
                     <span className="text-gray-500 mx-2">|</span>
-                    <span
-                      className="inline-block w-4 h-4 rounded-full border border-gray-300 align-middle mx-1"
-                      style={{ backgroundColor: item.color_code }}
-                    />
+                    <span className="inline-block w-4 h-4 rounded-full border border-gray-300 align-middle mx-1" />
                     <span className="text-gray-500 mx-2">|</span>
                     <span>Quantity: {item.quantity}</span>
                   </div>

@@ -2,63 +2,30 @@ const express = require("express");
 const controller = require("../../controllers/shoes");
 const authMiddleware = require("../../middlewares/auth");
 const isAdminMiddleware = require("../../middlewares/isAdmin");
-const { multerStorage } = require("../../middlewares/uploaderConfig");
+
 const {
-  convertImagesToWebp,
-} = require("../../middlewares/convertImagesToWebp");
+  multerStorage,
+  uploadWithErrorHandler,
+} = require("../../middlewares/uploaderConfig");
 
 const router = express.Router();
 
-const upload = multerStorage(
-  "public/images/posts",
-  /jpg|jpeg|webp|png|avif|dng|heic|heif/i,
-);
+const upload = multerStorage("public/images/posts");
 
-// هندل خطاهای آپلود چند عکس
-const uploadImages = (req, res, next) => {
-  upload.array("images", 10)(req, res, (err) => {
-    if (err) {
-      console.log("Multer error:", err);
+const uploadImages = uploadWithErrorHandler({
+  uploader: upload,
+  fieldName: "images",
+  multiple: true,
+  maxCount: 10,
+});
 
-      if (err.code === "LIMIT_FILE_SIZE") {
-        return res.status(400).json({
-          success: false,
-          message: "حجم هر فایل باید کمتر از 10 مگابایت باشد",
-        });
-      }
-
-      if (err.code === "LIMIT_UNEXPECTED_FILE") {
-        return res.status(400).json({
-          success: false,
-          message: "نام فیلد فایل اشتباه است. نام درست: images",
-        });
-      }
-
-      if (err.message === "Invalid file type") {
-        return res.status(400).json({
-          success: false,
-          message:
-            "فرمت فایل پشتیبانی نمی‌شود. فرمت‌های مجاز: JPG, JPEG, PNG, WEBP, AVIF, HEIC, HEIF",
-        });
-      }
-
-      return res.status(400).json({
-        success: false,
-        message: err.message || "خطا در آپلود فایل",
-      });
-    }
-
-    next();
-  });
-};
-
-// گرفتن همه کفش‌ها
+// گرفتن همه محصولات
 router.get("/", controller.getAllProducts);
 
-// گرفتن یک کفش خاص
+// گرفتن یک محصول
 router.get("/:id", controller.getSingleProduct);
 
-// ویرایش اطلاعات یک کفش خاص
+// ویرایش اطلاعات محصول
 router.put(
   "/:shoeId/info",
   authMiddleware,
@@ -66,17 +33,16 @@ router.put(
   controller.updateProductInfo,
 );
 
-// ویرایش عکس‌های یک کفش خاص
+// ویرایش تصاویر محصول
 router.put(
   "/:id/images",
   authMiddleware,
   isAdminMiddleware,
   uploadImages,
-  convertImagesToWebp,
   controller.updateProductPicture,
 );
 
-// ویرایش ترتیب عکس‌ها
+// ویرایش ترتیب تصاویر
 router.put(
   "/:shoeId/images/sort-order",
   authMiddleware,
@@ -84,17 +50,16 @@ router.put(
   controller.updateImageSortOrder,
 );
 
-// ثبت کفش جدید
+// ثبت محصول جدید
 router.post(
   "/",
   authMiddleware,
   isAdminMiddleware,
   uploadImages,
-  convertImagesToWebp,
   controller.createProduct,
 );
 
-// حذف کفش
+// حذف محصول
 router.delete(
   "/:id",
   authMiddleware,
@@ -102,7 +67,7 @@ router.delete(
   controller.deleteProduct,
 );
 
-// افزایش موجودی یک سایز خاص
+// افزایش موجودی
 router.patch(
   "/:shoeId/stock/:size",
   authMiddleware,

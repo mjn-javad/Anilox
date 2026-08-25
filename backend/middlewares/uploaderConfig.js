@@ -53,7 +53,7 @@ const createImageVersions = async (file) => {
       path: outputPath,
     });
   }
-
+  await fsPromises.unlink(inputPath);
   return generatedImages;
 };
 
@@ -189,12 +189,26 @@ exports.uploadWithErrorHandler = ({
         const generatedImages = [];
 
         for (const file of files) {
+          const originalFilename = file.filename;
+
           const versions = await createImageVersions(file);
 
+          const small = versions.find((image) => image.width === 320);
+          const medium = versions.find((image) => image.width === 640);
+          const large = versions.find((image) => image.width === 960);
+
           generatedImages.push({
-            original: file.filename,
+            original: originalFilename,
+            small: small?.filename,
+            medium: medium?.filename,
+            large: large?.filename,
             versions,
           });
+
+          // Controller نسخه 960 را به‌عنوان تصویر اصلی ذخیره می‌کند
+          file.originalFilename = originalFilename;
+          file.filename = large.filename;
+          file.path = large.path;
         }
 
         // در Controller هم قابل استفاده است

@@ -46,7 +46,11 @@ const SingleShoe = () => {
 
     if (!imageName) return "";
 
-    const imageBaseName = imageName.replace(/\.[^/.]+$/, "");
+    const imageBaseName = imageName
+      // حذف پسوند فایل
+      .replace(/\.[^/.]+$/, "")
+      // حذف اندازه قبلی از انتهای نام
+      .replace(/-(320|640|960)$/, "");
 
     return `${IMG_URL}${imageBaseName}-${size}.webp`;
   };

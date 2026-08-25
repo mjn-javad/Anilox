@@ -158,13 +158,11 @@ const ProductCard = ({
                 <div className="relative overflow-hidden bg-gray-50">
                   {shoe?.images?.[0]?.image_name ? (
                     <img
-                      src={`/api/images/posts/${shoe.images[0].image_name.replace(
-                        /\.[^/.]+$/,
-                        "",
-                      )}-640.webp`}
+                      src={`/api/images/posts/${shoe.images[0].image_name
+                        .replace(/\.[^/.]+$/, "")
+                        .replace(/-(320|640|960)$/, "")}-640.webp`}
                       onError={(e) => {
                         e.currentTarget.onerror = null;
-
                         e.currentTarget.src = `/api/images/posts/${shoe.images[0].image_name}`;
                       }}
                       alt={shoe.name}

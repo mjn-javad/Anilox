@@ -53,6 +53,7 @@ const createImageVersions = async (file) => {
       path: outputPath,
     });
   }
+
   await fsPromises.unlink(inputPath);
   return generatedImages;
 };

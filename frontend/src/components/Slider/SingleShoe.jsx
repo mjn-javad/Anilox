@@ -46,13 +46,20 @@ const SingleShoe = () => {
 
     if (!imageName) return "";
 
-    const imageBaseName = imageName
-      // حذف پسوند فایل
+    // فقط تصاویر جدید دارای نسخه‌های 320، 640 و 960 هستند
+    const hasResponsiveVersions = /-(320|640|960)\.webp$/i.test(imageName);
+
+    // تصاویر قدیمی: مستقیماً خود فایل اصلی را نمایش بده
+    if (!hasResponsiveVersions) {
+      return `${IMG_URL}${imageName}`;
+    }
+
+    // تصاویر جدید: اندازه موردنظر را برگردان
+    const baseName = imageName
       .replace(/\.[^/.]+$/, "")
-      // حذف اندازه قبلی از انتهای نام
       .replace(/-(320|640|960)$/, "");
 
-    return `${IMG_URL}${imageBaseName}-${size}.webp`;
+    return `${IMG_URL}${baseName}-${size}.webp`;
   };
 
   useEffect(() => {
@@ -189,15 +196,6 @@ const SingleShoe = () => {
             {images[selectedImage] ? (
               <img
                 src={getImageSrc(images[selectedImage], 960)}
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-
-                  const image = images[selectedImage];
-                  const imageName =
-                    typeof image === "string" ? image : image?.image_name;
-
-                  e.currentTarget.src = `${IMG_URL}${imageName}`;
-                }}
                 alt={shoe.name}
                 className="w-full h-full object-contain"
               />
@@ -220,14 +218,6 @@ const SingleShoe = () => {
                 >
                   <img
                     src={getImageSrc(image, 320)}
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-
-                      const imageName =
-                        typeof image === "string" ? image : image?.image_name;
-
-                      e.currentTarget.src = `${IMG_URL}${imageName}`;
-                    }}
                     alt={`${shoe.name} - ${index + 1}`}
                     loading="lazy"
                     className="w-full aspect-square object-cover"
@@ -303,17 +293,6 @@ const SingleShoe = () => {
                     >
                       <img
                         src={getImageSrc(color?.images?.[0], 320)}
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-
-                          const image = color?.images?.[0];
-                          const imageName =
-                            typeof image === "string"
-                              ? image
-                              : image?.image_name;
-
-                          e.currentTarget.src = `${IMG_URL}${imageName}`;
-                        }}
                         alt={color.name}
                         loading="lazy"
                         className="w-full h-full object-cover rounded"

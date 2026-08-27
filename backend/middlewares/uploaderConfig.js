@@ -175,13 +175,6 @@ exports.uploadWithErrorHandler = ({
 
       const files = multiple ? req.files : req.file ? [req.file] : [];
 
-      if (!files.length) {
-        return res.status(400).json({
-          success: false,
-          message: "لطفاً حداقل یک فایل تصویر انتخاب کنید",
-        });
-      }
-
       /* =========================
          Generate 320 / 640 / 960
       ========================= */

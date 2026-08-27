@@ -158,13 +158,9 @@ const ProductCard = ({
                 <div className="relative overflow-hidden bg-gray-50">
                   {shoe?.images?.[0]?.image_name ? (
                     <img
-                      src={
-                        /-(320|640|960)\.webp$/i.test(shoe.images[0].image_name)
-                          ? `/api/images/posts/${shoe.images[0].image_name
-                              .replace(/\.[^/.]+$/, "")
-                              .replace(/-(320|640|960)$/, "")}-640.webp`
-                          : `/api/images/posts/${shoe.images[0].image_name}`
-                      }
+                      src={`/api/images/posts/${shoe.images[0].image_name
+                        .replace(/\.[^/.]+$/, "")
+                        .replace(/-(320|640|960)$/, "")}-640.webp`}
                       alt={shoe.name}
                       loading="lazy"
                       className="aspect-square w-full object-cover transition-opacity duration-300 group-hover:opacity-90"

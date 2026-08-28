@@ -46,6 +46,14 @@ const SingleShoe = () => {
 
     if (!imageName) return "";
 
+    // اگر نام فایل اندازه داشته باشد، نسخه بهینه‌شده موجود است
+    const hasResponsiveVersions = /-(320|640|960)\.webp$/i.test(imageName);
+
+    // در غیر این صورت خود تصویر اصلی نمایش داده شود
+    if (!hasResponsiveVersions) {
+      return `${IMG_URL}${imageName}`;
+    }
+
     const baseName = imageName
       .replace(/\.[^/.]+$/, "")
       .replace(/-(320|640|960)$/i, "");

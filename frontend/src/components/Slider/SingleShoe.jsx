@@ -236,12 +236,21 @@ const SingleShoe = () => {
             </div>
 
             {isAdmin && (
-              <Link
-                to={`/admin/dashboard/editShoe/${getId(shoe)}`}
-                className="shrink-0 rounded-full border border-gray-300 px-4 py-2 text-xs font-medium uppercase tracking-widest text-gray-700 transition hover:bg-black hover:text-white"
-              >
-                Edit
-              </Link>
+              <div className="flex shrink-0 flex-col items-stretch gap-2">
+                <Link
+                  to={`/admin/dashboard/editShoe/${getId(shoe)}`}
+                  className="shrink-0 rounded-full border border-gray-300 px-4 py-2 text-xs font-medium uppercase tracking-widest text-gray-700 transition hover:bg-black hover:text-white"
+                >
+                  Edit
+                </Link>
+
+                <Link
+                  to={`/admin/dashboard/shoe-upload/${getId(shoe)}`}
+                  className="whitespace-nowrap rounded-full border border-gray-300 px-4 py-2 text-center text-xs font-medium uppercase tracking-widest text-gray-700 transition hover:bg-black hover:text-white"
+                >
+                  Add color
+                </Link>
+              </div>
             )}
           </div>
 

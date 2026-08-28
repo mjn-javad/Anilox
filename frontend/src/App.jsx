@@ -104,6 +104,11 @@ function App() {
           />
 
           <Route
+            path="admin/dashboard/shoe-upload/:shoeId"
+            element={<ShoeUploader />}
+          />
+
+          <Route
             path="admin/dashboard/banner-upload"
             element={<BannerUploader />}
           />

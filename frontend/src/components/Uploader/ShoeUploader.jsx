@@ -3,11 +3,20 @@ import apiClientShoes from "../../services/api-client_shoes";
 import apiClientBrand from "../../services/api-client_brand";
 
 import React, { FormEvent, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+
 import MessageAlert from "../Shared/MessageAlert";
 import InputField from "../Shared/InputField";
 import Button from "../Shared/Button";
+import LoadingSpinner from "../Shared/LoadingSpinner";
 
 const ShoeUploader = () => {
+  /*
+   * اگر از آدرس زیر وارد شویم، shoeId وجود دارد:
+   * /admin/dashboard/shoe-upload/:shoeId
+   */
+  const { shoeId } = useParams();
+
   const [form, setForm] = useState({
     type: "",
     brand: "",
@@ -25,6 +34,7 @@ const ShoeUploader = () => {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const [isShoeLoading, setIsShoeLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -33,6 +43,64 @@ const ShoeUploader = () => {
       .then((res) => setBrand(res.data.data))
       .catch((err) => setError(err));
   }, []);
+
+  /*
+   * اگر shoeId داخل URL وجود داشته باشد،
+   * اطلاعات محصول قبلی دریافت و داخل فرم قرار می‌گیرد.
+   */
+  useEffect(() => {
+    if (!shoeId) return;
+
+    let active = true;
+
+    const fetchShoe = async () => {
+      try {
+        setIsShoeLoading(true);
+        setError("");
+        setMessage("");
+
+        const res = await apiClientShoes.get(`/${shoeId}`);
+
+        const shoe = res.data?.data || res.data;
+
+        if (!active || !shoe) return;
+
+        setForm({
+          type: shoe.type || "",
+          brand: shoe.brand || "",
+          model: shoe.model || "",
+          category: shoe.category || "",
+          gender: shoe.gender || "",
+          price: shoe.price ?? "",
+          discount_price: shoe.discount_price ?? "",
+          description: shoe.description || "",
+
+          // رنگ محصول جدید باید جداگانه وارد شود
+          colors: "",
+        });
+
+        // تصاویر قبلی منتقل نمی‌شوند
+        setFiles([]);
+      } catch (err) {
+        if (active) {
+          setError(
+            err.response?.data?.message ||
+              "There was a problem retrieving product information",
+          );
+        }
+      } finally {
+        if (active) {
+          setIsShoeLoading(false);
+        }
+      }
+    };
+
+    fetchShoe();
+
+    return () => {
+      active = false;
+    };
+  }, [shoeId]);
 
   const handleChange = (nameKey, value) => {
     setForm({
@@ -73,6 +141,10 @@ const ShoeUploader = () => {
     }
   };
 
+  if (isShoeLoading) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <div className="container text-center my-5">
       <form
@@ -112,6 +184,7 @@ const ShoeUploader = () => {
             required
           >
             <option value="">Select Brand</option>
+
             {brands.map((brand, index) => (
               <option key={index} value={brand.slug}>
                 {brand.name}
@@ -208,6 +281,7 @@ const ShoeUploader = () => {
 
         <div>
           <label className="block mb-2">Images</label>
+
           <input
             type="file"
             multiple
@@ -219,6 +293,7 @@ const ShoeUploader = () => {
             }}
             className="px-5 py-2 rounded-2xl bg-gray-500 hover:bg-gray-400 duration-200"
           />
+
           {files.length > 0 && (
             <p className="text-sm mt-2">{files.length} file(s) selected</p>
           )}
@@ -226,12 +301,16 @@ const ShoeUploader = () => {
 
         <button
           type="submit"
-          className={`px-4 py-2 ${isLoading ? "bg-gray-400" : "bg-blue-500"} text-white rounded`}
+          className={`px-4 py-2 ${
+            isLoading ? "bg-gray-400" : "bg-blue-500"
+          } text-white rounded`}
           disabled={isLoading}
         >
           {isLoading ? "Creating" : "Create Product"}
         </button>
+
         {message && <MessageAlert message={message} type="success" />}
+
         {error && <MessageAlert message={error} type="error" />}
       </form>
     </div>

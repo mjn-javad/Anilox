@@ -502,6 +502,15 @@ export default function TopNavbar({ handelOrderPopup }) {
                 Login / Register
               </Link>
             )}
+
+            <div className="mt-4 border-t border-neutral-100 pt-3 text-center">
+              <p className="text-[10px] font-medium tracking-[0.14em] text-neutral-400">
+                Made with <span className="text-red-500">♥</span> by{" "}
+                <span className="font-semibold text-neutral-700 transition-colors hover:text-black">
+                  Shairut
+                </span>
+              </p>
+            </div>
           </div>
         </aside>
       </div>

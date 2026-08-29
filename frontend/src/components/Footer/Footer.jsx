@@ -65,8 +65,7 @@ const Footer = () => {
 
             <p className="text-gray-400 text-sm">
               Made with <span className="text-primary animate-pulse">💖</span>{" "}
-              by{" "}
-              <span className="text-white font-semibold">The MJ_Norouzi</span>
+              by <span className="text-white font-semibold">Shairut</span>
             </p>
           </div>
 

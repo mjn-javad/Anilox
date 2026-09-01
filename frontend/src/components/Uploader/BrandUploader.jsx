@@ -63,7 +63,7 @@ const BrandUploader = () => {
       const fileInput = document.getElementById("brand-image");
       if (fileInput) fileInput.value = "";
     } catch (err) {
-      setError(err.response?.data?.message || "Error creating shoe");
+      setError(err.response?.data?.message || "Error creating brand");
     }
   };
 

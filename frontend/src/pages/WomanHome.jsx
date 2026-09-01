@@ -25,7 +25,7 @@ const WomenHome = () => {
         myQuery={"?type=watch&gender=female&limit=20"}
         header={"Woman Watches"}
         title={"Sell All"}
-        navigateLink={"/slider-shoes?type=watch&gender=female"}
+        navigateLink={"/slider-products?type=watch&gender=female"}
         limit={20}
         infiniteScroll={false}
         scrollOnMobile={true}

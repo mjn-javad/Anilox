@@ -13,7 +13,7 @@ CREATE TABLE discount_codes (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
-    FOREIGN KEY (product_id) REFERENCES shoes(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     INDEX idx_code (code),
     INDEX idx_valid_dates (valid_from, valid_until),
     INDEX idx_active (is_active)

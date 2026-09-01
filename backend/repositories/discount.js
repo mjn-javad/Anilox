@@ -5,7 +5,7 @@ const setDiscountForAllProducts = async (discountPercentage) => {
   const discountMultiplier = 1 - discountPercentage / 100;
 
   const [result] = await db.execute(
-    `UPDATE shoes 
+    `UPDATE products
      SET discount_price = ROUND(price * ?, 2)
      WHERE discount_price != ROUND(price * ?, 2) OR discount_price IS NULL`,
     [discountMultiplier, discountMultiplier],
@@ -15,7 +15,7 @@ const setDiscountForAllProducts = async (discountPercentage) => {
 };
 
 const removeDiscountFromAllProducts = async () => {
-  const [result] = await db.execute(`UPDATE shoes SET discount_price = NULL`);
+  const [result] = await db.execute(`UPDATE products SET discount_price = NULL`);
   return result.affectedRows;
 };
 
@@ -57,7 +57,7 @@ const getAllDiscountCodes = async () => {
       s.name as product_name,
       s.slug as product_slug
      FROM discount_codes dc
-     LEFT JOIN shoes s ON dc.product_id = s.id
+     LEFT JOIN products s ON dc.product_id = s.id
      ORDER BY dc.created_at DESC`,
   );
   return rows;
@@ -70,7 +70,7 @@ const getDiscountCodeByCode = async (code) => {
       s.price as original_price,
       s.discount_price as product_discount_price
      FROM discount_codes dc
-     LEFT JOIN shoes s ON dc.product_id = s.id
+     LEFT JOIN products s ON dc.product_id = s.id
      WHERE dc.code = ? AND dc.is_active = TRUE
      AND (dc.valid_from IS NULL OR dc.valid_from <= NOW())
      AND (dc.valid_until IS NULL OR dc.valid_until >= NOW())
@@ -112,14 +112,14 @@ const incrementCodeUsage = async (code) => {
 
 const applyDiscountToProduct = async (productId, discountPrice) => {
   const [result] = await db.execute(
-    `UPDATE shoes SET discount_price = ? WHERE id = ?`,
+    `UPDATE products SET discount_price = ? WHERE id = ?`,
     [discountPrice, productId],
   );
   return result.affectedRows > 0;
 };
 
 const getProductById = async (productId) => {
-  const [rows] = await db.execute(`SELECT * FROM shoes WHERE id = ?`, [
+  const [rows] = await db.execute(`SELECT * FROM products WHERE id = ?`, [
     productId,
   ]);
   return rows[0];
@@ -127,7 +127,7 @@ const getProductById = async (productId) => {
 
 const getAllProducts = async () => {
   const [rows] = await db.execute(
-    `SELECT id, name, price, discount_price FROM shoes`,
+    `SELECT id, name, price, discount_price FROM products`,
   );
   return rows;
 };
@@ -182,7 +182,7 @@ const setDiscountForAllProductsWithTransaction = async (
 ) => {
   const discountMultiplier = 1 - discountPercentage / 100;
   const [result] = await connection.execute(
-    `UPDATE shoes 
+    `UPDATE products
      SET discount_price = ROUND(price * ?, 2)
      WHERE discount_price != ROUND(price * ?, 2) OR discount_price IS NULL`,
     [discountMultiplier, discountMultiplier],

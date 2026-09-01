@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const authRoute = require("./routes/v1/auth");
-const shoesRoute = require("./routes/v1/shoes");
+const productsRoute = require("./routes/v1/products");
 const ordersRoute = require("./routes/v1/order");
 const apidocRoute = require("./routes/v1/apidoc");
 const barndPopularRoute = require("./routes/v1/brandPopular");
@@ -48,7 +48,7 @@ app.use(flash());
 
 // Routes
 app.use("/v1/auth", authRoute);
-app.use("/v1/shoes", shoesRoute);
+app.use("/v1/products", productsRoute);
 app.use("/v1/orders", ordersRoute);
 app.use("/v1/apis", apidocRoute);
 app.use("/v1/brandPopular", barndPopularRoute);

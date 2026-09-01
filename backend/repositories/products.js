@@ -14,7 +14,7 @@ const create = async ({
   colors = null, // اضافه کردن colors به عنوان پارامتر اختیاری
 }) => {
   const query = `
-    INSERT INTO shoes 
+    INSERT INTO products 
     (type, name, slug, brand, model, category,  gender, price, discount_price, description, colors)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
@@ -36,23 +36,23 @@ const create = async ({
   return result.insertId;
 };
 
-const addImages = async (shoeId, images) => {
-  const query = "INSERT INTO shoes_images (shoes_id, image_name) VALUES (?, ?)";
+const addImages = async (productId, images) => {
+  const query = "INSERT INTO product_images (product_id, image_name) VALUES (?, ?)";
 
   for (const img of images) {
     const imageName = typeof img === "string" ? img : img.filename;
 
-    await db.execute(query, [shoeId, imageName]);
+    await db.execute(query, [productId, imageName]);
   }
 };
 
-const addSize = async (shoeId, size, quantity) => {
+const addStock = async (productId, stock, quantity) => {
   const query = `
-    INSERT INTO shoes_sizes (shoes_id, size, quantity) 
+    INSERT INTO product_stocks (product_id, stock, quantity) 
     VALUES (?, ?, ?)
   `;
 
-  const [result] = await db.execute(query, [shoeId, size, quantity]);
+  const [result] = await db.execute(query, [productId, stock, quantity]);
 
   return result.insertId;
 };
@@ -61,7 +61,7 @@ const hasOrders = async (id) => {
   const [rows] = await db.execute(
     `SELECT 1
          FROM order_items
-         WHERE shoes_id = ?
+         WHERE product_id = ?
          LIMIT 1`,
     [id],
   );
@@ -70,16 +70,16 @@ const hasOrders = async (id) => {
 };
 
 const remove = async (id) => {
-  const [result] = await db.execute("DELETE FROM shoes WHERE id = ?", [id]);
+  const [result] = await db.execute("DELETE FROM products WHERE id = ?", [id]);
 
   return result.affectedRows > 0;
 };
 
-const increaseStock = async (shoeId, size, quantity) => {
+const increaseStock = async (productId, stock, quantity) => {
   const query = `
-    INSERT INTO shoes_sizes (
-      shoes_id,
-      size,
+    INSERT INTO product_stocks (
+      product_id,
+      stock,
       quantity
     )
     VALUES (?, ?, ?)
@@ -87,32 +87,32 @@ const increaseStock = async (shoeId, size, quantity) => {
       quantity = quantity + VALUES(quantity)
   `;
 
-  const [result] = await db.execute(query, [shoeId, size, quantity]);
+  const [result] = await db.execute(query, [productId, stock, quantity]);
 
   return result.affectedRows > 0;
 };
 
 const findById = async (id) => {
-  const [shoes] = await db.execute("SELECT * FROM shoes WHERE id = ?", [id]);
+  const [products] = await db.execute("SELECT * FROM products WHERE id = ?", [id]);
 
-  if (!shoes.length) return null;
+  if (!products.length) return null;
 
-  const shoe = shoes[0];
+  const product = products[0];
 
   const [images] = await db.execute(
-    "SELECT image_name, sort_order FROM shoes_images WHERE shoes_id = ? ORDER BY sort_order DESC",
+    "SELECT image_name, sort_order FROM product_images WHERE product_id = ? ORDER BY sort_order DESC",
     [id],
   );
 
-  const [sizes] = await db.execute(
-    "SELECT * FROM shoes_sizes WHERE shoes_id = ?",
+  const [stocks] = await db.execute(
+    "SELECT * FROM product_stocks WHERE product_id = ?",
     [id],
   );
 
   return {
-    ...shoe,
+    ...product,
     images,
-    sizes,
+    stocks,
   };
 };
 
@@ -224,7 +224,7 @@ const getAll = async ({
   const [brands] = await db.execute(
     `
     SELECT DISTINCT s.brand AS name
-    FROM shoes s
+    FROM products s
     ${brandsWhereClause}
     ORDER BY s.brand ASC
     `,
@@ -234,7 +234,7 @@ const getAll = async ({
   // 📊 گرفتن تعداد کل
   const countQuery = `
     SELECT COUNT(*) as total
-    FROM shoes s
+    FROM products s
     ${whereClause}
   `;
 
@@ -259,7 +259,7 @@ const getAll = async ({
   const [rows] = await db.execute(
     `
     SELECT s.*
-    FROM shoes s
+    FROM products s
     ${whereClause}
     ORDER BY s.${safeSort} ${safeOrder}
     LIMIT ? OFFSET ?
@@ -280,55 +280,55 @@ const getAll = async ({
     };
   }
 
-  const shoeIds = rows.map((row) => row.id);
+  const productIds = rows.map((row) => row.id);
 
   // دریافت تصاویر فقط برای همین محصولات
   const [allImages] = await db.execute(
     `
-    SELECT shoes_id, image_name, sort_order 
-    FROM shoes_images 
-    WHERE shoes_id IN (${shoeIds.map(() => "?").join(",")})
+    SELECT product_id, image_name, sort_order 
+    FROM product_images 
+    WHERE product_id IN (${productIds.map(() => "?").join(",")})
     ORDER BY sort_order DESC
     `,
-    shoeIds,
+    productIds,
   );
 
   const imagesMap = {};
 
   allImages.forEach((image) => {
-    if (!imagesMap[image.shoes_id]) {
-      imagesMap[image.shoes_id] = [];
+    if (!imagesMap[image.product_id]) {
+      imagesMap[image.product_id] = [];
     }
 
-    imagesMap[image.shoes_id].push({
+    imagesMap[image.product_id].push({
       image_name: image.image_name,
       sort_order: image.sort_order,
     });
   });
 
   // دریافت موجودی
-  const [allSizes] = await db.execute(
+  const [allStocks] = await db.execute(
     `
     SELECT 
-      shoes_id, 
-      size, 
+      product_id, 
+      stock, 
       quantity 
-    FROM shoes_sizes 
-    WHERE shoes_id IN (${shoeIds.map(() => "?").join(",")})
-    ORDER BY shoes_id, size
+    FROM product_stocks 
+    WHERE product_id IN (${productIds.map(() => "?").join(",")})
+    ORDER BY product_id, stock
     `,
-    shoeIds,
+    productIds,
   );
 
-  const sizesByShoe = {};
+  const stocksByProduct = {};
 
-  allSizes.forEach((item) => {
-    if (!sizesByShoe[item.shoes_id]) {
-      sizesByShoe[item.shoes_id] = [];
+  allStocks.forEach((item) => {
+    if (!stocksByProduct[item.product_id]) {
+      stocksByProduct[item.product_id] = [];
     }
 
-    sizesByShoe[item.shoes_id].push({
-      size: item.size,
+    stocksByProduct[item.product_id].push({
+      stock: item.stock,
       quantity: item.quantity,
     });
   });
@@ -348,9 +348,9 @@ const getAll = async ({
     description: row.description,
     colors: row.colors,
     images: imagesMap[row.id] || [],
-    sizes: sizesByShoe[row.id] || [],
+    stocks: stocksByProduct[row.id] || [],
     total_stock:
-      sizesByShoe[row.id]?.reduce((sum, item) => sum + item.quantity, 0) || 0,
+      stocksByProduct[row.id]?.reduce((sum, item) => sum + item.quantity, 0) || 0,
     created_at: row.created_at,
     updated_at: row.updated_at,
   }));
@@ -370,7 +370,7 @@ const getAll = async ({
 const getAllNewArrivals = async ({ gender }) => {
   const [newArrivalIds] = await db.execute(
     `
-      SELECT shoe_id
+      SELECT product_id
       FROM new_arrivels
     `,
   );
@@ -383,13 +383,13 @@ const getAllNewArrivals = async ({ gender }) => {
     };
   }
 
-  const ids = newArrivalIds.map((item) => item.shoe_id);
+  const ids = newArrivalIds.map((item) => item.product_id);
   const placeholders = ids.map(() => "?").join(",");
 
   const [rows] = await db.execute(
     `
       SELECT *
-      FROM shoes
+      FROM products
       WHERE id IN (${placeholders})
       AND gender IN (?, ?)
       ORDER BY FIELD(id, ${placeholders})
@@ -399,26 +399,26 @@ const getAllNewArrivals = async ({ gender }) => {
 
   const [allImages] = await db.execute(
     `
-      SELECT shoes_id, image_name
-      FROM shoes_images
+      SELECT product_id, image_name
+      FROM product_images
     `,
   );
 
   const imagesMap = {};
 
   allImages.forEach((img) => {
-    if (!imagesMap[img.shoes_id]) {
-      imagesMap[img.shoes_id] = [];
+    if (!imagesMap[img.product_id]) {
+      imagesMap[img.product_id] = [];
     }
 
-    imagesMap[img.shoes_id].push({
+    imagesMap[img.product_id].push({
       image_name: img.image_name,
     });
   });
 
-  const newArrivals = rows.map((shoe) => ({
-    ...shoe,
-    images: imagesMap[shoe.id] || [],
+  const newArrivals = rows.map((product) => ({
+    ...product,
+    images: imagesMap[product.id] || [],
   }));
 
   return {
@@ -431,7 +431,7 @@ const getAllNewArrivals = async ({ gender }) => {
 const getAllBestSellers = async ({ gender }) => {
   const [bestSellersIds] = await db.execute(
     `
-      SELECT shoe_id
+      SELECT product_id
       FROM best_sellers
     `,
   );
@@ -444,13 +444,13 @@ const getAllBestSellers = async ({ gender }) => {
     };
   }
 
-  const ids = bestSellersIds.map((item) => item.shoe_id);
+  const ids = bestSellersIds.map((item) => item.product_id);
   const placeholders = ids.map(() => "?").join(",");
 
   const [rows] = await db.execute(
     `
       SELECT *
-      FROM shoes
+      FROM products
       WHERE id IN (${placeholders})
       AND gender IN (?, ?)
       ORDER BY FIELD(id, ${placeholders})
@@ -460,26 +460,26 @@ const getAllBestSellers = async ({ gender }) => {
 
   const [allImages] = await db.execute(
     `
-      SELECT shoes_id, image_name
-      FROM shoes_images
+      SELECT product_id, image_name
+      FROM product_images
     `,
   );
 
   const imagesMap = {};
 
   allImages.forEach((img) => {
-    if (!imagesMap[img.shoes_id]) {
-      imagesMap[img.shoes_id] = [];
+    if (!imagesMap[img.product_id]) {
+      imagesMap[img.product_id] = [];
     }
 
-    imagesMap[img.shoes_id].push({
+    imagesMap[img.product_id].push({
       image_name: img.image_name,
     });
   });
 
-  const bestSellers = rows.map((shoe) => ({
-    ...shoe,
-    images: imagesMap[shoe.id] || [],
+  const bestSellers = rows.map((product) => ({
+    ...product,
+    images: imagesMap[product.id] || [],
   }));
 
   return {
@@ -489,7 +489,7 @@ const getAllBestSellers = async ({ gender }) => {
   };
 };
 
-const updateShoeInfo = async (id, data) => {
+const updateProductInfo = async (id, data) => {
   try {
     const fields = [];
     const values = [];
@@ -505,7 +505,7 @@ const updateShoeInfo = async (id, data) => {
       return { affectedRows: 0, success: false };
     }
 
-    const query = `UPDATE shoes SET ${fields.join(", ")} WHERE id = ?`;
+    const query = `UPDATE products SET ${fields.join(", ")} WHERE id = ?`;
     values.push(id);
 
     const [result] = await db.execute(query, values);
@@ -523,17 +523,17 @@ const updateShoeInfo = async (id, data) => {
 
 const findBySlug = async (connection, slug) => {
   const [rows] = await db.execute(
-    "SELECT * FROM shoes WHERE slug = ? LIMIT 1",
+    "SELECT * FROM products WHERE slug = ? LIMIT 1",
     [slug],
   );
   return rows[0];
 };
 
-const deleteImagesByNames = async (shoeId, imageNames) => {
+const deleteImagesByNames = async (productId, imageNames) => {
   try {
     // اعتبارسنجی ورودی
-    if (!shoeId) {
-      throw new Error("Shoe ID is required");
+    if (!productId) {
+      throw new Error("Product ID is required");
     }
 
     if (!imageNames || !Array.isArray(imageNames) || imageNames.length === 0) {
@@ -567,8 +567,8 @@ const deleteImagesByNames = async (shoeId, imageNames) => {
 
     for (const imageName of validImageNames) {
       const [result] = await db.execute(
-        "DELETE FROM shoes_images WHERE shoes_id = ? AND image_name = ?",
-        [shoeId, imageName],
+        "DELETE FROM product_images WHERE product_id = ? AND image_name = ?",
+        [productId, imageName],
       );
       totalAffected += result.affectedRows;
     }
@@ -583,14 +583,14 @@ const deleteImagesByNames = async (shoeId, imageNames) => {
   }
 };
 
-// repositories/shoes.js
-const findImageByName = async (shoeId, imageName) => {
+// repositories/products.js
+const findImageByName = async (productId, imageName) => {
   try {
-    const shoeIdNum = parseInt(shoeId);
+    const productIdNum = parseInt(productId);
     const imageNameStr = String(imageName).trim();
 
-    if (isNaN(shoeIdNum)) {
-      throw new Error("Invalid shoe ID");
+    if (isNaN(productIdNum)) {
+      throw new Error("Invalid product ID");
     }
 
     if (!imageNameStr) {
@@ -599,9 +599,9 @@ const findImageByName = async (shoeId, imageName) => {
 
     // در MySQL2، نتیجه execute به صورت [rows, fields] برمی‌گردد
     const [rows, fields] = await db.execute(
-      `SELECT * FROM shoes_images 
-       WHERE shoes_id = ? AND image_name = ?`,
-      [shoeIdNum, imageNameStr],
+      `SELECT * FROM product_images 
+       WHERE product_id = ? AND image_name = ?`,
+      [productIdNum, imageNameStr],
     );
 
     return rows[0] || null;
@@ -611,15 +611,15 @@ const findImageByName = async (shoeId, imageName) => {
   }
 };
 
-const updateImageSortOrder = async (shoeId, imageName, sortOrder) => {
+const updateImageSortOrder = async (productId, imageName, sortOrder) => {
   try {
     // اطمینان از نوع داده‌ها
-    const shoeIdNum = parseInt(shoeId);
+    const productIdNum = parseInt(productId);
     const sortOrderNum = parseInt(sortOrder);
     const imageNameStr = String(imageName).trim();
 
-    if (isNaN(shoeIdNum)) {
-      throw new Error("Invalid shoe ID");
+    if (isNaN(productIdNum)) {
+      throw new Error("Invalid product ID");
     }
 
     if (isNaN(sortOrderNum) || sortOrderNum < 0) {
@@ -631,17 +631,17 @@ const updateImageSortOrder = async (shoeId, imageName, sortOrder) => {
     }
 
     // ابتدا بررسی کنیم که تصویر وجود دارد
-    const existingImage = await findImageByName(shoeIdNum, imageNameStr);
+    const existingImage = await findImageByName(productIdNum, imageNameStr);
     if (!existingImage) {
       throw new Error(`Image not found: ${imageNameStr}`);
     }
 
     // به‌روزرسانی - در MySQL2، result به صورت [rows, fields] برمی‌گردد
     const [result, fields] = await db.execute(
-      `UPDATE shoes_images 
+      `UPDATE product_images 
        SET sort_order = ?
-       WHERE shoes_id = ? AND image_name = ?`,
-      [sortOrderNum, shoeIdNum, imageNameStr],
+       WHERE product_id = ? AND image_name = ?`,
+      [sortOrderNum, productIdNum, imageNameStr],
     );
 
     if (result.affectedRows === 0) {
@@ -649,7 +649,7 @@ const updateImageSortOrder = async (shoeId, imageName, sortOrder) => {
     }
 
     // گرفتن اطلاعات به‌روز شده
-    const updatedImage = await findImageByName(shoeIdNum, imageNameStr);
+    const updatedImage = await findImageByName(productIdNum, imageNameStr);
     return updatedImage;
   } catch (err) {
     console.error("Error updating image sort order:", err);
@@ -657,38 +657,38 @@ const updateImageSortOrder = async (shoeId, imageName, sortOrder) => {
   }
 };
 
-const changeStock = async (shoeId, size, quantityChange) => {
+const changeStock = async (productId, stock, quantityChange) => {
   const query = `
-    INSERT INTO shoes_sizes (shoes_id, size, quantity)
+    INSERT INTO product_stocks (product_id, stock, quantity)
     VALUES (?, ?, ?)
     ON DUPLICATE KEY UPDATE
       quantity = GREATEST(quantity + VALUES(quantity), 0)
   `;
 
-  await db.execute(query, [shoeId, size, quantityChange]);
+  await db.execute(query, [productId, stock, quantityChange]);
 
   await db.execute(
     `
-      DELETE FROM shoes_sizes
-      WHERE shoes_id = ?
-        AND size = ?
+      DELETE FROM product_stocks
+      WHERE product_id = ?
+        AND stock = ?
         AND quantity <= 0
     `,
-    [shoeId, size],
+    [productId, stock],
   );
 
   return true;
 };
 
 module.exports = {
-  updateShoeInfo,
+  updateProductInfo,
   getAll,
   getAllNewArrivals,
   getAllBestSellers,
   findById,
   findBySlug,
   remove,
-  addSize,
+  addStock,
   addImages,
   create,
   deleteImagesByNames,

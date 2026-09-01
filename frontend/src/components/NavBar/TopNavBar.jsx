@@ -5,8 +5,8 @@ import apiClientAuth from "../../services/api-client_auth";
 
 const adminLinks = [
   ["Add Brand", "/admin/dashboard/brand-upload"],
-  ["Add New Product", "/admin/dashboard/shoe-upload"],
-  ["Manage Products", "/admin/dashboard/shoes-manager"],
+  ["Add New Product", "/admin/dashboard/product-upload"],
+  ["Manage Products", "/admin/dashboard/products-manager"],
   ["Manage Users", "/admin/dashboard/users-manager"],
   ["Manage Carts", "/admin/dashboard/carts"],
   ["Manage Orders", "/admin/dashboard/orders"],
@@ -16,7 +16,7 @@ const adminLinks = [
   ["Discount Codes Manager", "/admin/dashboard/discount-code-manager"],
 ];
 
-const shoeTypes = [
+const shoeCategories = [
   ["Sneakers", "sneaker"],
   ["Loafers", "loafer"],
   ["Formal", "formal"],
@@ -61,7 +61,7 @@ export default function TopNavbar({ handelOrderPopup }) {
       }
     });
 
-    return `/slider-shoes?${q}`;
+    return `/slider-products?${q}`;
   };
 
   const mainLinks = [
@@ -121,7 +121,7 @@ export default function TopNavbar({ handelOrderPopup }) {
     }
 
     if (type) {
-      return pathname === "/slider-shoes" && params.get("type") === type;
+      return pathname === "/slider-products" && params.get("type") === type;
     }
 
     return pathname + search === itemLink;
@@ -179,7 +179,7 @@ export default function TopNavbar({ handelOrderPopup }) {
                           Shop By Type
                         </p>
 
-                        {shoeTypes.map(([label, category]) => (
+                        {shoeCategories.map(([label, category]) => (
                           <Link
                             key={category}
                             to={link({
@@ -401,7 +401,7 @@ export default function TopNavbar({ handelOrderPopup }) {
               <div className="border-b">
                 <Link
                   key={"Add New Product"}
-                  to={"/admin/dashboard/shoe-upload"}
+                  to={"/admin/dashboard/product-upload"}
                   className="block rounded-xl px-4 py-3 text-sm text-neutral-600 hover:bg-neutral-100"
                 >
                   {"Add New Product"}
@@ -443,7 +443,7 @@ export default function TopNavbar({ handelOrderPopup }) {
                       onClick={closeAll}
                       className="flex-1 px-5 py-4 text-sm uppercase tracking-[0.16em] text-neutral-700"
                     >
-                      Shoes
+                      Products
                     </Link>
 
                     <button
@@ -460,7 +460,7 @@ export default function TopNavbar({ handelOrderPopup }) {
 
                   {shoeOpen && (
                     <div className="bg-neutral-50 px-7 pb-4">
-                      {shoeTypes.map(([label, category]) => (
+                      {shoeCategories.map(([label, category]) => (
                         <Link
                           key={category}
                           to={link({

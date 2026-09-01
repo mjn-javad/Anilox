@@ -253,7 +253,7 @@ const Basket = () => {
                   {item.image && (
                     <img
                       src={`/api/images/posts/${item.image}`}
-                      alt={item.shoe?.name}
+                      alt={item.product?.name}
                       className="w-full h-full object-contain"
                     />
                   )}
@@ -264,7 +264,7 @@ const Basket = () => {
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                     <div>
                       <Link
-                        to={`/shoe/${item.shoe_Id}`}
+                        to={`/product/${item.product_id}`}
                         className="text-xl font-bold hover:text-blue-600 transition"
                       >
                         {item?.name}
@@ -272,7 +272,7 @@ const Basket = () => {
                       <p className="text-gray-600">{item?.brand}</p>
                       <div className="flex items-center gap-3 mt-1">
                         <p className="text-sm text-gray-500">
-                          size: {item.size}
+                          size: {item.stock}
                         </p>
                       </div>
                     </div>

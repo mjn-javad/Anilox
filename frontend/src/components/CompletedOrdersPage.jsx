@@ -72,9 +72,9 @@ const CompletedOrdersPage = () => {
                   className="flex flex-nowrap justify-between items-center text-sm"
                 >
                   <div className="flex-1 whitespace-nowrap">
-                    <span className="font-medium">{item.shoes_name}</span>
+                    <span className="font-medium">{item.product_name}</span>
                     <span className="text-gray-500 mx-2">|</span>
-                    <span>Size: {item.size}</span>
+                    <span>Size: {item.stock}</span>
                     <span className="text-gray-500 mx-2">|</span>
                     <span className="inline-block w-4 h-4 rounded-full border border-gray-300 align-middle mx-1" />
                     <span className="text-gray-500 mx-2">|</span>

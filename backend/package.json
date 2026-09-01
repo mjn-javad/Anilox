@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "migrate": "node ./migrations/index.js",
+    "migrate:rename-products": "node ./migrations/rename_product_schema.js",
     "dev": "nodemon server.js"
   },
   "author": "",
@@ -27,6 +28,7 @@
     "mysql2": "^3.18.1",
     "nodemailer": "^8.0.10",
     "nodemon": "^3.1.14",
+    "resend": "^6.25.0",
     "sharp": "^0.35.3",
     "svg-captcha": "^1.4.0",
     "swagger-ui-express": "^5.0.1",

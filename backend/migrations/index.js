@@ -12,13 +12,13 @@ console.log(
 
 const migrate = async () => {
   const users = fs.readFileSync(path.join(__dirname, "users_ddl.sql"), "utf8");
-  const shoes = fs.readFileSync(path.join(__dirname, "shoes_ddl.sql"), "utf8");
-  const shoesSizes = fs.readFileSync(
-    path.join(__dirname, "shoes_sizes_ddl.sql"),
+  const products = fs.readFileSync(path.join(__dirname, "products_ddl.sql"), "utf8");
+  const productStocks = fs.readFileSync(
+    path.join(__dirname, "product_stocks_ddl.sql"),
     "utf8",
   );
-  const shoesImages = fs.readFileSync(
-    path.join(__dirname, "shoes_images_ddl.sql"),
+  const productImages = fs.readFileSync(
+    path.join(__dirname, "product_images_ddl.sql"),
     "utf8",
   );
 
@@ -49,9 +49,9 @@ const migrate = async () => {
   try {
     console.log("Creating tables...");
     await db.query(users);
-    await db.query(shoes);
-    await db.query(shoesSizes);
-    await db.query(shoesImages);
+    await db.query(products);
+    await db.query(productStocks);
+    await db.query(productImages);
     await db.query(userAddresses);
     await db.query(orders);
     await db.query(orderItems);

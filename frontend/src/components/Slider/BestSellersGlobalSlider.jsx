@@ -12,7 +12,7 @@ const BestSellersGlobalSlider = ({
 }) => {
   const [searchParams] = useSearchParams();
 
-  const [shoes, setShoes] = useState([]);
+  const [products, setProducts] = useState([]);
   const [error, setError] = useState("");
 
   const gender = searchParams.get("gender");
@@ -34,7 +34,7 @@ const BestSellersGlobalSlider = ({
           `/bestSellers?${params.toString()}`,
         );
 
-        setShoes(res.data?.data || []);
+        setProducts(res.data?.data || []);
       } catch (err) {
         console.error("Get best sellers error:", err);
         setError("Failed to load best sellers");
@@ -51,7 +51,7 @@ const BestSellersGlobalSlider = ({
       )}
 
       <ProductCard
-        shoes={shoes}
+        products={products}
         header={header}
         title={title}
         navigateLink={navigateLink}

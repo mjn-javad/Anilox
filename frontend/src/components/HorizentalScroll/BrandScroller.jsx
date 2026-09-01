@@ -31,7 +31,7 @@ const formatBrand = (name) =>
 
 const BrandScroller = ({
   brands: receivedBrands,
-  navigatePath = "/slider-shoes",
+  navigatePath = "/slider-products",
   defaultType = "",
 }) => {
   const [brands, setBrands] = useState([]);

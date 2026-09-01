@@ -1,4 +1,4 @@
-// components/Admin/ShoeManagement/LoadingSpinner.jsx
+// components/Admin/ProductManagement/LoadingSpinner.jsx
 import React from "react";
 
 const LoadingSpinner = () => {

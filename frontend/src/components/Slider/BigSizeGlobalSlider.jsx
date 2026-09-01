@@ -22,7 +22,7 @@ const NewArivelsGlobalSlider = ({
   navigateLink,
   limit,
 }) => {
-  const [shoes, setShoes] = useState([]);
+  const [products, setProducts] = useState([]);
   const [banner, setBanner] = useState(null);
   const [error, setError] = useState("");
 
@@ -31,20 +31,20 @@ const NewArivelsGlobalSlider = ({
   useEffect(() => {
     let isMounted = true;
 
-    const fetchShoes = async () => {
+    const fetchProducts = async () => {
       try {
-        const shoesRes = await apiClientBrandPopular.get(
+        const productsRes = await apiClientBrandPopular.get(
           `/newArrivels${myQuery}`,
         );
 
         if (isMounted) {
-          setShoes(shoesRes.data?.data || []);
+          setProducts(productsRes.data?.data || []);
         }
       } catch (err) {
         console.error("New arrivals request error:", err);
 
         if (isMounted) {
-          setShoes([]);
+          setProducts([]);
           setError("Failed to load new arrivals");
         }
       }
@@ -79,7 +79,7 @@ const NewArivelsGlobalSlider = ({
 
     setError("");
 
-    fetchShoes();
+    fetchProducts();
     fetchBanner();
 
     return () => {
@@ -113,7 +113,7 @@ const NewArivelsGlobalSlider = ({
         </div>
       )}
       <ProductCard
-        shoes={shoes}
+        products={products}
         header={header}
         title={title}
         navigateLink={navigateLink}

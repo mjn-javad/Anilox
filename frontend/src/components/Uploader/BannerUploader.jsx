@@ -196,7 +196,7 @@ const BannerUploader = () => {
               value={form.btnLink1}
               onChange={handleChange}
               // required={true}
-              placeholder="Example: /slider-shoes?gender=female"
+              placeholder="Example: /slider-products?gender=female"
             />
           </div>
         </div>

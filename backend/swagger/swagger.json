@@ -1,9 +1,9 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "Shoe Store API",
+        "title": "Product Store API",
         "version": "1.0.0",
-        "description": "API documentation for the Shoe Store Project"
+        "description": "API documentation for the Product Store Project"
     },
     "servers": [
         {
@@ -20,7 +20,7 @@
             }
         },
         "schemas": {
-            "Shoe": {
+            "Product": {
                 "type": "object",
                 "properties": {
                     "name": {
@@ -54,7 +54,7 @@
                     },
                     "description": {
                         "type": "string",
-                        "example": "Premium running shoes"
+                        "example": "Premium running product"
                     },
                     "images": {
                         "type": "array",
@@ -66,12 +66,12 @@
                             "img2.jpg"
                         ]
                     },
-                    "sizes": {
+                    "stocks": {
                         "type": "array",
                         "items": {
                             "type": "object",
                             "properties": {
-                                "size": {
+                                "stock": {
                                     "type": "number",
                                     "example": 42
                                 },
@@ -270,12 +270,12 @@
                 }
             }
         },
-        "/shoes": {
+        "/products": {
             "get": {
                 "tags": [
-                    "Shoes"
+                    "Products"
                 ],
-                "summary": "Get all shoes with filters",
+                "summary": "Get all products with filters",
                 "parameters": [
                     {
                         "name": "search",
@@ -314,20 +314,20 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "List of shoes"
+                        "description": "List of products"
                     }
                 }
             },
             "post": {
                 "tags": [
-                    "Shoes"
+                    "Products"
                 ],
-                "summary": "Create a new shoe",
+                "summary": "Create a new product",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Shoe"
+                                "$ref": "#/components/schemas/Product"
                             }
                         }
                     }
@@ -339,10 +339,10 @@
                 }
             }
         },
-        "/shoes/{id}": {
+        "/products/{id}": {
             "get": {
                 "tags": [
-                    "Shoes"
+                    "Products"
                 ],
                 "parameters": [
                     {
@@ -356,7 +356,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Shoe details"
+                        "description": "Product details"
                     },
                     "404": {
                         "description": "Not found"
@@ -365,7 +365,7 @@
             },
             "put": {
                 "tags": [
-                    "Shoes"
+                    "Products"
                 ],
                 "parameters": [
                     {
@@ -381,7 +381,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Shoe"
+                                "$ref": "#/components/schemas/Product"
                             }
                         }
                     }
@@ -394,7 +394,7 @@
             },
             "delete": {
                 "tags": [
-                    "Shoes"
+                    "Products"
                 ],
                 "parameters": [
                     {
@@ -413,15 +413,15 @@
                 }
             }
         },
-        "/shoes/{shoeId}/stock/{size}": {
+        "/products/{productId}/stock/{stock}": {
             "patch": {
                 "tags": [
-                    "Shoes"
+                    "Products"
                 ],
-                "summary": "Increase stock for a specific size",
+                "summary": "Update inventory for a specific stock option",
                 "parameters": [
                     {
-                        "name": "shoeId",
+                        "name": "productId",
                         "in": "path",
                         "required": true,
                         "schema": {
@@ -429,7 +429,7 @@
                         }
                     },
                     {
-                        "name": "size",
+                        "name": "stock",
                         "in": "path",
                         "required": true,
                         "schema": {
@@ -476,11 +476,11 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "shoesId": {
+                                    "productId": {
                                         "type": "integer",
                                         "example": 1
                                     },
-                                    "size": {
+                                    "stock": {
                                         "type": "number",
                                         "example": 42
                                     },

@@ -1,5 +1,5 @@
 const express = require("express");
-const controller = require("../../controllers/shoes");
+const controller = require("../../controllers/products");
 const authMiddleware = require("../../middlewares/auth");
 const isAdminMiddleware = require("../../middlewares/isAdmin");
 
@@ -27,7 +27,7 @@ router.get("/:id", controller.getSingleProduct);
 
 // ویرایش اطلاعات محصول
 router.put(
-  "/:shoeId/info",
+  "/:productId/info",
   authMiddleware,
   isAdminMiddleware,
   controller.updateProductInfo,
@@ -44,7 +44,7 @@ router.put(
 
 // ویرایش ترتیب تصاویر
 router.put(
-  "/:shoeId/images/sort-order",
+  "/:productId/images/sort-order",
   authMiddleware,
   isAdminMiddleware,
   controller.updateImageSortOrder,
@@ -69,10 +69,10 @@ router.delete(
 
 // افزایش موجودی
 router.patch(
-  "/:shoeId/stock/:size",
+  "/:productId/stock/:stock",
   authMiddleware,
   isAdminMiddleware,
-  controller.updateShoeStock,
+  controller.updateProductStock,
 );
 
 module.exports = router;

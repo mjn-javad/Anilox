@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
-import apiClientShoes from "../../services/api-client_shoes";
+import apiClientProducts from "../../services/api-client_products";
 import apiClientCart from "../../services/api-client_order";
 import apiClientAuth from "../../services/api-client_auth";
 
@@ -12,10 +12,10 @@ import ProductFinderBox from "../OrderOnWhatsApp/ProductFinderBox";
 
 const IMG_URL = "/api/images/posts/";
 
-const SingleShoe = () => {
+const SingleProduct = () => {
   const { id } = useParams();
 
-  const [shoe, setShoe] = useState(null);
+  const [product, setProduct] = useState(null);
   const [colors, setColors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -23,14 +23,14 @@ const SingleShoe = () => {
   const [user, setUser] = useState(null);
 
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedStock, setSelectedStock] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartMessage, setCartMessage] = useState({ type: "", text: "" });
   const [showSizeGuide, setShowSizeGuide] = useState(false);
 
-  const images = shoe?.images || [];
-  const sizes = (shoe?.sizes || []).filter((item) => item.quantity > 0);
+  const images = product?.images || [];
+  const stocks = (product?.stocks || []).filter((item) => item.quantity > 0);
 
   const currentColor =
     colors.find((item) => String(item.id || item._id) === String(id)) || null;
@@ -87,17 +87,17 @@ const SingleShoe = () => {
   useEffect(() => {
     let active = true;
 
-    const fetchShoe = async () => {
+    const fetchProduct = async () => {
       setLoading(true);
       setError("");
       setSelectedImage(0);
-      setSelectedSize("");
+      setSelectedStock("");
       setQuantity(1);
       setCartMessage({ type: "", text: "" });
 
       try {
-        const res = await apiClientShoes.get(`/${id}`);
-        if (active) setShoe(res.data.data);
+        const res = await apiClientProducts.get(`/${id}`);
+        if (active) setProduct(res.data.data);
       } catch {
         if (active) setError("There was a problem retrieving information");
       } finally {
@@ -105,7 +105,7 @@ const SingleShoe = () => {
       }
     };
 
-    fetchShoe();
+    fetchProduct();
 
     return () => {
       active = false;
@@ -113,13 +113,13 @@ const SingleShoe = () => {
   }, [id]);
 
   useEffect(() => {
-    if (!shoe?.model) return;
+    if (!product?.model) return;
 
     let active = true;
 
     const fetchColors = async () => {
       try {
-        const res = await apiClientShoes.get(`/?model=${shoe.model}`);
+        const res = await apiClientProducts.get(`/?model=${product.model}`);
         if (active && res.data.success) setColors(res.data.data || []);
       } catch (err) {
         console.error("Error fetching colors:", err);
@@ -131,10 +131,10 @@ const SingleShoe = () => {
     return () => {
       active = false;
     };
-  }, [shoe?.model]);
+  }, [product?.model]);
 
   const handleAddToCart = async () => {
-    if (!selectedSize) {
+    if (!selectedStock) {
       setCartMessage({ type: "error", text: "Please select a size" });
       return;
     }
@@ -144,10 +144,10 @@ const SingleShoe = () => {
 
     try {
       const res = await apiClientCart.post("/cart", {
-        shoesId: getId(shoe),
-        size: selectedSize,
+        productId: getId(product),
+        stock: selectedStock,
         quantity,
-        color: currentColor?.name || shoe?.color || null,
+        color: currentColor?.name || product?.color || null,
       });
 
       if (res.data.success) {
@@ -176,16 +176,16 @@ const SingleShoe = () => {
 
   if (loading) return <LoadingSpinner />;
   if (error) return <MessageAlert message={error} type="error" />;
-  if (!shoe) return <div className="text-center py-10">Shoes not found</div>;
+  if (!product) return <div className="text-center py-10">Products not found</div>;
 
   return (
     <div className="container mx-auto my-0 p-4">
       <ProductFinderBox />
       <OrderOnWhatsApp
-        productName={shoe.name}
-        productPrice={shoe.discount_price || shoe.price}
-        productId={getId(shoe)}
-        shareUrl={`http://31.56.178.10/api/shoes/share/${getId(shoe)}`}
+        productName={product.name}
+        productPrice={product.discount_price || product.price}
+        productId={getId(product)}
+        shareUrl={`http://31.56.178.10/api/products/share/${getId(product)}`}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -195,7 +195,7 @@ const SingleShoe = () => {
             {images[selectedImage] ? (
               <img
                 src={getImageSrc(images[selectedImage], 960)}
-                alt={shoe.name}
+                alt={product.name}
                 className="w-full h-full object-contain"
               />
             ) : (
@@ -217,7 +217,7 @@ const SingleShoe = () => {
                 >
                   <img
                     src={getImageSrc(image, 320)}
-                    alt={`${shoe.name} - ${index + 1}`}
+                    alt={`${product.name} - ${index + 1}`}
                     loading="lazy"
                     className="w-full aspect-square object-cover"
                   />
@@ -231,21 +231,21 @@ const SingleShoe = () => {
         <div className="space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold">{shoe.name}</h1>
-              <p className="text-gray-600 text-lg">{shoe.brand}</p>
+              <h1 className="text-3xl font-bold">{product.name}</h1>
+              <p className="text-gray-600 text-lg">{product.brand}</p>
             </div>
 
             {isAdmin && (
               <div className="flex shrink-0 flex-col items-stretch gap-2">
                 <Link
-                  to={`/admin/dashboard/editShoe/${getId(shoe)}`}
+                  to={`/admin/dashboard/editProduct/${getId(product)}`}
                   className="shrink-0 rounded-full border border-gray-300 px-4 py-2 text-xs font-medium uppercase tracking-widest text-gray-700 transition hover:bg-black hover:text-white"
                 >
                   Edit
                 </Link>
 
                 <Link
-                  to={`/admin/dashboard/shoe-upload/${getId(shoe)}`}
+                  to={`/admin/dashboard/product-upload/${getId(product)}`}
                   className="whitespace-nowrap rounded-full border border-gray-300 px-4 py-2 text-center text-xs font-medium uppercase tracking-widest text-gray-700 transition hover:bg-black hover:text-white"
                 >
                   Add color
@@ -255,29 +255,29 @@ const SingleShoe = () => {
           </div>
 
           <div>
-            {Number(shoe.price) === 1 ? (
+            {Number(product.price) === 1 ? (
               <p className="text-2xl font-bold text-green-600">
                 Price on WhatsApp
               </p>
-            ) : shoe.discount_price &&
-              Number(shoe.discount_price) !== Number(shoe.price) ? (
+            ) : product.discount_price &&
+              Number(product.discount_price) !== Number(product.price) ? (
               <>
                 <p className="text-2xl text-gray-500 line-through">
-                  {Number(shoe.price).toLocaleString()} AED
+                  {Number(product.price).toLocaleString()} AED
                 </p>
 
                 <p className="text-3xl font-bold text-green-600">
-                  {Number(shoe.discount_price).toLocaleString()} AED
+                  {Number(product.discount_price).toLocaleString()} AED
                 </p>
               </>
             ) : (
               <p className="text-3xl font-bold text-green-600">
-                {Number(shoe.price).toLocaleString()} AED
+                {Number(product.price).toLocaleString()} AED
               </p>
             )}
           </div>
 
-          <p className="text-gray-700 leading-relaxed">{shoe.description}</p>
+          <p className="text-gray-700 leading-relaxed">{product.description}</p>
 
           {/* Colors */}
           {colors.length > 0 && (
@@ -292,7 +292,7 @@ const SingleShoe = () => {
                   return (
                     <Link
                       key={colorId}
-                      to={`/shoe/${colorId}`}
+                      to={`/product/${colorId}`}
                       className={`w-14 h-14 p-1 rounded-lg border-2 transition-all ${
                         isActive
                           ? "border-blue-600 bg-blue-50 ring-2 ring-blue-200"
@@ -313,12 +313,12 @@ const SingleShoe = () => {
           )}
 
           {/* Sizes */}
-          {sizes.length > 0 && (
+          {stocks.length > 0 && (
             <div>
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-lg font-bold">Select Size (EU)</h3>
 
-                {shoe.type === "shoe" && (
+                {product.type === "shoe" && (
                   <button
                     type="button"
                     onClick={() => setShowSizeGuide((prev) => !prev)}
@@ -329,7 +329,7 @@ const SingleShoe = () => {
                 )}
               </div>
 
-              {showSizeGuide && shoe.type === "shoe" && (
+              {showSizeGuide && product.type === "shoe" && (
                 <div className="mb-4 overflow-x-auto rounded-xl border border-neutral-200 bg-neutral-50 p-3">
                   <table className="w-full min-w-[750px] text-center text-sm">
                     <tbody>
@@ -365,18 +365,18 @@ const SingleShoe = () => {
               )}
 
               <div className="flex flex-wrap gap-3">
-                {sizes.map((item) => (
+                {stocks.map((item) => (
                   <button
                     type="button"
-                    key={item.id || item.size}
-                    onClick={() => setSelectedSize(item.size)}
+                    key={item.id || item.stock}
+                    onClick={() => setSelectedStock(item.stock)}
                     className={`h-12 w-12 rounded-lg border-2 font-medium transition-all ${
-                      String(selectedSize) === String(item.size)
+                      String(selectedStock) === String(item.stock)
                         ? "border-neutral-950 bg-neutral-950 text-white"
                         : "border-neutral-300 text-neutral-800 hover:border-neutral-950 hover:bg-neutral-100"
                     }`}
                   >
-                    {item.size}
+                    {item.stock}
                   </button>
                 ))}
               </div>
@@ -384,7 +384,7 @@ const SingleShoe = () => {
           )}
 
           {/* Quantity */}
-          {selectedSize && (
+          {selectedStock && (
             <div className="flex items-center gap-4 mb-4">
               <label className="font-bold">Quantity:</label>
 
@@ -423,16 +423,16 @@ const SingleShoe = () => {
 
           <button
             onClick={handleAddToCart}
-            disabled={addingToCart || sizes.length === 0}
+            disabled={addingToCart || stocks.length === 0}
             className={`w-full py-3 rounded-lg transition-all text-lg mt-6 ${
-              addingToCart || sizes.length === 0
+              addingToCart || stocks.length === 0
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-neutral-950 hover:bg-neutral-600 text-white"
             }`}
           >
             {addingToCart
               ? "Adding..."
-              : sizes.length === 0
+              : stocks.length === 0
                 ? "Out of stock"
                 : "Add to basket"}
           </button>
@@ -442,4 +442,4 @@ const SingleShoe = () => {
   );
 };
 
-export default SingleShoe;
+export default SingleProduct;

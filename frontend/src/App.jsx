@@ -5,7 +5,7 @@ import Layout from "./pages/Layout";
 import WomenHome from "./pages/WomanHome";
 import MenHome from "./pages/ManHome";
 
-import ShoeUploader from "./components/Uploader/ShoeUploader";
+import ProductUploader from "./components/Uploader/ProductUploader";
 import BrandUploader from "./components/Uploader/BrandUploader";
 import BannerUploader from "./components/Uploader/BannerUploader";
 
@@ -15,15 +15,15 @@ import VerifyCode from "./components/Login/VerifyCode";
 import ForgotPassword from "./components/Login/ForgotPassword";
 import ResetPassword from "./components/Login/ResetPassword";
 
-import SingleShoe from "./components/Slider/SingleShoe";
-import SliderShoes from "./components/Slider/SliderShoes";
+import SingleProduct from "./components/Slider/SingleProduct";
+import SliderProducts from "./components/Slider/SliderProducts";
 import SliderNewArrivels from "./components/Slider/SliderNewArrivels";
 
 import Basket from "./components/Basket/Basket";
 import AddressPage from "./components/AddressPage/AddressPage";
 
-import AdminShoesManagement from "./components/AdminShoesManager/AdminShoesManager";
-import AdminSingleShoeManagement from "./components/AdminShoesManager/AdminSingleShoeManagment";
+import AdminProductsManagement from "./components/AdminProductsManager/AdminProductsManager";
+import AdminSingleProductManagement from "./components/AdminProductsManager/AdminSingleProductManagement";
 import UserManagement from "./components/UserManagment/UserManagment";
 import SimpleAllCarts from "./components/SimpleAllCarts";
 import CompletedOrdersPage from "./components/CompletedOrdersPage";
@@ -52,8 +52,8 @@ function App() {
           <Route path="men" element={<MenHome />} />
 
           {/* Product Pages */}
-          <Route path="shoe/:id" element={<SingleShoe />} />
-          <Route path="slider-shoes" element={<SliderShoes />} />
+          <Route path="product/:id" element={<SingleProduct />} />
+          <Route path="slider-products" element={<SliderProducts />} />
           <Route path="new-arrivals" element={<SliderNewArrivels />} />
           <Route path="bestSellers" element={<BestSellersGlobalSlider />} />
 
@@ -69,16 +69,16 @@ function App() {
           <Route path="address" element={<AddressPage />} />
 
           {/* Admin Dashboard */}
-          <Route path="admin/dashboard" element={<AdminShoesManagement />} />
+          <Route path="admin/dashboard" element={<AdminProductsManagement />} />
 
           <Route
-            path="admin/dashboard/shoes-manager"
-            element={<AdminShoesManagement />}
+            path="admin/dashboard/products-manager"
+            element={<AdminProductsManagement />}
           />
 
           <Route
-            path="admin/dashboard/editShoe/:shoeId"
-            element={<AdminSingleShoeManagement />}
+            path="admin/dashboard/editProduct/:productId"
+            element={<AdminSingleProductManagement />}
           />
 
           <Route
@@ -99,13 +99,13 @@ function App() {
           />
 
           <Route
-            path="admin/dashboard/shoe-upload"
-            element={<ShoeUploader />}
+            path="admin/dashboard/product-upload"
+            element={<ProductUploader />}
           />
 
           <Route
-            path="admin/dashboard/shoe-upload/:shoeId"
-            element={<ShoeUploader />}
+            path="admin/dashboard/product-upload/:productId"
+            element={<ProductUploader />}
           />
 
           <Route

@@ -6,7 +6,7 @@ import ProductCard from "./ProductCart";
 
 const SliderNewArrivels = ({ limit }) => {
   const [searchParams] = useSearchParams();
-  const [shoes, setShoes] = useState([]);
+  const [products, setProducts] = useState([]);
   const [error, setError] = useState("");
   const gender = searchParams.get("gender");
 
@@ -21,13 +21,13 @@ const SliderNewArrivels = ({ limit }) => {
 
     apiClientBrandPopular
       .get("/newArrivels", Param)
-      .then((res) => setShoes(res.data.data))
+      .then((res) => setProducts(res.data.data))
       .catch((err) => setError("err: ", err));
   }, []);
 
   return (
     <div className="container">
-      <ProductCard shoes={shoes} />
+      <ProductCard products={products} />
     </div>
   );
 };

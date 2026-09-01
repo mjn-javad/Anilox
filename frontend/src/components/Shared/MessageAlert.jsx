@@ -1,4 +1,4 @@
-// components/Admin/ShoeManagement/MessageAlert.jsx
+// components/Admin/ProductManagement/MessageAlert.jsx
 import React from "react";
 
 const MessageAlert = ({ message, type = "error" }) => {

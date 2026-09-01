@@ -1,25 +1,25 @@
-// AdminSingleShoeManagement.jsx
+// AdminSingleProductManagement.jsx
 
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import apiClientShoes from "../../services/api-client_shoes";
+import apiClientProducts from "../../services/api-client_products";
 import apiClientBrandPopular from "../../services/api-client";
 
 import LoadingSpinner from "../Shared/LoadingSpinner";
 import MessageAlert from "../Shared/MessageAlert";
-import ShoeInfoForm from "./ShoeInfoForm";
-import SizesStockManager from "./SizesStockManager";
+import ProductInfoForm from "./ProductInfoForm";
+import ProductStockManager from "./ProductStockManager";
 import ImagesManager from "./ImagesManager";
 
-const AdminSingleShoeManagement = () => {
-  const { shoeId } = useParams();
+const AdminSingleProductManagement = () => {
+  const { productId } = useParams();
 
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  const [shoeInfo, setShoeInfo] = useState({
+  const [productInfo, setProductInfo] = useState({
     name: "",
     slug: "",
     brand: "",
@@ -33,47 +33,53 @@ const AdminSingleShoeManagement = () => {
     colors: "",
   });
 
-  const [sizes, setSizes] = useState([]);
+  const [stocks, setStocks] = useState([]);
   const [images, setImages] = useState([]);
   const [newImages, setNewImages] = useState([]);
   const [deletedImages, setDeletedImages] = useState([]);
 
-  useEffect(() => {
-    fetchShoeData();
-  }, [shoeId]);
+  const showSuccess = useCallback((message) => {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage(""), 3000);
+  }, []);
 
-  const fetchShoeData = async () => {
+  const showError = useCallback((message) => {
+    setError(message);
+    setTimeout(() => setError(""), 3000);
+  }, []);
+
+  const fetchProductData = useCallback(async () => {
     try {
       setLoading(true);
 
-      const response = await apiClientShoes.get(`/${shoeId}`);
-      const shoe = response.data.data;
+      const response = await apiClientProducts.get(`/${productId}`);
+      const product = response.data.data;
 
-      setShoeInfo({
-        name: shoe.name ?? "",
-        slug: shoe.slug ?? "",
-        brand: shoe.brand ?? "",
-        model: shoe.model ?? "",
-        category: shoe.category ?? "",
-        gender: shoe.gender ?? "genderless",
-        type: shoe.type ?? "shoe",
-        price: shoe.price ?? "",
-        discountPrice: shoe.discount_price ?? "",
-        description: shoe.description ?? "",
-        colors: shoe.colors ?? "",
+      setProductInfo({
+        name: product.name ?? "",
+        slug: product.slug ?? "",
+        brand: product.brand ?? "",
+        model: product.model ?? "",
+        category: product.category ?? "",
+        gender: product.gender ?? "genderless",
+        type: product.type ?? "shoe",
+        price: product.price ?? "",
+        discountPrice: product.discount_price ?? "",
+        description: product.description ?? "",
+        colors: product.colors ?? "",
       });
 
-      let sizesArray = [];
+      let stocksArray = [];
 
-      if (shoe.sizes && Array.isArray(shoe.sizes)) {
-        sizesArray = shoe.sizes.map((item) => ({
-          size: item.size,
+      if (product.stocks && Array.isArray(product.stocks)) {
+        stocksArray = product.stocks.map((item) => ({
+          stock: item.stock,
           quantity: item.quantity,
         }));
       }
 
-      setSizes(sizesArray);
-      setImages(shoe.images || []);
+      setStocks(stocksArray);
+      setImages(product.images || []);
       setNewImages([]);
       setDeletedImages([]);
       setError("");
@@ -83,22 +89,16 @@ const AdminSingleShoeManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [productId, showError]);
 
-  const showSuccess = (message) => {
-    setSuccessMessage(message);
-    setTimeout(() => setSuccessMessage(""), 3000);
-  };
-
-  const showError = (message) => {
-    setError(message);
-    setTimeout(() => setError(""), 3000);
-  };
+  useEffect(() => {
+    fetchProductData();
+  }, [fetchProductData]);
 
   const handleInfoChange = (e) => {
     const { name, value } = e.target;
 
-    setShoeInfo((prev) => ({
+    setProductInfo((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -108,9 +108,9 @@ const AdminSingleShoeManagement = () => {
     try {
       setUpdating(true);
 
-      await apiClientBrandPopular.post(`/newArrivels/${shoeId}`);
+      await apiClientBrandPopular.post(`/newArrivels/${productId}`);
 
-      showSuccess(`"${shoeInfo.name}" added to big size`);
+      showSuccess(`"${productInfo.name}" added to big size`);
     } catch (err) {
       console.error("Error adding to big size:", err);
       showError(err.response?.data?.message || "Error adding to big size");
@@ -123,9 +123,9 @@ const AdminSingleShoeManagement = () => {
     try {
       setUpdating(true);
 
-      await apiClientBrandPopular.delete(`/newArrivels/${shoeId}`);
+      await apiClientBrandPopular.delete(`/newArrivels/${productId}`);
 
-      showSuccess(`"${shoeInfo.name}" removed from big size`);
+      showSuccess(`"${productInfo.name}" removed from big size`);
     } catch (err) {
       console.error("Error removing from big size:", err);
       showError(err.response?.data?.message || "Error removing from big size");
@@ -138,9 +138,9 @@ const AdminSingleShoeManagement = () => {
     try {
       setUpdating(true);
 
-      await apiClientBrandPopular.post(`/bestSellers/${shoeId}`);
+      await apiClientBrandPopular.post(`/bestSellers/${productId}`);
 
-      showSuccess(`"${shoeInfo.name}" added to best sellers`);
+      showSuccess(`"${productInfo.name}" added to best sellers`);
     } catch (err) {
       console.error("Error adding to best sellers:", err);
       showError(err.response?.data?.message || "Error adding to best sellers");
@@ -153,9 +153,9 @@ const AdminSingleShoeManagement = () => {
     try {
       setUpdating(true);
 
-      await apiClientBrandPopular.delete(`/bestSellers/${shoeId}`);
+      await apiClientBrandPopular.delete(`/bestSellers/${productId}`);
 
-      showSuccess(`"${shoeInfo.name}" removed from best sellers`);
+      showSuccess(`"${productInfo.name}" removed from best sellers`);
     } catch (err) {
       console.error("Error removing from best sellers:", err);
       showError(
@@ -167,12 +167,12 @@ const AdminSingleShoeManagement = () => {
   };
 
   const handleDeleteProduct = async () => {
-    if (!window.confirm(`Delete "${shoeInfo.name}"?`)) return;
+    if (!window.confirm(`Delete "${productInfo.name}"?`)) return;
 
     try {
       setUpdating(true);
 
-      const { data } = await apiClientShoes.delete(`/${shoeId}`);
+      const { data } = await apiClientProducts.delete(`/${productId}`);
 
       showSuccess(data.message);
 
@@ -187,35 +187,35 @@ const AdminSingleShoeManagement = () => {
   };
 
   const handleUpdateInfo = async () => {
-    if (!shoeInfo.name.trim()) {
+    if (!productInfo.name.trim()) {
       showError("Product name is required");
       return;
     }
 
-    if (!shoeInfo.slug.trim()) {
+    if (!productInfo.slug.trim()) {
       showError("Product slug is required");
       return;
     }
 
-    if (!shoeInfo.brand.trim()) {
+    if (!productInfo.brand.trim()) {
       showError("Product brand is required");
       return;
     }
 
-    if (!shoeInfo.model.trim()) {
+    if (!productInfo.model.trim()) {
       showError("Product model is required");
       return;
     }
 
-    if (!shoeInfo.price || Number(shoeInfo.price) <= 0) {
+    if (!productInfo.price || Number(productInfo.price) <= 0) {
       showError("Please enter a valid price");
       return;
     }
 
     if (
-      shoeInfo.discountPrice !== "" &&
-      shoeInfo.discountPrice !== null &&
-      Number(shoeInfo.discountPrice) < 0
+      productInfo.discountPrice !== "" &&
+      productInfo.discountPrice !== null &&
+      Number(productInfo.discountPrice) < 0
     ) {
       showError("Discount price cannot be negative");
       return;
@@ -225,25 +225,25 @@ const AdminSingleShoeManagement = () => {
       setUpdating(true);
 
       const payload = {
-        name: shoeInfo.name.trim(),
-        slug: shoeInfo.slug.trim(),
-        brand: shoeInfo.brand.trim(),
-        model: shoeInfo.model.trim(),
-        category: shoeInfo.category,
-        gender: shoeInfo.gender,
-        type: shoeInfo.type,
-        price: Number(shoeInfo.price),
+        name: productInfo.name.trim(),
+        slug: productInfo.slug.trim(),
+        brand: productInfo.brand.trim(),
+        model: productInfo.model.trim(),
+        category: productInfo.category,
+        gender: productInfo.gender,
+        type: productInfo.type,
+        price: Number(productInfo.price),
         discountPrice:
-          shoeInfo.discountPrice === "" ||
-          shoeInfo.discountPrice === null ||
-          shoeInfo.discountPrice === undefined
-            ? Number(shoeInfo.price)
-            : Number(shoeInfo.discountPrice),
-        description: shoeInfo.description?.trim() || null,
-        colors: shoeInfo.colors?.trim() || null,
+          productInfo.discountPrice === "" ||
+          productInfo.discountPrice === null ||
+          productInfo.discountPrice === undefined
+            ? Number(productInfo.price)
+            : Number(productInfo.discountPrice),
+        description: productInfo.description?.trim() || null,
+        colors: productInfo.colors?.trim() || null,
       };
 
-      await apiClientShoes.put(`/${shoeId}/info`, payload);
+      await apiClientProducts.put(`/${productId}/info`, payload);
 
       showSuccess("Product information updated successfully");
     } catch (err) {
@@ -254,7 +254,7 @@ const AdminSingleShoeManagement = () => {
     }
   };
 
-  const handleChangeStock = async (size, quantityChange) => {
+  const handleChangeStock = async (stock, quantityChange) => {
     const change = Number(quantityChange);
 
     if (!Number.isInteger(change) || change === 0) {
@@ -262,16 +262,16 @@ const AdminSingleShoeManagement = () => {
       return false;
     }
 
-    const selectedSize = sizes.find(
-      (item) => String(item.size) === String(size),
+    const selectedStock = stocks.find(
+      (item) => String(item.stock) === String(stock),
     );
 
-    if (!selectedSize) {
-      showError(`Size ${size} not found`);
+    if (!selectedStock) {
+      showError(`Stock ${stock} not found`);
       return false;
     }
 
-    const currentQuantity = Number(selectedSize.quantity) || 0;
+    const currentQuantity = Number(selectedStock.quantity) || 0;
     const updatedQuantity = currentQuantity + change;
 
     if (updatedQuantity < 0) {
@@ -282,14 +282,14 @@ const AdminSingleShoeManagement = () => {
     try {
       setUpdating(true);
 
-      await apiClientShoes.patch(`/${shoeId}/stock/${size}`, {
-        size,
+      await apiClientProducts.patch(`/${productId}/stock/${stock}`, {
+        stock,
         quantity: change,
       });
 
-      setSizes((previousSizes) =>
-        previousSizes.map((item) =>
-          String(item.size) === String(size)
+      setStocks((previousStocks) =>
+        previousStocks.map((item) =>
+          String(item.stock) === String(stock)
             ? {
                 ...item,
                 quantity: updatedQuantity,
@@ -298,7 +298,7 @@ const AdminSingleShoeManagement = () => {
         ),
       );
 
-      showSuccess(`Stock for size ${size} updated to ${updatedQuantity}`);
+      showSuccess(`Stock for stock ${stock} updated to ${updatedQuantity}`);
 
       return true;
     } catch (error) {
@@ -312,17 +312,17 @@ const AdminSingleShoeManagement = () => {
     }
   };
 
-  const handleDeleteSize = async (size) => {
-    const selectedSize = sizes.find(
-      (item) => String(item.size) === String(size),
+  const handleDeleteStock = async (stock) => {
+    const selectedStock = stocks.find(
+      (item) => String(item.stock) === String(stock),
     );
 
-    if (!selectedSize) {
-      showError(`Size ${size} not found`);
+    if (!selectedStock) {
+      showError(`Stock ${stock} not found`);
       return false;
     }
 
-    const currentQuantity = Number(selectedSize.quantity) || 0;
+    const currentQuantity = Number(selectedStock.quantity) || 0;
 
     try {
       setUpdating(true);
@@ -332,23 +332,23 @@ const AdminSingleShoeManagement = () => {
       مثلاً اگر موجودی 5 باشد، quantity برابر -5 ارسال می‌شود.
     */
       if (currentQuantity > 0) {
-        await apiClientShoes.patch(`/${shoeId}/stock/${size}`, {
-          size,
+        await apiClientProducts.patch(`/${productId}/stock/${stock}`, {
+          stock,
           quantity: -currentQuantity,
         });
       }
 
-      setSizes((previousSizes) =>
-        previousSizes.filter((item) => String(item.size) !== String(size)),
+      setStocks((previousStocks) =>
+        previousStocks.filter((item) => String(item.stock) !== String(stock)),
       );
 
-      showSuccess(`Size ${size} deleted successfully`);
+      showSuccess(`Stock ${stock} deleted successfully`);
 
       return true;
     } catch (error) {
-      console.error("Error deleting size:", error);
+      console.error("Error deleting stock:", error);
 
-      showError(error.response?.data?.message || "Failed to delete size");
+      showError(error.response?.data?.message || "Failed to delete stock");
 
       return false;
     } finally {
@@ -356,12 +356,12 @@ const AdminSingleShoeManagement = () => {
     }
   };
 
-  const handleAddNewSize = async (newSizeData) => {
-    const size = String(newSizeData.size || "").trim();
-    const quantity = Number(newSizeData.quantity);
+  const handleAddNewStock = async (newStockData) => {
+    const stock = String(newStockData.stock || "").trim();
+    const quantity = Number(newStockData.quantity);
 
-    if (!size) {
-      showError("Please enter a size");
+    if (!stock) {
+      showError("Please enter a stock");
       return false;
     }
 
@@ -370,36 +370,36 @@ const AdminSingleShoeManagement = () => {
       return false;
     }
 
-    const exists = sizes.some((item) => String(item.size) === size);
+    const exists = stocks.some((item) => String(item.stock) === stock);
 
     if (exists) {
-      showError(`Size ${size} already exists`);
+      showError(`Stock ${stock} already exists`);
       return false;
     }
 
     try {
       setUpdating(true);
 
-      await apiClientShoes.patch(`/${shoeId}/stock/${size}`, {
-        size,
+      await apiClientProducts.patch(`/${productId}/stock/${stock}`, {
+        stock,
         quantity,
       });
 
-      setSizes((previousSizes) => [
-        ...previousSizes,
+      setStocks((previousStocks) => [
+        ...previousStocks,
         {
-          size,
+          stock,
           quantity,
         },
       ]);
 
-      showSuccess(`New size ${size} added successfully`);
+      showSuccess(`New stock ${stock} added successfully`);
 
       return true;
     } catch (error) {
-      console.error("Error adding new size:", error);
+      console.error("Error adding new stock:", error);
 
-      showError(error.response?.data?.message || "Failed to add new size");
+      showError(error.response?.data?.message || "Failed to add new stock");
 
       return false;
     } finally {
@@ -407,33 +407,33 @@ const AdminSingleShoeManagement = () => {
     }
   };
 
-  const handleGroupSizes = async (selectedSizes, quantity) => {
+  const handleGroupStocks = async (selectedStocks, quantity) => {
     const amount = Number(quantity);
 
-    if (!selectedSizes.length || !Number.isInteger(amount) || amount < 1) {
-      showError("Select sizes and enter a valid quantity");
+    if (!selectedStocks.length || !Number.isInteger(amount) || amount < 1) {
+      showError("Select stocks and enter a valid quantity");
       return false;
     }
 
     try {
       setUpdating(true);
 
-      for (const item of selectedSizes) {
-        const size = String(item);
+      for (const item of selectedStocks) {
+        const stock = String(item);
 
-        await apiClientShoes.patch(`/${shoeId}/stock/${size}`, {
-          size,
+        await apiClientProducts.patch(`/${productId}/stock/${stock}`, {
+          stock,
           quantity: amount,
         });
       }
 
-      setSizes((previous) => {
+      setStocks((previous) => {
         const updated = [...previous];
 
-        selectedSizes.forEach((item) => {
-          const size = String(item);
+        selectedStocks.forEach((item) => {
+          const stock = String(item);
 
-          const index = updated.findIndex((row) => String(row.size) === size);
+          const index = updated.findIndex((row) => String(row.stock) === stock);
 
           if (index >= 0) {
             updated[index] = {
@@ -442,7 +442,7 @@ const AdminSingleShoeManagement = () => {
             };
           } else {
             updated.push({
-              size,
+              stock,
               quantity: amount,
             });
           }
@@ -451,12 +451,12 @@ const AdminSingleShoeManagement = () => {
         return updated;
       });
 
-      showSuccess(`${selectedSizes.length} sizes added successfully`);
+      showSuccess(`${selectedStocks.length} stocks added successfully`);
       return true;
     } catch (error) {
-      console.error("Error adding group sizes:", error);
+      console.error("Error adding group stocks:", error);
 
-      showError(error.response?.data?.message || "Failed to add group sizes");
+      showError(error.response?.data?.message || "Failed to add group stocks");
 
       return false;
     } finally {
@@ -523,7 +523,7 @@ const AdminSingleShoeManagement = () => {
     try {
       setUpdating(true);
 
-      await apiClientShoes.put(`/${shoeId}/images/sort-order`, {
+      await apiClientProducts.put(`/${productId}/images/sort-order`, {
         imageName,
         sortOrder: parseInt(newSortOrder),
       });
@@ -554,13 +554,13 @@ const AdminSingleShoeManagement = () => {
     try {
       setUpdating(true);
 
-      await apiClientShoes.put(`/${shoeId}/images`, formData, {
+      await apiClientProducts.put(`/${productId}/images`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
-      await fetchShoeData();
+      await fetchProductData();
 
       setNewImages([]);
       setDeletedImages([]);
@@ -645,20 +645,20 @@ const AdminSingleShoeManagement = () => {
       <MessageAlert message={successMessage} type="success" />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <ShoeInfoForm
-          shoeInfo={shoeInfo}
+        <ProductInfoForm
+          productInfo={productInfo}
           onChange={handleInfoChange}
           onUpdate={handleUpdateInfo}
           updating={updating}
         />
 
-        <SizesStockManager
-          type={shoeInfo.type}
-          sizes={sizes}
+        <ProductStockManager
+          type={productInfo.type}
+          stocks={stocks}
           onChangeStock={handleChangeStock}
-          onDeleteSize={handleDeleteSize}
-          onAddNewSize={handleAddNewSize}
-          onAddGroupSizes={handleGroupSizes}
+          onDeleteStock={handleDeleteStock}
+          onAddNewStock={handleAddNewStock}
+          onAddGroupStocks={handleGroupStocks}
           updating={updating}
         />
 
@@ -679,4 +679,4 @@ const AdminSingleShoeManagement = () => {
   );
 };
 
-export default AdminSingleShoeManagement;
+export default AdminSingleProductManagement;

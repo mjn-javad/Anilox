@@ -1,4 +1,4 @@
-// components/Admin/ShoeManagement/ImagesManager.jsx
+// components/Admin/ProductManagement/ImagesManager.jsx
 import React, { useState } from "react";
 
 const ImageGallery = ({
@@ -65,7 +65,7 @@ const ImageGallery = ({
                 e.currentTarget.onerror = null;
                 e.currentTarget.src = `${imageBaseUrl}${image.image_name || image}`;
               }}
-              alt={`Shoe ${idx + 1}`}
+              alt={`Product ${idx + 1}`}
               loading="lazy"
               className="w-full h-48 object-cover rounded-lg"
             />

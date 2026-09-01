@@ -14,7 +14,7 @@ import ImgBagWomen from "../../assets/ShopByTypePic/Women/Bags.png";
 const ShopByType = ({
   title = "Shop by Type",
   subtitle = "Explore Collection",
-  navigatePath = "/slider-shoes",
+  navigatePath = "/slider-products",
 }) => {
   const [activeTypeIndex, setActiveTypeIndex] = useState(null);
 

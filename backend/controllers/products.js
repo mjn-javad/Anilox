@@ -1,4 +1,4 @@
-const ShoesRepository = require("../repositories/shoes");
+const ProductsRepository = require("../repositories/products");
 const BrandPopular = require("../repositories/brandPopular");
 const fs = require("fs").promises;
 const path = require("path");
@@ -137,7 +137,7 @@ exports.createProduct = async (req, res, next) => {
 
     const slug = await generateSlug(name, processedModel, colorsString || "");
 
-    const hasSlugUsed = await ShoesRepository.findBySlug(null, slug);
+    const hasSlugUsed = await ProductsRepository.findBySlug(null, slug);
 
     if (hasSlugUsed) {
       return res.status(409).json({
@@ -150,7 +150,7 @@ exports.createProduct = async (req, res, next) => {
       ? req.files.map((file) => file.filename)
       : [];
 
-    const shoeId = await ShoesRepository.create({
+    const productId = await ProductsRepository.create({
       type: normalizedType,
       name,
       slug,
@@ -168,14 +168,14 @@ exports.createProduct = async (req, res, next) => {
     });
 
     if (imageNames.length > 0) {
-      await ShoesRepository.addImages(shoeId, imageNames);
+      await ProductsRepository.addImages(productId, imageNames);
     }
 
     return res.status(201).json({
       success: true,
       message: "Product created successfully",
       data: {
-        shoeId,
+        productId,
         model: processedModel,
       },
     });
@@ -189,7 +189,7 @@ exports.deleteProduct = async (req, res, next) => {
     const { id } = req.params;
 
     // بررسی اینکه محصول سفارش دارد یا نه
-    const hasOrders = await ShoesRepository.hasOrders(id);
+    const hasOrders = await ProductsRepository.hasOrders(id);
 
     if (hasOrders) {
       return res.status(409).json({
@@ -200,7 +200,7 @@ exports.deleteProduct = async (req, res, next) => {
     }
 
     // قبل از حذف محصول، اطلاعات تصاویر را بگیر
-    const product = await ShoesRepository.findById(id);
+    const product = await ProductsRepository.findById(id);
 
     if (!product) {
       return res.status(404).json({
@@ -213,7 +213,7 @@ exports.deleteProduct = async (req, res, next) => {
     const images = Array.isArray(product.images) ? product.images : [];
 
     // حذف محصول از دیتابیس
-    const deleted = await ShoesRepository.remove(id);
+    const deleted = await ProductsRepository.remove(id);
 
     if (!deleted) {
       return res.status(404).json({
@@ -240,15 +240,16 @@ exports.deleteProduct = async (req, res, next) => {
   }
 };
 
-exports.updateShoeStock = async (req, res) => {
+exports.updateProductStock = async (req, res) => {
   try {
-    const { shoeId } = req.params;
-    const { size, quantity } = req.body;
+    const { productId, stock: stockParam } = req.params;
+    const { stock: stockBody, quantity } = req.body;
+    const stock = stockParam ?? stockBody;
 
-    if (!size) {
+    if (!stock) {
       return res.status(400).json({
         success: false,
-        message: "Size is required",
+        message: "Stock is required",
       });
     }
 
@@ -261,12 +262,12 @@ exports.updateShoeStock = async (req, res) => {
       });
     }
 
-    const updated = await changeStock(shoeId, size, quantityChange);
+    const updated = await changeStock(productId, stock, quantityChange);
 
     if (!updated) {
       return res.status(404).json({
         success: false,
-        message: "Shoe size was not found",
+        message: "Product stock was not found",
       });
     }
 
@@ -278,11 +279,11 @@ exports.updateShoeStock = async (req, res) => {
           : "Stock decreased successfully",
     });
   } catch (error) {
-    console.error("Update shoe stock error:", error);
+    console.error("Update product stock error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to update shoe stock",
+      message: "Failed to update product stock",
     });
   }
 };
@@ -311,7 +312,7 @@ exports.getAllProducts = async (req, res, next) => {
 
     order = order?.toUpperCase() === "ASC" ? "ASC" : "DESC";
 
-    const result = await ShoesRepository.getAll({
+    const result = await ProductsRepository.getAll({
       search,
       type,
       gender,
@@ -340,18 +341,18 @@ exports.getSingleProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const shoe = await ShoesRepository.findById(id);
+    const product = await ProductsRepository.findById(id);
 
-    if (!shoe) {
+    if (!product) {
       return res.status(404).json({
         success: false,
-        message: "Shoe not found",
+        message: "Product not found",
       });
     }
 
     return res.status(200).json({
       success: true,
-      data: shoe,
+      data: product,
     });
   } catch (err) {
     next(err);
@@ -360,7 +361,7 @@ exports.getSingleProduct = async (req, res, next) => {
 
 exports.updateProductInfo = async (req, res, next) => {
   try {
-    const { shoeId } = req.params;
+    const { productId } = req.params;
     const {
       name,
       model, // مدل کفش
@@ -375,10 +376,10 @@ exports.updateProductInfo = async (req, res, next) => {
     } = req.body;
 
     // اعتبارسنجی وجود id
-    if (!shoeId) {
+    if (!productId) {
       return res.status(400).json({
         success: false,
-        message: "Shoe ID is required",
+        message: "Product ID is required",
       });
     }
 
@@ -433,19 +434,19 @@ exports.updateProductInfo = async (req, res, next) => {
     if (type) updateData.type = type; // رشته ساده بدون هیچ پردازشی
 
     // فراخوانی متد آپدیت از ریپازیتوری
-    const result = await ShoesRepository.updateShoeInfo(shoeId, updateData);
+    const result = await ProductsRepository.updateProductInfo(productId, updateData);
 
     // بررسی اینکه آیا کفشی با این ID وجود دارد
     if (!result.success) {
       return res.status(404).json({
         success: false,
-        message: "Shoe not found or no changes applied",
+        message: "Product not found or no changes applied",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: "Shoe information updated successfully",
+      message: "Product information updated successfully",
       data: {
         ...(updateData.model && { model: updateData.model }),
       },
@@ -455,14 +456,14 @@ exports.updateProductInfo = async (req, res, next) => {
   }
 };
 
-// controllers/shoeController.js
+// controllers/productController.js
 exports.updateImageSortOrder = async (req, res, next) => {
   try {
-    const { shoeId } = req.params;
+    const { productId } = req.params;
     const { imageName, sortOrder } = req.body;
 
     // اعتبارسنجی ورودی‌ها
-    if (!shoeId) {
+    if (!productId) {
       return res.status(400).json({
         success: false,
         message: "Product ID is required",
@@ -493,17 +494,17 @@ exports.updateImageSortOrder = async (req, res, next) => {
     }
 
     // بررسی وجود کفش
-    const shoeExists = await ShoesRepository.findById(shoeId);
-    if (!shoeExists) {
+    const productExists = await ProductsRepository.findById(productId);
+    if (!productExists) {
       return res.status(404).json({
         success: false,
-        message: "Shoe not found",
+        message: "Product not found",
       });
     }
 
     // بررسی وجود تصویر
-    const imageExists = await ShoesRepository.findImageByName(
-      shoeId,
+    const imageExists = await ProductsRepository.findImageByName(
+      productId,
       imageName,
     );
 
@@ -515,13 +516,13 @@ exports.updateImageSortOrder = async (req, res, next) => {
     }
 
     // به‌روزرسانی sort_order
-    await ShoesRepository.updateImageSortOrder(shoeId, imageName, sortOrderNum);
+    await ProductsRepository.updateImageSortOrder(productId, imageName, sortOrderNum);
 
     res.status(200).json({
       success: true,
       message: "Image sort order updated successfully",
       data: {
-        shoeId,
+        productId,
         imageName,
         sortOrder: sortOrderNum,
       },
@@ -545,20 +546,20 @@ exports.updateProductPicture = async (req, res, next) => {
 
       return res.status(400).json({
         success: false,
-        message: "Shoe ID is required",
+        message: "Product ID is required",
       });
     }
 
-    const shoeExists = await ShoesRepository.findById(id);
+    const productExists = await ProductsRepository.findById(id);
 
-    if (!shoeExists) {
+    if (!productExists) {
       if (newImages.length > 0) {
         await deleteUploadedFiles(newImages);
       }
 
       return res.status(404).json({
         success: false,
-        message: "Shoe not found",
+        message: "Product not found",
       });
     }
 
@@ -584,12 +585,12 @@ exports.updateProductPicture = async (req, res, next) => {
 
     // حذف از دیتابیس
     if (deletedImagesList.length > 0) {
-      await ShoesRepository.deleteImagesByNames(id, deletedImagesList);
+      await ProductsRepository.deleteImagesByNames(id, deletedImagesList);
     }
 
     // اضافه کردن عکس‌های جدید
     if (newImages.length > 0) {
-      await ShoesRepository.addImages(id, newImages);
+      await ProductsRepository.addImages(id, newImages);
     }
 
     // حذف فایل اصلی + نسخه‌های 320 / 640 / 960
@@ -601,7 +602,7 @@ exports.updateProductPicture = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      message: "Shoe images updated successfully",
+      message: "Product images updated successfully",
     });
   } catch (err) {
     // اگر عملیات DB شکست خورد،
@@ -610,7 +611,7 @@ exports.updateProductPicture = async (req, res, next) => {
       await deleteUploadedFiles(req.files);
     }
 
-    console.error("Error in updateShoePicture:", err);
+    console.error("Error in updateProductPicture:", err);
 
     next(err);
   }
@@ -665,26 +666,26 @@ const generateSlug = (name, model, colors) => {
   return slug;
 };
 
-const changeStock = async (shoeId, size, quantityChange) => {
-  const parsedShoeId = Number(shoeId);
+const changeStock = async (productId, stock, quantityChange) => {
+  const parsedProductId = Number(productId);
   const parsedQuantity = Number(quantityChange);
-  const normalizedSize = String(size).trim();
+  const normalizedStock = String(stock).trim();
 
-  if (!Number.isInteger(parsedShoeId) || parsedShoeId <= 0) {
-    throw new Error("Invalid shoe ID");
+  if (!Number.isInteger(parsedProductId) || parsedProductId <= 0) {
+    throw new Error("Invalid product ID");
   }
 
-  if (!normalizedSize) {
-    throw new Error("Size is required");
+  if (!normalizedStock) {
+    throw new Error("Stock is required");
   }
 
   if (!Number.isInteger(parsedQuantity) || parsedQuantity === 0) {
     throw new Error("Quantity must be a non-zero integer");
   }
 
-  return ShoesRepository.changeStock(
-    parsedShoeId,
-    normalizedSize,
+  return ProductsRepository.changeStock(
+    parsedProductId,
+    normalizedStock,
     parsedQuantity,
   );
 };

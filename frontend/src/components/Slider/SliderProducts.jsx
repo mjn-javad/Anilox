@@ -14,11 +14,11 @@ const typeLabels = {
 const categoryLabels = {
   sneaker: "Sneakers",
   loafer: "Loafers",
-  formal: "Formal Shoes",
+  formal: "Formal Products",
   boot: "Boots",
   sandal: "Sandals",
-  sport: "Sport Shoes",
-  classic: "Classic Shoes",
+  sport: "Sport Products",
+  classic: "Classic Products",
 };
 
 const formatText = (value = "") => {
@@ -36,7 +36,7 @@ const getGenderLabel = (gender) => {
   return "";
 };
 
-const SliderShoes = ({ limit }) => {
+const SliderProducts = ({ limit }) => {
   const [searchParams] = useSearchParams();
 
   const brand = searchParams.get("brand");
@@ -142,10 +142,10 @@ const SliderShoes = ({ limit }) => {
       myQuery={myQuery}
       header={pageInfo.header}
       title={pageInfo.title}
-      navigateLink={`/slider-shoes${myQuery}`}
+      navigateLink={`/slider-products${myQuery}`}
       limit={limit}
     />
   );
 };
 
-export default SliderShoes;
+export default SliderProducts;

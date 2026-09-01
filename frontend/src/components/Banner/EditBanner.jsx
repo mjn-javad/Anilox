@@ -289,7 +289,7 @@ const EditBanner = () => {
               value={form.btnLink1}
               onChange={handleChange}
               // required={true}
-              placeholder="/slider-shoes?type=shoe&gender=female"
+              placeholder="/slider-products?type=product&gender=female"
             />
           </div>
         </div>

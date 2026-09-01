@@ -158,7 +158,7 @@ class EmailService {
       <tr style="border-bottom: 1px solid #eee;">
         <td style="padding: 10px; text-align: left;">${item.name}</td>
         <td style="padding: 10px; text-align: center;">${item.quantity}</td>
-        <td style="padding: 10px; text-align: center;">${item.size || "-"}</td>
+        <td style="padding: 10px; text-align: center;">${item.stock || "-"}</td>
         <td style="padding: 10px; text-align: right; text-decoration: line-through;">${item.price.toFixed(2)} AED</td>
         <td style="padding: 10px; text-align: right;">${item.discount_price.toFixed(2)} AED</td>
         <td style="padding: 10px; text-align: right;">${(
@@ -359,7 +359,7 @@ class EmailService {
       <tr style="border-bottom: 1px solid #eee;">
         <td style="padding: 10px; text-align: left;">${item.name}</td>
         <td style="padding: 10px; text-align: center;">${item.quantity}</td>
-        <td style="padding: 10px; text-align: center;">${item.size || "-"}</td>
+        <td style="padding: 10px; text-align: center;">${item.stock || "-"}</td>
         <td style="padding: 10px; text-align: right; text-decoration: line-through;">$${item.price.toFixed(2)}</td>
         <td style="padding: 10px; text-align: right;">${item.discount_price.toFixed(2)} AED</td>
         <td style="padding: 10px; text-align: right;">${(

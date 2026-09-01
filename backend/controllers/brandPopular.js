@@ -1,5 +1,5 @@
 const BrandPopular = require("../repositories/brandPopular");
-const ShoesRepository = require("../repositories/shoes");
+const ProductsRepository = require("../repositories/products");
 const BestSellers = require("../repositories/bestSellers");
 const NewArrivels = require("../repositories/newArrivels");
 
@@ -50,7 +50,7 @@ exports.getAllBrand = async (req, res, next) => {
 exports.getAllBestSeller = async (req, res, next) => {
   try {
     const { gender } = req.query;
-    const result = await ShoesRepository.getAllBestSellers({ gender });
+    const result = await ProductsRepository.getAllBestSellers({ gender });
 
     return res.status(200).json({
       success: true,
@@ -61,30 +61,30 @@ exports.getAllBestSeller = async (req, res, next) => {
   }
 };
 
-exports.addShoeToBestSellers = async (req, res, next) => {
+exports.addProductToBestSellers = async (req, res, next) => {
   try {
-    const { shoeId } = req.params;
+    const { productId } = req.params;
 
-    const isShoeIdValid = await ShoesRepository.findById(shoeId);
-    if (!isShoeIdValid) {
+    const isProductIdValid = await ProductsRepository.findById(productId);
+    if (!isProductIdValid) {
       return res
         .status(403)
-        .json({ success: false, message: "Can not find a shoe with this id" });
+        .json({ success: false, message: "Can not find a product with this id" });
     }
 
-    const isShoeAddedBefore = await BestSellers.findByShoeId(null, shoeId);
+    const isProductAddedBefore = await BestSellers.findByProductId(null, productId);
 
-    if (isShoeAddedBefore.length !== 0) {
+    if (isProductAddedBefore.length !== 0) {
       return res.status(403).json({
         success: false,
-        message: "this shoe has added to best seller before",
+        message: "this product has added to best seller before",
       });
     }
-    await BestSellers.create(null, shoeId);
+    await BestSellers.create(null, productId);
 
     return res.status(201).json({
       success: true,
-      message: "This shoe added to bestSellers successfully",
+      message: "This product added to bestSellers successfully",
     });
   } catch (err) {
     next(err);
@@ -95,7 +95,7 @@ exports.getAllNewArrivel = async (req, res, next) => {
   try {
     const { gender } = req.query;
 
-    const result = await ShoesRepository.getAllNewArrivals({ gender });
+    const result = await ProductsRepository.getAllNewArrivals({ gender });
 
     return res.status(200).json({
       success: true,
@@ -106,87 +106,87 @@ exports.getAllNewArrivel = async (req, res, next) => {
   }
 };
 
-exports.addShoeToNewArrivel = async (req, res, next) => {
+exports.addProductToNewArrivel = async (req, res, next) => {
   try {
-    const { shoeId } = req.params;
-    const isShoeIdValid = await ShoesRepository.findById(shoeId);
-    if (!isShoeIdValid) {
+    const { productId } = req.params;
+    const isProductIdValid = await ProductsRepository.findById(productId);
+    if (!isProductIdValid) {
       return res
         .status(403)
-        .json({ success: false, message: "Can not find a shoe with this id" });
+        .json({ success: false, message: "Can not find a product with this id" });
     }
 
-    const isShoeAddedBefore = await NewArrivels.findByShoeId(null, shoeId);
-    if (isShoeAddedBefore.length !== 0) {
+    const isProductAddedBefore = await NewArrivels.findByProductId(null, productId);
+    if (isProductAddedBefore.length !== 0) {
       return res.status(403).json({
         success: false,
-        message: "this shoe has added to new arrivels before",
+        message: "this product has added to new arrivels before",
       });
     }
 
-    await NewArrivels.create(null, shoeId);
+    await NewArrivels.create(null, productId);
 
     return res.status(201).json({
       success: true,
-      message: "This shoe added to NewArrivels successfully",
+      message: "This product added to NewArrivels successfully",
     });
   } catch (err) {
     next(err);
   }
 };
 
-exports.removeShoeFromBestSellers = async (req, res, next) => {
+exports.removeProductFromBestSellers = async (req, res, next) => {
   try {
-    const { shoeId } = req.params;
-    const isShoeIdValid = await ShoesRepository.findById(shoeId);
-    if (!isShoeIdValid) {
+    const { productId } = req.params;
+    const isProductIdValid = await ProductsRepository.findById(productId);
+    if (!isProductIdValid) {
       return res
         .status(403)
-        .json({ success: false, message: "Can not find a shoe with this id" });
+        .json({ success: false, message: "Can not find a product with this id" });
     }
 
-    const isShoeAddedBefore = await BestSellers.findByShoeId(null, shoeId);
-    if (isShoeAddedBefore.length === 0) {
+    const isProductAddedBefore = await BestSellers.findByProductId(null, productId);
+    if (isProductAddedBefore.length === 0) {
       return res.status(403).json({
         success: false,
-        message: "this shoe has not added to new BestSellers before",
+        message: "this product has not added to new BestSellers before",
       });
     }
 
-    await BestSellers.remove(null, shoeId);
+    await BestSellers.remove(null, productId);
 
     return res.status(201).json({
       success: true,
-      message: "This shoe deleted from BestSellers successfully",
+      message: "This product deleted from BestSellers successfully",
     });
   } catch (err) {
     next(err);
   }
 };
 
-exports.removeShoeFromNewArrivel = async (req, res, next) => {
+exports.removeProductFromNewArrivel = async (req, res, next) => {
   try {
-    const { shoeId } = req.params;
-    const isShoeIdValid = await ShoesRepository.findById(shoeId);
-    if (!isShoeIdValid) {
+    const { productId } = req.params;
+    const isProductIdValid = await ProductsRepository.findById(productId);
+    if (!isProductIdValid) {
       return res
         .status(403)
-        .json({ success: false, message: "Can not find a shoe with this id" });
+        .json({ success: false, message: "Can not find a product with this id" });
     }
 
-    const isShoeAddedBefore = await NewArrivels.findByShoeId(null, shoeId);
-    if (isShoeAddedBefore.length === 0) {
+    const isProductAddedBefore = await NewArrivels.findByProductId(null, productId);
+    if (isProductAddedBefore.length === 0) {
       return res.status(403).json({
         success: false,
-        message: "this shoe has not added to new NewArrivels before",
+        message: "this product has not added to new NewArrivels before",
       });
     }
 
-    await NewArrivels.remove(null, shoeId);
+    await NewArrivels.remove(null, productId);
 
     return res.status(201).json({
       success: true,
-      message: "This shoe deleted from NewArrivels successfully",
+      message: "This product deleted from NewArrivels successfully",
     });
   } catch (err) {
     next(err);

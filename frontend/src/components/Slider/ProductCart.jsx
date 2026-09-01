@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { ShoppingBag } from "lucide-react";
 
 const ProductCard = ({
-  shoes,
+  products: initialProducts,
   header,
   title,
   navigateLink,
@@ -11,12 +11,12 @@ const ProductCard = ({
   scrollOnLaptop = false,
   infiniteScroll = true,
 
-  apiUrl = "/api/v1/shoes",
+  apiUrl = "/api/v1/products",
   limit = 20,
 }) => {
   const [searchParams] = useSearchParams();
 
-  const [products, setProducts] = useState(shoes || []);
+  const [products, setProducts] = useState(initialProducts || []);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -24,10 +24,10 @@ const ProductCard = ({
   const observerRef = useRef(null);
 
   useEffect(() => {
-    setProducts(shoes || []);
+    setProducts(initialProducts || []);
     setPage(1);
     setTotalPages(null);
-  }, [shoes]);
+  }, [initialProducts]);
 
   useEffect(() => {
     return () => {
@@ -138,38 +138,38 @@ const ProductCard = ({
 
       <div className="relative">
         <div className={productsContainerClass}>
-          {products.map((shoe, index) => {
-            const shoeId = shoe._id || shoe.id;
+          {products.map((product, index) => {
+            const productId = product._id || product.id;
 
             const discountPercentage = getDiscountPercentage(
-              shoe.price,
-              shoe.discount_price,
+              product.price,
+              product.discount_price,
             );
 
             const isLastProduct = index === products.length - 1;
 
             return (
               <Link
-                key={shoeId || index}
+                key={productId || index}
                 ref={infiniteScroll && isLastProduct ? lastProductRef : null}
-                to={`/shoe/${shoeId}`}
+                to={`/product/${productId}`}
                 className={productCardClass}
               >
                 <div className="relative overflow-hidden bg-gray-50">
-                  {shoe?.images?.[0]?.image_name ? (
+                  {product?.images?.[0]?.image_name ? (
                     <img
                       src={
-                        shoe.images?.[0]?.image_name
+                        product.images?.[0]?.image_name
                           ? /-(320|640|960)\.webp$/i.test(
-                              shoe.images[0].image_name,
+                              product.images[0].image_name,
                             )
-                            ? `/api/images/posts/${shoe.images[0].image_name
+                            ? `/api/images/posts/${product.images[0].image_name
                                 .replace(/\.[^/.]+$/, "")
                                 .replace(/-(320|640|960)$/i, "")}-640.webp`
-                            : `/api/images/posts/${shoe.images[0].image_name}`
+                            : `/api/images/posts/${product.images[0].image_name}`
                           : ""
                       }
-                      alt={shoe.name}
+                      alt={product.name}
                       loading="lazy"
                       className="aspect-square w-full object-cover transition-opacity duration-300 group-hover:opacity-90"
                     />
@@ -188,32 +188,32 @@ const ProductCard = ({
 
                 <div className="mt-3 space-y-1">
                   <h3 className="truncate text-sm font-normal text-gray-800">
-                    {shoe.name}
+                    {product.name}
                   </h3>
 
                   <p className="text-xs uppercase tracking-wide text-gray-400">
-                    {shoe.brand || "Brand"}
+                    {product.brand || "Brand"}
                   </p>
 
                   <div className="flex items-baseline gap-2">
-                    {Number(shoe.price) === 1 ? (
+                    {Number(product.price) === 1 ? (
                       <span className="text-xs font-medium text-green-600">
                         Price on WhatsApp
                       </span>
-                    ) : shoe.discount_price &&
-                      Number(shoe.discount_price) !== Number(shoe.price) ? (
+                    ) : product.discount_price &&
+                      Number(product.discount_price) !== Number(product.price) ? (
                       <>
                         <span className="text-sm font-medium text-gray-900">
-                          {Number(shoe.discount_price).toLocaleString()} AED
+                          {Number(product.discount_price).toLocaleString()} AED
                         </span>
 
                         <span className="text-xs text-gray-400 line-through">
-                          {Number(shoe.price).toLocaleString()} AED
+                          {Number(product.price).toLocaleString()} AED
                         </span>
                       </>
                     ) : (
                       <span className="text-sm font-medium text-gray-900">
-                        {Number(shoe.price).toLocaleString()} AED
+                        {Number(product.price).toLocaleString()} AED
                       </span>
                     )}
                   </div>

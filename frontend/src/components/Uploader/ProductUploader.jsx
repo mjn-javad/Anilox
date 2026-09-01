@@ -1,5 +1,4 @@
-import axios from "axios";
-import apiClientShoes from "../../services/api-client_shoes";
+import apiClientProducts from "../../services/api-client_products";
 import apiClientBrand from "../../services/api-client_brand";
 
 import React, { FormEvent, useEffect, useState } from "react";
@@ -10,12 +9,12 @@ import InputField from "../Shared/InputField";
 import Button from "../Shared/Button";
 import LoadingSpinner from "../Shared/LoadingSpinner";
 
-const ShoeUploader = () => {
+const ProductUploader = () => {
   /*
-   * اگر از آدرس زیر وارد شویم، shoeId وجود دارد:
-   * /admin/dashboard/shoe-upload/:shoeId
+   * اگر از آدرس زیر وارد شویم، productId وجود دارد:
+   * /admin/dashboard/product-upload/:productId
    */
-  const { shoeId } = useParams();
+  const { productId } = useParams();
 
   const [form, setForm] = useState({
     type: "",
@@ -34,7 +33,7 @@ const ShoeUploader = () => {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const [isShoeLoading, setIsShoeLoading] = useState(false);
+  const [isProductLoading, setIsProductLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -45,35 +44,35 @@ const ShoeUploader = () => {
   }, []);
 
   /*
-   * اگر shoeId داخل URL وجود داشته باشد،
+   * اگر productId داخل URL وجود داشته باشد،
    * اطلاعات محصول قبلی دریافت و داخل فرم قرار می‌گیرد.
    */
   useEffect(() => {
-    if (!shoeId) return;
+    if (!productId) return;
 
     let active = true;
 
-    const fetchShoe = async () => {
+    const fetchProduct = async () => {
       try {
-        setIsShoeLoading(true);
+        setIsProductLoading(true);
         setError("");
         setMessage("");
 
-        const res = await apiClientShoes.get(`/${shoeId}`);
+        const res = await apiClientProducts.get(`/${productId}`);
 
-        const shoe = res.data?.data || res.data;
+        const product = res.data?.data || res.data;
 
-        if (!active || !shoe) return;
+        if (!active || !product) return;
 
         setForm({
-          type: shoe.type || "",
-          brand: shoe.brand || "",
-          model: shoe.model || "",
-          category: shoe.category || "",
-          gender: shoe.gender || "",
-          price: shoe.price ?? "",
-          discount_price: shoe.discount_price ?? "",
-          description: shoe.description || "",
+          type: product.type || "",
+          brand: product.brand || "",
+          model: product.model || "",
+          category: product.category || "",
+          gender: product.gender || "",
+          price: product.price ?? "",
+          discount_price: product.discount_price ?? "",
+          description: product.description || "",
 
           // رنگ محصول جدید باید جداگانه وارد شود
           colors: "",
@@ -90,17 +89,17 @@ const ShoeUploader = () => {
         }
       } finally {
         if (active) {
-          setIsShoeLoading(false);
+          setIsProductLoading(false);
         }
       }
     };
 
-    fetchShoe();
+    fetchProduct();
 
     return () => {
       active = false;
     };
-  }, [shoeId]);
+  }, [productId]);
 
   const handleChange = (nameKey, value) => {
     setForm({
@@ -129,7 +128,7 @@ const ShoeUploader = () => {
         formData.append("images", files[i]);
       }
 
-      const res = await apiClientShoes.post("/", formData);
+      const res = await apiClientProducts.post("/", formData);
 
       setMessage(res.data.message);
 
@@ -141,7 +140,7 @@ const ShoeUploader = () => {
     }
   };
 
-  if (isShoeLoading) {
+  if (isProductLoading) {
     return <LoadingSpinner />;
   }
 
@@ -317,4 +316,4 @@ const ShoeUploader = () => {
   );
 };
 
-export default ShoeUploader;
+export default ProductUploader;

@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import apiClientShoes from "../../services/api-client_shoes";
+import apiClientProducts from "../../services/api-client_products";
 import ProductCard from "./ProductCart";
 import ProductFinderBox from "../OrderOnWhatsApp/ProductFinderBox";
 import BrandScroller from "../HorizentalScroll/BrandScroller";
@@ -16,7 +16,7 @@ const GlobalSlider = ({
   scrollOnMobile = false,
   scrollOnLaptop = false,
 }) => {
-  const [shoes, setShoes] = useState([]);
+  const [products, setProducts] = useState([]);
   const [brands, setBrands] = useState([]);
   const [error, setError] = useState("");
 
@@ -35,10 +35,10 @@ const GlobalSlider = ({
     const finalQuery = params.toString();
     const requestQuery = finalQuery ? `${path}?${finalQuery}` : path;
 
-    apiClientShoes
+    apiClientProducts
       .get(requestQuery)
       .then((res) => {
-        setShoes(res.data?.data || []);
+        setProducts(res.data?.data || []);
         setBrands(res.data?.brands || []);
       })
       .catch((err) => {
@@ -54,11 +54,11 @@ const GlobalSlider = ({
       {limit === undefined && <BrandScroller brands={brands} />}
 
       <ProductCard
-        shoes={shoes}
+        products={products}
         header={header}
         title={title}
         navigateLink={navigateLink}
-        apiUrl="/api/v1/shoes"
+        apiUrl="/api/v1/products"
         limit={limit}
         infiniteScroll={infiniteScroll}
         scrollOnMobile={scrollOnMobile}

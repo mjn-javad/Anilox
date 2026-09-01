@@ -22,33 +22,33 @@ router.get("/", controller.getAllBrand);
 router.get("/bestSellers", controller.getAllBestSeller);
 
 router.post(
-  "/bestSellers/:shoeId",
+  "/bestSellers/:productId",
   authMiddleware,
   isAdminMiddleware,
-  controller.addShoeToBestSellers,
+  controller.addProductToBestSellers,
 );
 
 router.delete(
-  "/bestSellers/:shoeId",
+  "/bestSellers/:productId",
   authMiddleware,
   isAdminMiddleware,
-  controller.removeShoeFromBestSellers,
+  controller.removeProductFromBestSellers,
 );
 
 router.get("/newArrivels", controller.getAllNewArrivel);
 
 router.post(
-  "/newArrivels/:shoeId",
+  "/newArrivels/:productId",
   authMiddleware,
   isAdminMiddleware,
-  controller.addShoeToNewArrivel,
+  controller.addProductToNewArrivel,
 );
 
 router.delete(
-  "/newArrivels/:shoeId",
+  "/newArrivels/:productId",
   authMiddleware,
   isAdminMiddleware,
-  controller.removeShoeFromNewArrivel,
+  controller.removeProductFromNewArrivel,
 );
 
 module.exports = router;

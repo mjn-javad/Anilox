@@ -13,37 +13,37 @@ const findCartItemInfo = async (connection, cartItemId, userId) => {
   const [rows] = await executor.execute(
     `SELECT 
       ci.id, 
-      ci.shoes_id, 
-      ci.size, 
+      ci.product_id,
+      ci.stock,
       ci.quantity as cart_quantity,
       COALESCE(sz.quantity, 0) as inStockQuantity
      FROM cart_items ci
-     LEFT JOIN shoes_sizes sz ON ci.shoes_id = sz.shoes_id AND ci.size = sz.size
+     LEFT JOIN product_stocks sz ON ci.product_id = sz.product_id AND ci.stock = sz.stock
      WHERE ci.id = ? AND ci.user_id = ?`,
     [cartItemId, userId],
   );
   return rows[0];
 };
 
-const findCartItemById = async (connection, userId, shoesId, size) => {
+const findCartItemById = async (connection, userId, productId, stock) => {
   const executor = getExecutor(connection);
   const [rows] = await executor.execute(
-    "SELECT * FROM cart_items WHERE user_id=? AND shoes_id=? AND size=?",
-    [userId, shoesId, size],
+    "SELECT * FROM cart_items WHERE user_id=? AND product_id=? AND stock=?",
+    [userId, productId, stock],
   );
   return rows[0];
 };
 
-const insertCartItem = async (connection, userId, shoesId, size, quantity) => {
+const insertCartItem = async (connection, userId, productId, stock, quantity) => {
   const executor = getExecutor(connection);
   await executor.execute(
-    "INSERT INTO cart_items (user_id, shoes_id, size, quantity) VALUES (?,?,?,?)",
-    [userId, shoesId, size, quantity],
+    "INSERT INTO cart_items (user_id, product_id, stock, quantity) VALUES (?,?,?,?)",
+    [userId, productId, stock, quantity],
   );
 
   await executor.execute(
-    "UPDATE shoes_sizes SET quantity = quantity - ? WHERE shoes_id=? AND size=?",
-    [quantity, shoesId, size],
+    "UPDATE product_stocks SET quantity = quantity - ? WHERE product_id=? AND stock=?",
+    [quantity, productId, stock],
   );
 };
 
@@ -52,8 +52,8 @@ const updateCartItemQuantity = async (
   cartItemId,
   userId,
   quantity,
-  shoesId,
-  size,
+  productId,
+  stock,
 ) => {
   const executor = getExecutor(connection);
   await executor.execute(
@@ -62,8 +62,8 @@ const updateCartItemQuantity = async (
   );
 
   await executor.execute(
-    "UPDATE shoes_sizes SET quantity = quantity - ? WHERE shoes_id=? AND size=?",
-    [quantity, shoesId, size],
+    "UPDATE product_stocks SET quantity = quantity - ? WHERE product_id=? AND stock=?",
+    [quantity, productId, stock],
   );
 };
 
@@ -72,17 +72,17 @@ const deleteAllCartItems = async (connection) => {
 
   // گرفتن تمام آیتم‌ها
   const [cartItems] = await executor.execute(`
-    SELECT shoes_id, size, quantity
+    SELECT product_id, stock, quantity
     FROM cart_items
   `);
 
   // برگرداندن موجودی کفش‌ها
   for (const item of cartItems) {
     await executor.execute(
-      `UPDATE shoes_sizes
+      `UPDATE product_stocks
        SET quantity = quantity + ?
-       WHERE shoes_id = ? AND size = ?`,
-      [item.quantity, item.shoes_id, item.size],
+       WHERE product_id = ? AND stock = ?`,
+      [item.quantity, item.product_id, item.stock],
     );
   }
 
@@ -94,8 +94,8 @@ const deleteCartItem = async (
   connection,
   userId,
   cartItemId,
-  shoesId,
-  size,
+  productId,
+  stock,
   quantity,
 ) => {
   const executor = getExecutor(connection);
@@ -104,8 +104,8 @@ const deleteCartItem = async (
     userId,
   ]);
   await executor.execute(
-    "UPDATE shoes_sizes SET quantity = quantity + ? WHERE shoes_id=? AND size=?",
-    [quantity, shoesId, size],
+    "UPDATE product_stocks SET quantity = quantity + ? WHERE product_id=? AND stock=?",
+    [quantity, productId, stock],
   );
 };
 
@@ -116,8 +116,8 @@ const getAllCarts = async (connection) => {
     `SELECT 
       ci.id,
       ci.user_id,
-      ci.shoes_id,
-      ci.size,
+      ci.product_id,
+      ci.stock,
       ci.quantity AS cart_quantity,
 
       -- user info
@@ -126,8 +126,8 @@ const getAllCarts = async (connection) => {
       u.email,
       u.role,
 
-      -- shoes info
-      s.name AS shoes_name,
+      -- product info
+      s.name AS product_name,
       s.price,
       s.discount_price,
       s.brand,
@@ -144,12 +144,12 @@ const getAllCarts = async (connection) => {
      JOIN users u 
        ON ci.user_id = u.id
 
-     JOIN shoes s 
-       ON ci.shoes_id = s.id
+     JOIN products s
+       ON ci.product_id = s.id
 
-     LEFT JOIN shoes_sizes sz 
-       ON s.id = sz.shoes_id 
-      AND ci.size = sz.size`,
+     LEFT JOIN product_stocks sz
+       ON s.id = sz.product_id
+      AND ci.stock = sz.stock`,
   );
 
   return rows;
@@ -201,13 +201,13 @@ const getAllOrders = async (connection) => {
       const [items] = await executor.execute(
         `SELECT 
           oi.id,
-          oi.shoes_id,
-          oi.size,
+          oi.product_id,
+          oi.stock,
           oi.quantity,
           oi.price_at_purchase,
           
-          -- shoes info
-          s.name AS shoes_name,
+          -- product info
+          s.name AS product_name,
           s.brand,
           s.model,
           s.category,
@@ -215,12 +215,12 @@ const getAllOrders = async (connection) => {
           s.price AS current_price,
           s.discount_price AS current_discount_price,
           
-          -- current stock for this size
+          -- current stock for this stock
           COALESCE(sz.quantity, 0) AS current_stock
           
         FROM order_items oi
-        JOIN shoes s ON oi.shoes_id = s.id
-        LEFT JOIN shoes_sizes sz ON s.id = sz.shoes_id AND oi.size = sz.size
+        JOIN products s ON oi.product_id = s.id
+        LEFT JOIN product_stocks sz ON s.id = sz.product_id AND oi.stock = sz.stock
         WHERE oi.order_id = ?
         ORDER BY oi.id DESC`,
         [order.id],
@@ -271,8 +271,8 @@ const getCartByUser = async (connection, userId) => {
     `SELECT 
       ci.id,
       ci.user_id,
-      ci.shoes_id,
-      ci.size,
+      ci.product_id,
+      ci.stock,
       ci.quantity as cart_quantity,
       s.name,
       s.price,
@@ -284,15 +284,15 @@ const getCartByUser = async (connection, userId) => {
       s.created_at,
       (
         SELECT si.image_name 
-        FROM shoes_images si 
-        WHERE si.shoes_id = s.id 
+        FROM product_images si
+        WHERE si.product_id = s.id
         LIMIT 1
       ) as image,
       COALESCE(sz.quantity, 0) as current_stock
      FROM cart_items ci
-     JOIN shoes s ON ci.shoes_id = s.id
-     LEFT JOIN shoes_sizes sz ON s.id = sz.shoes_id 
-        AND ci.size = sz.size 
+     JOIN products s ON ci.product_id = s.id
+     LEFT JOIN product_stocks sz ON s.id = sz.product_id
+        AND ci.stock = sz.stock
      WHERE ci.user_id = ?`,
     [userId],
   );
@@ -316,7 +316,7 @@ const calculateCartTotals = async (connection, userId) => {
       ) AS price_with_discount
 
     FROM cart_items ci
-    JOIN shoes s ON ci.shoes_id = s.id
+    JOIN products s ON ci.product_id = s.id
     WHERE ci.user_id = ?
     `,
     [userId],
@@ -332,13 +332,13 @@ const completeOrder = async (connection, userId, addressId, paymentMethod) => {
   const [cartItems] = await executor.execute(
     `
     SELECT 
-      ci.shoes_id,
-      ci.size,
+      ci.product_id,
+      ci.stock,
       ci.quantity,
       s.price,
       s.discount_price
     FROM cart_items ci
-    JOIN shoes s ON ci.shoes_id = s.id
+    JOIN products s ON ci.product_id = s.id
     WHERE ci.user_id = ?
     `,
     [userId],
@@ -386,10 +386,10 @@ const completeOrder = async (connection, userId, addressId, paymentMethod) => {
     await executor.execute(
       `
       INSERT INTO order_items
-      (order_id, shoes_id, size, quantity,  price_at_purchase)
+      (order_id, product_id, stock, quantity,  price_at_purchase)
       VALUES (?, ?, ?, ?, ?)
       `,
-      [orderId, item.shoes_id, item.size, item.quantity, finalPrice],
+      [orderId, item.product_id, item.stock, item.quantity, finalPrice],
     );
   }
 
@@ -421,7 +421,7 @@ const getOrderDetailsForEmail = async (
     const [orderItems] = await connection.query(
       `SELECT oi.*, s.name, s.price, s.discount_price
        FROM order_items oi
-       JOIN shoes s ON oi.shoes_id = s.id
+       JOIN products s ON oi.product_id = s.id
        WHERE oi.order_id = ?`,
       [orderId],
     );
@@ -435,7 +435,7 @@ const getOrderDetailsForEmail = async (
     const items = orderItems.map((item) => ({
       name: item.name,
       quantity: item.quantity,
-      size: item.size || null,
+      stock: item.stock || null,
       price: parseFloat(item.price),
       discount_price: parseFloat(item.discount_price),
       total: parseFloat(item.discount_price) * item.quantity,

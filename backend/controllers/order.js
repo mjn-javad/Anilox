@@ -1,6 +1,6 @@
 const db = require("../db");
 const Order = require("../repositories/order");
-const Shoe = require("../repositories/shoes");
+const Product = require("../repositories/products");
 const User = require("../repositories/users");
 const Address = require("../repositories/address");
 const emailService = require("../services/emailService");
@@ -10,25 +10,25 @@ const emailService = require("../services/emailService");
 exports.addToCart = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const { shoesId, size, quantity } = req.body;
+    const { productId, stock, quantity } = req.body;
 
-    if (!shoesId || !size || !quantity) {
+    if (!productId || !stock || !quantity) {
       return res.status(400).json({
         success: false,
         message: "Invalid input data",
       });
     }
 
-    const shoe = await Shoe.findById(shoesId);
-    if (!shoe) {
+    const product = await Product.findById(productId);
+    if (!product) {
       return res.status(400).json({
         success: false,
-        message: "Can not find this shoe",
+        message: "Can not find this product",
       });
     }
 
     const isThisQuantityInStock =
-      shoe.sizes.filter((s) => s.size === size)[0].quantity >= quantity;
+      product.stocks.filter((s) => s.stock === stock)[0].quantity >= quantity;
     if (!isThisQuantityInStock) {
       return res.status(403).json({
         success: false,
@@ -37,21 +37,21 @@ exports.addToCart = async (req, res, next) => {
       });
     }
 
-    const existing = await Order.findCartItemById(null, userId, shoesId, size);
+    const existing = await Order.findCartItemById(null, userId, productId, stock);
 
     if (existing) {
-      const shoesId = existing.shoes_id;
-      const size = existing.size;
+      const productId = existing.product_id;
+      const stock = existing.stock;
       await Order.updateCartItemQuantity(
         null,
         existing.id,
         userId,
         quantity,
-        shoesId,
-        size,
+        productId,
+        stock,
       );
     } else {
-      await Order.insertCartItem(null, userId, shoesId, size, quantity);
+      await Order.insertCartItem(null, userId, productId, stock, quantity);
     }
 
     res.json({ success: true, message: "Added to cart" });
@@ -134,12 +134,12 @@ exports.removeFromCart = async (req, res, next) => {
 
     const {
       _,
-      shoes_id: shoesId,
-      size,
+      product_id: productId,
+      stock,
       cart_quantity: quantity,
     } = await Order.findCartItemInfo(null, cartItemId, userId);
 
-    if (!shoesId || !size || !quantity) {
+    if (!productId || !stock || !quantity) {
       return res.status(400).json({
         success: false,
         message: "Invalid Cart Item ID",
@@ -150,8 +150,8 @@ exports.removeFromCart = async (req, res, next) => {
       null,
       userId,
       cartItemId,
-      shoesId,
-      size,
+      productId,
+      stock,
       quantity,
     );
 
@@ -266,15 +266,15 @@ exports.editQuantity = async (req, res, next) => {
           "The requested quantity is greater than the available quantity.",
       });
     } else {
-      const shoesId = existing.shoes_id;
-      const size = existing.size;
+      const productId = existing.product_id;
+      const stock = existing.stock;
       await Order.updateCartItemQuantity(
         null,
         existing.id,
         userId,
         decOrInc,
-        shoesId,
-        size,
+        productId,
+        stock,
       );
     }
 

@@ -52,7 +52,7 @@ const TransactionCard = ({ transaction }) => {
       {/* Body */}
       <div className="p-4">
         <h3 className="font-semibold text-gray-800 mb-2">
-          {transaction.shoes_name}
+          {transaction.product_name}
         </h3>
 
         <div className="grid grid-cols-2 gap-3 text-sm">
@@ -63,7 +63,7 @@ const TransactionCard = ({ transaction }) => {
 
           <div>
             <span className="text-gray-500">Size:</span>
-            <span className="ml-2">{transaction.size}</span>
+            <span className="ml-2">{transaction.stock}</span>
           </div>
 
           <div>
@@ -99,7 +99,7 @@ const TransactionCard = ({ transaction }) => {
       {/* Footer */}
       <div className="bg-gray-50 px-4 py-2 text-xs text-gray-500 flex justify-between border-t">
         <span>User ID: {transaction.user_id}</span>
-        <span>Shoe ID: {transaction.shoes_id}</span>
+        <span>Product ID: {transaction.product_id}</span>
       </div>
     </div>
   );

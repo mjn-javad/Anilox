@@ -57,9 +57,9 @@ const SingleProduct = () => {
   };
 
   const getOriginalImageSrc = (image) => {
-    const baseName = getImageBaseName(image);
+    const imageName = getImageName(image);
 
-    return baseName ? `${IMG_URL}${baseName}.webp` : "";
+    return imageName ? `${IMG_URL}${imageName}` : "";
   };
 
   useEffect(() => {
@@ -201,7 +201,9 @@ const SingleProduct = () => {
                 className="w-full h-full object-contain"
                 onError={(event) => {
                   event.currentTarget.onerror = null;
-                  event.currentTarget.src = getOriginalImageSrc(image);
+                  event.currentTarget.src = getOriginalImageSrc(
+                    images[selectedImage],
+                  );
                 }}
               />
             ) : (
@@ -316,7 +318,9 @@ const SingleProduct = () => {
                         className="w-full h-full object-cover rounded"
                         onError={(event) => {
                           event.currentTarget.onerror = null;
-                          event.currentTarget.src = getOriginalImageSrc(image);
+                          event.currentTarget.src = getOriginalImageSrc(
+                            color?.images?.[0],
+                          );
                         }}
                       />
                     </Link>

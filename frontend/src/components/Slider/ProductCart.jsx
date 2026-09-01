@@ -158,17 +158,15 @@ const ProductCard = ({
                 <div className="relative overflow-hidden bg-gray-50">
                   {product?.images?.[0]?.image_name ? (
                     <img
-                      src={
-                        product.images?.[0]?.image_name
-                          ? /-(320|640|960)\.webp$/i.test(
-                              product.images[0].image_name,
-                            )
-                            ? `/api/images/posts/${product.images[0].image_name
-                                .replace(/\.[^/.]+$/, "")
-                                .replace(/-(320|640|960)$/i, "")}-640.webp`
-                            : `/api/images/posts/${product.images[0].image_name}`
-                          : ""
-                      }
+                      src={`/api/images/posts/${product.images[0].image_name
+                        .replace(/\.[^/.]+$/, "")
+                        .replace(/-(320|640|960)$/i, "")}-640.webp`}
+                      onError={(event) => {
+                        event.currentTarget.onerror = null;
+                        event.currentTarget.src = `/api/images/posts/${product.images[0].image_name
+                          .replace(/\.[^/.]+$/, "")
+                          .replace(/-(320|640|960)$/i, "")}.webp`;
+                      }}
                       alt={product.name}
                       loading="lazy"
                       className="aspect-square w-full object-cover transition-opacity duration-300 group-hover:opacity-90"
@@ -201,7 +199,8 @@ const ProductCard = ({
                         Price on WhatsApp
                       </span>
                     ) : product.discount_price &&
-                      Number(product.discount_price) !== Number(product.price) ? (
+                      Number(product.discount_price) !==
+                        Number(product.price) ? (
                       <>
                         <span className="text-sm font-medium text-gray-900">
                           {Number(product.discount_price).toLocaleString()} AED

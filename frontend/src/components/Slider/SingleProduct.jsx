@@ -39,26 +39,27 @@ const SingleProduct = () => {
 
   const isAdmin = user?.role === "admin";
 
-  const getImageSrc = (image, size = 960) => {
-    if (!image) return "";
+  const getImageName = (image) =>
+    typeof image === "string" ? image : image?.image_name;
 
-    const imageName = typeof image === "string" ? image : image.image_name;
+  const getImageBaseName = (image) => {
+    const imageName = getImageName(image);
 
     if (!imageName) return "";
 
-    // اگر نام فایل اندازه داشته باشد، نسخه بهینه‌شده موجود است
-    const hasResponsiveVersions = /-(320|640|960)\.webp$/i.test(imageName);
+    return imageName.replace(/\.[^/.]+$/, "").replace(/-(320|640|960)$/i, "");
+  };
 
-    // در غیر این صورت خود تصویر اصلی نمایش داده شود
-    if (!hasResponsiveVersions) {
-      return `${IMG_URL}${imageName}`;
-    }
+  const getImageSrc = (image, size = 960) => {
+    const baseName = getImageBaseName(image);
 
-    const baseName = imageName
-      .replace(/\.[^/.]+$/, "")
-      .replace(/-(320|640|960)$/i, "");
+    return baseName ? `${IMG_URL}${baseName}-${size}.webp` : "";
+  };
 
-    return `${IMG_URL}${baseName}-${size}.webp`;
+  const getOriginalImageSrc = (image) => {
+    const baseName = getImageBaseName(image);
+
+    return baseName ? `${IMG_URL}${baseName}.webp` : "";
   };
 
   useEffect(() => {
@@ -176,7 +177,8 @@ const SingleProduct = () => {
 
   if (loading) return <LoadingSpinner />;
   if (error) return <MessageAlert message={error} type="error" />;
-  if (!product) return <div className="text-center py-10">Products not found</div>;
+  if (!product)
+    return <div className="text-center py-10">Products not found</div>;
 
   return (
     <div className="container mx-auto my-0 p-4">
@@ -197,6 +199,10 @@ const SingleProduct = () => {
                 src={getImageSrc(images[selectedImage], 960)}
                 alt={product.name}
                 className="w-full h-full object-contain"
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = getOriginalImageSrc(image);
+                }}
               />
             ) : (
               <span className="text-gray-400">No image available</span>
@@ -220,6 +226,10 @@ const SingleProduct = () => {
                     alt={`${product.name} - ${index + 1}`}
                     loading="lazy"
                     className="w-full aspect-square object-cover"
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = getOriginalImageSrc(image);
+                    }}
                   />
                 </button>
               ))}
@@ -304,6 +314,10 @@ const SingleProduct = () => {
                         alt={color.name}
                         loading="lazy"
                         className="w-full h-full object-cover rounded"
+                        onError={(event) => {
+                          event.currentTarget.onerror = null;
+                          event.currentTarget.src = getOriginalImageSrc(image);
+                        }}
                       />
                     </Link>
                   );

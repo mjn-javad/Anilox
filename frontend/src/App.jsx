@@ -53,6 +53,8 @@ function App() {
 
           {/* Product Pages */}
           <Route path="product/:id" element={<SingleProduct />} />
+          <Route path="shoe/:id" element={<SingleProduct />} />
+
           <Route path="slider-products" element={<SliderProducts />} />
           <Route path="new-arrivals" element={<SliderNewArrivels />} />
           <Route path="bestSellers" element={<BestSellersGlobalSlider />} />

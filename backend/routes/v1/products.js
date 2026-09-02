@@ -7,6 +7,7 @@ const {
   multerStorage,
   uploadWithErrorHandler,
 } = require("../../middlewares/uploaderConfig");
+const telegramBotAuth = require("../../middlewares/telegramBotAuth");
 
 const router = express.Router();
 
@@ -55,6 +56,13 @@ router.post(
   "/",
   authMiddleware,
   isAdminMiddleware,
+  uploadImages,
+  controller.createProduct,
+);
+
+router.post(
+  "/telegram",
+  telegramBotAuth,
   uploadImages,
   controller.createProduct,
 );

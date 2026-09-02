@@ -1,0 +1,29 @@
+{
+  "name": "telegram-course",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsx src/bot.ts",
+    "start": "tsx src/bot.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@grammyjs/conversations": "^2.1.1",
+    "@grammyjs/files": "^1.2.0",
+    "@grammyjs/i18n": "^1.1.2",
+    "dotenv": "^17.4.2",
+    "grammy": "^1.45.1",
+    "https-proxy-agent": "^9.1.0"
+  }
+}

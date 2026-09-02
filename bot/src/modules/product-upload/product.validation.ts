@@ -224,6 +224,33 @@ export function validatePhoto(photo: ProductPhotoInput): ProductPhotoInput {
   return photo;
 }
 
+export function validatePhotos(
+  photos: readonly ProductPhotoInput[],
+): ProductPhotoInput[] {
+  if (photos.length < 1 || photos.length > 10) {
+    throw new ProductUploadError(
+      "INVALID_PHOTO",
+      "Send between 1 and 10 product photos.",
+    );
+  }
+
+  const uniquePhotos = new Map<string, ProductPhotoInput>();
+
+  for (const photo of photos) {
+    const validatedPhoto = validatePhoto(photo);
+    uniquePhotos.set(validatedPhoto.fileUniqueId, validatedPhoto);
+  }
+
+  if (uniquePhotos.size !== photos.length) {
+    throw new ProductUploadError(
+      "INVALID_PHOTO",
+      "The same product photo was sent more than once.",
+    );
+  }
+
+  return [...uniquePhotos.values()];
+}
+
 export function normalizeProductDraft(draft: ProductDraft): ProductDraft {
   const type = validateType(draft.type);
 
@@ -243,6 +270,6 @@ export function normalizeProductDraft(draft: ProductDraft): ProductDraft {
     discountPrice: validateDiscountPrice(draft.discountPrice, price),
     description: validateDescription(draft.description),
     colors: validateSelectedColors(draft.colors ?? []),
-    photo: validatePhoto(draft.photo),
+    photos: validatePhotos(draft.photos),
   };
 }

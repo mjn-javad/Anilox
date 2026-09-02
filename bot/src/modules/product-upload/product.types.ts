@@ -27,7 +27,7 @@ export interface ProductDraft {
   discountPrice: string | null;
   description: string | null;
   colors: string[] | null;
-  photo: ProductPhotoInput;
+  photos: ProductPhotoInput[];
 }
 
 export interface CreateProductPayload {

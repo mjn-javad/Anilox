@@ -549,7 +549,7 @@ function appendOptionalFormField(
 
 function createProductFormData(
   draft: ProductDraft,
-  image: DownloadedProductImage,
+  images: readonly DownloadedProductImage[],
 ) {
   const payload = toCreateProductPayload(draft);
 
@@ -573,7 +573,11 @@ function createProductFormData(
 
   appendOptionalFormField(formData, "colors", payload.colors);
 
-  formData.append(getProductImageField(), image.blob, image.filename);
+  const imageField = getProductImageField();
+
+  for (const image of images) {
+    formData.append(imageField, image.blob, image.filename);
+  }
 
   return formData;
 }
@@ -642,9 +646,11 @@ export const productBackendApi = {
   },
 
   async createProduct(draft: ProductDraft): Promise<CreatedBackendProduct> {
-    const image = await downloadTelegramProductImage(draft.photo);
+    const images = await Promise.all(
+      draft.photos.map((photo) => downloadTelegramProductImage(photo)),
+    );
 
-    const formData = createProductFormData(draft, image);
+    const formData = createProductFormData(draft, images);
 
     const payload = await requestJson(
       getProductApiUrl(),

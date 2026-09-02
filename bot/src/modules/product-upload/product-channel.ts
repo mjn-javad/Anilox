@@ -6,6 +6,10 @@ import {
   TYPE_LABELS,
 } from "./product.constants.js";
 import type { ProductDraft } from "./product.types.js";
+import {
+  formatProductPrice,
+  getModelHashtag,
+} from "./product-formatting.js";
 
 const TELEGRAM_PHOTO_CAPTION_LIMIT = 1_024;
 
@@ -88,22 +92,16 @@ function escapeHtmlWithLimit(value: string, maximumEscapedLength: number) {
   return result;
 }
 
-function formatMoney(value: string | null) {
-  if (!value) {
-    return "None";
-  }
-
-  return new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 2,
-  }).format(Number(value));
-}
-
 export function formatProductChannelCaption(draft: ProductDraft) {
   const priceUnit = escapeHtmlWithLimit(getProductPriceUnit(), 20);
 
   const brandName = escapeHtmlWithLimit(draft.brandName, 90);
 
   const model = escapeHtmlWithLimit(draft.model, 110);
+  const modelHashtag = escapeHtmlWithLimit(getModelHashtag(draft.model), 110);
+  const modelWithHashtag = modelHashtag
+    ? `${model} ${modelHashtag}`
+    : model;
 
   const colors = escapeHtmlWithLimit(draft.colors?.join(", ") ?? "None", 160);
 
@@ -116,12 +114,12 @@ export function formatProductChannelCaption(draft: ProductDraft) {
 
 🏷 <b>Type:</b> ${TYPE_LABELS[draft.type]}
 🏭 <b>Brand:</b> ${brandName}
-🧩 <b>Model:</b> ${model}${categoryLine}
+🧩 <b>Model:</b> ${modelWithHashtag}${categoryLine}
 👤 <b>Gender:</b> ${GENDER_LABELS[draft.gender]}
-💰 <b>Price:</b> ${formatMoney(draft.price)} ${priceUnit}
+💰 <b>Price:</b> ${formatProductPrice(draft.price, priceUnit)}
 🔥 <b>Discount price:</b> ${
     draft.discountPrice
-      ? `${formatMoney(draft.discountPrice)} ${priceUnit}`
+      ? formatProductPrice(draft.discountPrice, priceUnit)
       : "None"
   }
 🎨 <b>Colors:</b> ${colors}
@@ -156,14 +154,38 @@ export function getProductChannelPublicMessage(error: unknown) {
 }
 
 export async function publishProductToChannel(api: Api, draft: ProductDraft) {
-  const message = await api.sendPhoto(
-    getProductChannelId(),
-    draft.photo.fileId,
-    {
-      caption: formatProductChannelCaption(draft),
-      parse_mode: "HTML",
-    },
-  );
+  const channelId = getProductChannelId();
+  const caption = formatProductChannelCaption(draft);
+  const messages =
+    draft.photos.length === 1
+      ? [
+          await api.sendPhoto(channelId, draft.photos[0]!.fileId, {
+            caption,
+            parse_mode: "HTML",
+          }),
+        ]
+      : await api.sendMediaGroup(
+          channelId,
+          draft.photos.map((photo, index) => ({
+            type: "photo" as const,
+            media: photo.fileId,
+            ...(index === 0
+              ? {
+                  caption,
+                  parse_mode: "HTML" as const,
+                }
+              : {}),
+          })),
+        );
+
+  const message = messages[0];
+
+  if (!message) {
+    throw new ProductChannelError(
+      "CHANNEL_ID_INVALID",
+      "Telegram did not return the published media group.",
+    );
+  }
 
   const channelUsername =
     "username" in message.chat ? message.chat.username : undefined;

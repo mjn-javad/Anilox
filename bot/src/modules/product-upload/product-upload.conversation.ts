@@ -75,6 +75,8 @@ import {
 import type { BrandOption, ProductDraft } from "./product.types.js";
 
 const PAGINATED_OPTIONS_PER_PAGE = 8;
+const MAX_PRODUCT_PHOTOS = 10;
+const DONE_PHOTOS_INPUT = "✅ Done adding photos";
 
 type TextValidator<T> = (value: string) => T;
 
@@ -294,6 +296,63 @@ Selected: ${selectedColors.join(", ") || "None"}`,
   }
 }
 
+async function askPhotos(
+  conversation: AppConversation,
+  ctx: AppConversationContext,
+) {
+  const photos: ProductDraft["photos"] = [];
+  const doneKeyboard = new Keyboard().text(DONE_PHOTOS_INPUT).resized();
+
+  await ctx.reply(
+    `Send 1 to ${MAX_PRODUCT_PHOTOS} product photos.
+You can send them one by one or as a Telegram album.`,
+    { reply_markup: removeKeyboard() },
+  );
+
+  while (photos.length < MAX_PRODUCT_PHOTOS) {
+    const photoContext = await conversation.wait();
+    const largestPhoto = photoContext.message?.photo?.at(-1);
+
+    if (largestPhoto) {
+      photos.push({
+        fileId: largestPhoto.file_id,
+        fileUniqueId: largestPhoto.file_unique_id,
+        width: largestPhoto.width,
+        height: largestPhoto.height,
+      });
+
+      if (photos.length === MAX_PRODUCT_PHOTOS) {
+        await ctx.reply(`✅ ${photos.length} photos received.`, {
+          reply_markup: removeKeyboard(),
+        });
+        break;
+      }
+
+      await ctx.reply(
+        `📷 ${photos.length} photo${photos.length === 1 ? "" : "s"} received. Send another photo or press ${DONE_PHOTOS_INPUT}.`,
+        { reply_markup: doneKeyboard },
+      );
+      continue;
+    }
+
+    if (photoContext.message?.text?.trim() === DONE_PHOTOS_INPUT) {
+      if (photos.length > 0) {
+        break;
+      }
+
+      await photoContext.reply("❌ Send at least one product photo.");
+      continue;
+    }
+
+    await photoContext.reply(
+      `❌ Send a Telegram Photo or press ${DONE_PHOTOS_INPUT}.`,
+      { reply_markup: photos.length > 0 ? doneKeyboard : removeKeyboard() },
+    );
+  }
+
+  return photos;
+}
+
 function createTypeOptions() {
   return PRODUCT_TYPES.map((value) => {
     return {
@@ -466,24 +525,7 @@ Press ${SKIP_INPUT} to leave it empty.`,
 
   const colors = await askColors(conversation, ctx);
 
-  await ctx.reply("Send one product image as a Telegram Photo:", {
-    reply_markup: removeKeyboard(),
-  });
-
-  const photoContext = await conversation.waitFor("message:photo", {
-    otherwise: (wrongContext) => {
-      return wrongContext.reply(
-        "❌ Send the image as a Photo, not as a file or text.",
-      );
-    },
-  });
-
-  const largestPhoto = photoContext.message.photo.at(-1);
-
-  if (!largestPhoto) {
-    await ctx.reply("❌ A valid photo was not received.");
-    return;
-  }
+  const photos = await askPhotos(conversation, ctx);
 
   let draft: ProductDraft = {
     type: type as ProductType,
@@ -496,12 +538,7 @@ Press ${SKIP_INPUT} to leave it empty.`,
     discountPrice,
     description,
     colors,
-    photo: {
-      fileId: largestPhoto.file_id,
-      fileUniqueId: largestPhoto.file_unique_id,
-      width: largestPhoto.width,
-      height: largestPhoto.height,
-    },
+    photos,
   };
 
   try {
@@ -546,10 +583,26 @@ Press ${SKIP_INPUT} to leave it empty.`,
 
   await ctx.reply("👁 Preview of the channel post:");
 
-  await ctx.replyWithPhoto(draft.photo.fileId, {
-    caption: channelCaption,
-    parse_mode: "HTML",
-  });
+  if (draft.photos.length === 1) {
+    await ctx.replyWithPhoto(draft.photos[0]!.fileId, {
+      caption: channelCaption,
+      parse_mode: "HTML",
+    });
+  } else {
+    await ctx.api.sendMediaGroup(
+      ctx.chat.id,
+      draft.photos.map((photo, index) => ({
+        type: "photo" as const,
+        media: photo.fileId,
+        ...(index === 0
+          ? {
+              caption: channelCaption,
+              parse_mode: "HTML" as const,
+            }
+          : {}),
+      })),
+    );
+  }
 
   await ctx.reply("Publish this product?", {
     reply_markup: createConfirmKeyboard(CONFIRM_INPUT),

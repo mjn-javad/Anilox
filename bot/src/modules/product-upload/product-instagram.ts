@@ -7,7 +7,11 @@ import {
   TYPE_LABELS,
 } from "./product.constants.js";
 import { downloadTelegramProductImage } from "./product-backend.api.js";
-import type { ProductDraft } from "./product.types.js";
+import {
+  formatProductPrice,
+  getModelHashtag,
+} from "./product-formatting.js";
+import type { ProductDraft, ProductPhotoInput } from "./product.types.js";
 
 const INSTAGRAM_REQUEST_TIMEOUT_MS = 30_000;
 const INSTAGRAM_CAPTION_LIMIT = 2_200;
@@ -369,14 +373,14 @@ async function ensureInstagramMediaServer(port: number) {
 
 async function stageInstagramImage(
   configuration: ProductInstagramConfiguration,
-  draft: ProductDraft,
+  photo: ProductPhotoInput,
 ) {
   await ensureInstagramMediaServer(configuration.mediaPort);
 
   let image;
 
   try {
-    image = await downloadTelegramProductImage(draft.photo);
+    image = await downloadTelegramProductImage(photo);
   } catch (error) {
     throw new ProductInstagramError(
       "IMAGE_DOWNLOAD_FAILED",
@@ -408,16 +412,6 @@ async function stageInstagramImage(
   };
 }
 
-function formatMoney(value: string | null) {
-  if (!value) {
-    return "None";
-  }
-
-  return new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 2,
-  }).format(Number(value));
-}
-
 function truncateCaption(value: string) {
   const characters = Array.from(value);
 
@@ -430,6 +424,10 @@ function truncateCaption(value: string) {
 
 export function formatProductInstagramCaption(draft: ProductDraft) {
   const priceUnit = process.env.PRODUCT_PRICE_UNIT?.trim() || "Toman";
+  const modelHashtag = getModelHashtag(draft.model);
+  const modelWithHashtag = modelHashtag
+    ? `${draft.model} ${modelHashtag}`
+    : draft.model;
   const categoryLine =
     draft.type === "shoe"
       ? `\n👟 Category: ${CATEGORY_LABELS[draft.category]}`
@@ -439,12 +437,12 @@ export function formatProductInstagramCaption(draft: ProductDraft) {
 
 🏷 Type: ${TYPE_LABELS[draft.type]}
 🏭 Brand: ${draft.brandName}
-🧩 Model: ${draft.model}${categoryLine}
+🧩 Model: ${modelWithHashtag}${categoryLine}
 👤 Gender: ${GENDER_LABELS[draft.gender]}
-💰 Price: ${formatMoney(draft.price)} ${priceUnit}
+💰 Price: ${formatProductPrice(draft.price, priceUnit)}
 🔥 Discount price: ${
     draft.discountPrice
-      ? `${formatMoney(draft.discountPrice)} ${priceUnit}`
+      ? formatProductPrice(draft.discountPrice, priceUnit)
       : "None"
   }
 🎨 Colors: ${draft.colors?.join(", ") || "None"}
@@ -493,6 +491,66 @@ async function createInstagramContainer(
   return getRequiredId(
     payload,
     "Instagram did not return a media container ID.",
+  );
+}
+
+async function createInstagramCarouselItemContainer(
+  configuration: ProductInstagramConfiguration,
+  imageUrl: string,
+) {
+  const body = new URLSearchParams({
+    image_url: imageUrl,
+    is_carousel_item: "true",
+  });
+
+  const payload = await requestInstagramJson(
+    configuration,
+    `${configuration.accountId}/media`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body,
+    },
+    "CONTAINER_REQUEST_FAILED",
+    "Could not create an Instagram carousel item.",
+  );
+
+  return getRequiredId(
+    payload,
+    "Instagram did not return a carousel item container ID.",
+  );
+}
+
+async function createInstagramCarouselContainer(
+  configuration: ProductInstagramConfiguration,
+  childContainerIds: readonly string[],
+  caption: string,
+) {
+  const body = new URLSearchParams({
+    caption,
+    children: childContainerIds.join(","),
+    media_type: "CAROUSEL",
+  });
+
+  const payload = await requestInstagramJson(
+    configuration,
+    `${configuration.accountId}/media`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body,
+    },
+    "CONTAINER_REQUEST_FAILED",
+    "Could not create the Instagram carousel container.",
+  );
+
+  return getRequiredId(
+    payload,
+    "Instagram did not return a carousel container ID.",
   );
 }
 
@@ -578,14 +636,42 @@ export async function publishProductToInstagram(
   draft: ProductDraft,
 ): Promise<ProductInstagramPublishResult> {
   const configuration = getProductInstagramConfiguration();
-  const stagedImage = await stageInstagramImage(configuration, draft);
+  const stagedMedia: Awaited<ReturnType<typeof stageInstagramImage>>[] = [];
 
   try {
-    const containerId = await createInstagramContainer(
-      configuration,
-      stagedImage.imageUrl,
-      formatProductInstagramCaption(draft),
-    );
+    for (const photo of draft.photos) {
+      stagedMedia.push(await stageInstagramImage(configuration, photo));
+    }
+
+    const caption = formatProductInstagramCaption(draft);
+    let containerId: string;
+
+    if (stagedMedia.length === 1) {
+      containerId = await createInstagramContainer(
+        configuration,
+        stagedMedia[0]!.imageUrl,
+        caption,
+      );
+    } else {
+      const childContainerIds = await Promise.all(
+        stagedMedia.map(async (image) => {
+          const childContainerId =
+            await createInstagramCarouselItemContainer(
+              configuration,
+              image.imageUrl,
+            );
+
+          await waitForInstagramContainer(configuration, childContainerId);
+          return childContainerId;
+        }),
+      );
+
+      containerId = await createInstagramCarouselContainer(
+        configuration,
+        childContainerIds,
+        caption,
+      );
+    }
 
     await waitForInstagramContainer(configuration, containerId);
 
@@ -593,6 +679,8 @@ export async function publishProductToInstagram(
       mediaId: await publishInstagramContainer(configuration, containerId),
     };
   } finally {
-    stagedImages.delete(stagedImage.token);
+    for (const stagedImage of stagedMedia) {
+      stagedImages.delete(stagedImage.token);
+    }
   }
 }

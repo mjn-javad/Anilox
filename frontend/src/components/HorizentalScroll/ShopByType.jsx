@@ -2,12 +2,12 @@ import React, { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import ImgShoeMen from "../../assets/ShopByTypePic/Men/Shoes.png";
-import ImgGlassMen from "../../assets/ShopByTypePic/Men/SunGlasses.png";
+import ImgWatchWomen from "../../assets/ShopByTypePic/Men/Watch.png";
 import ImgLuggMen from "../../assets/ShopByTypePic/Men/Luggages.png";
 import ImgBagMen from "../../assets/ShopByTypePic/Men/Bags.png";
 
 import ImgShoeWomen from "../../assets/ShopByTypePic/Women/Shoes.png";
-import ImgGlassWomen from "../../assets/ShopByTypePic/Women/SunGlasses.png";
+import ImgWatchMen from "../../assets/ShopByTypePic/Women/Watch.png";
 import ImgLuggWomen from "../../assets/ShopByTypePic/Women/Luggages.png";
 import ImgBagWomen from "../../assets/ShopByTypePic/Women/Bags.png";
 
@@ -54,7 +54,7 @@ const ShopByType = ({
       {
         title: "Glasses",
         type: "glasses",
-        image: isMale ? ImgGlassMen : ImgGlassWomen,
+        image: isMale ? ImgWatchWomen : ImgWatchMen,
       },
       {
         title: "Luggage",

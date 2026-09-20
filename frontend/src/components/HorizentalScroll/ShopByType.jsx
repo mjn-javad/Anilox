@@ -52,8 +52,8 @@ const ShopByType = ({
         image: isMale ? ImgBagMen : ImgBagWomen,
       },
       {
-        title: "Glasses",
-        type: "glasses",
+        title: "Watch",
+        type: "watch",
         image: isMale ? ImgWatchWomen : ImgWatchMen,
       },
       {

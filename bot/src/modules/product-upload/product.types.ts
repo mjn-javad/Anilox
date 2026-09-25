@@ -11,15 +11,23 @@ export interface ProductPhotoInput {
   height: number;
 }
 
+export type ProductSiteId = "anilox" | "ebraha";
+
+export type ProductPublishDestination =
+  | ProductSiteId
+  | "telegram"
+  | "instagram";
+
 export interface BrandOption {
   name: string;
-  slug: string;
+  siteSlugs: Partial<Record<ProductSiteId, string>>;
 }
 
-export interface ProductDraft {
+export interface ProductData {
   type: ProductType;
   brand: string;
   brandName: string;
+  brandSlugs: Partial<Record<ProductSiteId, string>>;
   model: string;
   category: ProductCategory | "other";
   gender: ProductGender;
@@ -27,6 +35,9 @@ export interface ProductDraft {
   discountPrice: string | null;
   description: string | null;
   colors: string[] | null;
+}
+
+export interface ProductDraft extends ProductData {
   photos: ProductPhotoInput[];
 }
 
@@ -44,4 +55,18 @@ export interface CreateProductPayload {
 
 export interface CreatedBackendProduct {
   id: string | null;
+}
+
+export interface ProductImageUpload {
+  blob: Blob;
+  filename: string;
+}
+
+export type ProductSitePublishStatus = "created" | "brand_missing" | "failed";
+
+export interface ProductSitePublishResult {
+  site: ProductSiteId;
+  status: ProductSitePublishStatus;
+  id: string | null;
+  message: string | null;
 }

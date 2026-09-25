@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "tsc -p tsconfig.test.json && node --test .test-dist/src/modules/product-upload/product-backend.api.test.js",
     "dev": "tsx src/bot.ts",
     "start": "tsx src/bot.ts",
     "typecheck": "tsc --noEmit"

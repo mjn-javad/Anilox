@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <title>آپلود سریع محصول</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div class="hero__icon" aria-hidden="true">EW</div>
+        <div>
+          <p class="eyebrow">EmirWalk uploader</p>
+          <h1>آپلود سریع محصول</h1>
+          <p class="subtitle">انتشار انتخابی در سایت‌ها، تلگرام و اینستاگرام</p>
+        </div>
+      </header>
+
+      <div id="authNotice" class="notice notice--warning" hidden>
+        این صفحه را از داخل ربات تلگرام باز کنید.
+      </div>
+
+      <form id="productForm" novalidate>
+        <section class="card">
+          <div class="section-heading">
+            <span class="step">۱</span>
+            <div>
+              <h2>نوع و برند</h2>
+              <p>فهرست برندها اجتماع هر دو سایت است.</p>
+            </div>
+          </div>
+
+          <div class="grid grid--two">
+            <label>
+              <span>نوع محصول</span>
+              <select name="type" id="type" required>
+                <option value="shoe">کفش</option>
+                <option value="belt">کمربند</option>
+                <option value="bag">کیف</option>
+                <option value="luggage">چمدان</option>
+                <option value="glasses">عینک</option>
+                <option value="watch">ساعت</option>
+              </select>
+            </label>
+
+            <label>
+              <span>برند</span>
+              <input
+                name="brandName"
+                id="brandName"
+                list="brandOptions"
+                autocomplete="off"
+                placeholder="انتخاب یا جستجوی برند"
+                required
+              />
+              <datalist id="brandOptions"></datalist>
+              <small id="brandHint">در حال دریافت برندها…</small>
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-heading">
+            <span class="step">۲</span>
+            <div>
+              <h2>عکس‌های محصول</h2>
+              <p>۱ تا ۱۰ عکس؛ هر عکس حداکثر ۱۰ مگابایت.</p>
+            </div>
+          </div>
+
+          <label class="dropzone" for="images">
+            <input
+              type="file"
+              name="images"
+              id="images"
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+              multiple
+              required
+            />
+            <span class="dropzone__icon" aria-hidden="true">＋</span>
+            <strong>انتخاب عکس‌ها</strong>
+            <small id="photoHint">هنوز عکسی انتخاب نشده است</small>
+          </label>
+          <div id="photoPreview" class="photo-preview" aria-live="polite"></div>
+        </section>
+
+        <section class="card">
+          <div class="section-heading">
+            <span class="step">۳</span>
+            <div>
+              <h2>مشخصات مشترک</h2>
+              <p>این فیلدها بعد از ثبت محصول باقی می‌مانند.</p>
+            </div>
+          </div>
+
+          <div class="grid grid--two">
+            <label class="span-two">
+              <span>مدل</span>
+              <input name="model" id="model" maxlength="255" required />
+            </label>
+
+            <label id="categoryField">
+              <span>دسته‌بندی کفش</span>
+              <select name="category" id="category">
+                <option value="sneaker">Sneaker</option>
+                <option value="loafer">Loafer</option>
+                <option value="formal">Formal</option>
+                <option value="boot">Boot</option>
+                <option value="sandal">Sandal</option>
+                <option value="sport">Sport</option>
+                <option value="classic">Classic</option>
+                <option value="flat">Flat</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+
+            <label>
+              <span>جنسیت</span>
+              <select name="gender" id="gender" required>
+                <option value="male">مردانه</option>
+                <option value="female">زنانه</option>
+                <option value="genderless">بدون جنسیت</option>
+              </select>
+            </label>
+
+            <label>
+              <span>قیمت اصلی</span>
+              <input
+                name="price"
+                id="price"
+                inputmode="decimal"
+                placeholder="1250000"
+                required
+              />
+            </label>
+
+            <label>
+              <span>قیمت تخفیف</span>
+              <input
+                name="discountPrice"
+                id="discountPrice"
+                inputmode="decimal"
+                placeholder="اختیاری"
+              />
+            </label>
+
+            <label class="span-two">
+              <span>توضیحات</span>
+              <textarea name="description" id="description" maxlength="2000" rows="4"></textarea>
+            </label>
+          </div>
+        </section>
+
+        <section class="card card--accent">
+          <div class="section-heading">
+            <span class="step">۴</span>
+            <div>
+              <h2>رنگ این محصول</h2>
+              <p>برای چند رنگ، نام‌ها را با ویرگول جدا کنید.</p>
+            </div>
+          </div>
+
+          <label>
+            <span>رنگ‌ها</span>
+            <input name="colors" id="colors" placeholder="Black, Gold" maxlength="500" />
+          </label>
+        </section>
+
+        <section class="card">
+          <div class="section-heading">
+            <span class="step">۵</span>
+            <div>
+              <h2>محل انتشار</h2>
+              <p>هر مقصد مستقل است؛ فقط گزینه‌های انتخاب‌شده منتشر می‌شوند.</p>
+            </div>
+          </div>
+
+          <div class="destination-grid">
+            <label class="destination-option">
+              <input type="checkbox" name="destinations" value="anilox" checked />
+              <span><strong>انیلوکس</strong><small>aniloxhub.com</small></span>
+            </label>
+            <label class="destination-option">
+              <input type="checkbox" name="destinations" value="ebraha" checked />
+              <span><strong>ابراهااستایل</strong><small>ebrahastyle.com</small></span>
+            </label>
+            <label class="destination-option">
+              <input type="checkbox" name="destinations" value="telegram" checked />
+              <span><strong>تلگرام</strong><small>کانال محصولات</small></span>
+            </label>
+            <label class="destination-option">
+              <input type="checkbox" name="destinations" value="instagram" checked />
+              <span><strong>اینستاگرام</strong><small>پست یا کاروسل</small></span>
+            </label>
+          </div>
+        </section>
+
+        <div id="result" class="result" aria-live="polite" hidden></div>
+
+        <div class="actions">
+          <button id="submitButton" type="submit" class="button button--primary">
+            انتشار در مقصدهای انتخاب‌شده
+          </button>
+          <button id="retryButton" type="button" class="button button--secondary" hidden>
+            تلاش مجدد برای سایت باقی‌مانده
+          </button>
+        </div>
+      </form>
+
+      <p class="footnote">
+        پس از موفقیت کامل، مشخصات مشترک می‌مانند و فقط رنگ و عکس‌ها خالی می‌شوند.
+      </p>
+    </main>
+  </body>
+</html>

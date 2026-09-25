@@ -1,11 +1,15 @@
-import type { Api } from "grammy";
+import { InputFile, type Api } from "grammy";
 
 import {
   CATEGORY_LABELS,
   GENDER_LABELS,
   TYPE_LABELS,
 } from "./product.constants.js";
-import type { ProductDraft } from "./product.types.js";
+import type {
+  ProductData,
+  ProductDraft,
+  ProductImageUpload,
+} from "./product.types.js";
 import {
   formatProductPrice,
   getModelHashtag,
@@ -92,7 +96,7 @@ function escapeHtmlWithLimit(value: string, maximumEscapedLength: number) {
   return result;
 }
 
-export function formatProductChannelCaption(draft: ProductDraft) {
+export function formatProductChannelCaption(draft: ProductData) {
   const priceUnit = escapeHtmlWithLimit(getProductPriceUnit(), 20);
 
   const brandName = escapeHtmlWithLimit(draft.brandName, 90);
@@ -178,6 +182,63 @@ export async function publishProductToChannel(api: Api, draft: ProductDraft) {
           })),
         );
 
+  const message = messages[0];
+
+  if (!message) {
+    throw new ProductChannelError(
+      "CHANNEL_ID_INVALID",
+      "Telegram did not return the published media group.",
+    );
+  }
+
+  const channelUsername =
+    "username" in message.chat ? message.chat.username : undefined;
+
+  return {
+    chatId: String(message.chat.id),
+    messageId: message.message_id,
+    messageLink: channelUsername
+      ? `https://t.me/${channelUsername}/${message.message_id}`
+      : null,
+  };
+}
+
+export async function publishUploadedProductToChannel(
+  api: Api,
+  product: ProductData,
+  images: readonly ProductImageUpload[],
+) {
+  const channelId = getProductChannelId();
+  const caption = formatProductChannelCaption(product);
+  const inputFiles = await Promise.all(
+    images.map(async (image) =>
+      new InputFile(
+        new Uint8Array(await image.blob.arrayBuffer()),
+        image.filename,
+      ),
+    ),
+  );
+  const messages =
+    inputFiles.length === 1
+      ? [
+          await api.sendPhoto(channelId, inputFiles[0]!, {
+            caption,
+            parse_mode: "HTML",
+          }),
+        ]
+      : await api.sendMediaGroup(
+          channelId,
+          inputFiles.map((image, index) => ({
+            type: "photo" as const,
+            media: image,
+            ...(index === 0
+              ? {
+                  caption,
+                  parse_mode: "HTML" as const,
+                }
+              : {}),
+          })),
+        );
   const message = messages[0];
 
   if (!message) {

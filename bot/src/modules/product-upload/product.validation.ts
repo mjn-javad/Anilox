@@ -7,7 +7,12 @@ import {
   type ProductType,
 } from "./product.constants.js";
 import { ProductUploadError } from "./product-upload.error.js";
-import type { ProductDraft, ProductPhotoInput } from "./product.types.js";
+import type {
+  ProductData,
+  ProductDraft,
+  ProductPhotoInput,
+  ProductSiteId,
+} from "./product.types.js";
 
 function normalizeDigits(value: string) {
   const persianDigits = "۰۱۲۳۴۵۶۷۸۹";
@@ -224,6 +229,17 @@ export function validatePhoto(photo: ProductPhotoInput): ProductPhotoInput {
   return photo;
 }
 
+function validateBrandValue(value: string, field: "name" | "slug") {
+  return normalizeRequiredText(
+    value,
+    255,
+    new ProductUploadError(
+      "INVALID_BRAND",
+      `The brand ${field} must contain between 1 and 255 characters.`,
+    ),
+  );
+}
+
 export function validatePhotos(
   photos: readonly ProductPhotoInput[],
 ): ProductPhotoInput[] {
@@ -251,25 +267,42 @@ export function validatePhotos(
   return [...uniquePhotos.values()];
 }
 
-export function normalizeProductDraft(draft: ProductDraft): ProductDraft {
-  const type = validateType(draft.type);
+export function normalizeProductData(product: ProductData): ProductData {
+  const type = validateType(product.type);
 
-  const price = validateMoney(draft.price, "price");
+  const price = validateMoney(product.price, "price");
 
   const category =
-    type === "shoe" ? validateCategory(draft.category ?? "other") : "other";
+    type === "shoe" ? validateCategory(product.category ?? "other") : "other";
+
+  const brandSlugs: Partial<Record<ProductSiteId, string>> = {};
+
+  for (const site of ["anilox", "ebraha"] as const) {
+    const slug = product.brandSlugs[site];
+
+    if (slug) {
+      brandSlugs[site] = validateBrandValue(slug, "slug");
+    }
+  }
 
   return {
     type,
-    brand: draft.brand,
-    brandName: draft.brandName,
-    model: validateModel(draft.model),
+    brand: validateBrandValue(product.brand, "slug"),
+    brandName: validateBrandValue(product.brandName, "name"),
+    brandSlugs,
+    model: validateModel(product.model),
     category,
-    gender: validateGender(draft.gender),
+    gender: validateGender(product.gender),
     price,
-    discountPrice: validateDiscountPrice(draft.discountPrice, price),
-    description: validateDescription(draft.description),
-    colors: validateSelectedColors(draft.colors ?? []),
+    discountPrice: validateDiscountPrice(product.discountPrice, price),
+    description: validateDescription(product.description),
+    colors: validateSelectedColors(product.colors ?? []),
+  };
+}
+
+export function normalizeProductDraft(draft: ProductDraft): ProductDraft {
+  return {
+    ...normalizeProductData(draft),
     photos: validatePhotos(draft.photos),
   };
 }

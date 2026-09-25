@@ -11,7 +11,12 @@ import {
   formatProductPrice,
   getModelHashtag,
 } from "./product-formatting.js";
-import type { ProductDraft, ProductPhotoInput } from "./product.types.js";
+import type {
+  ProductData,
+  ProductDraft,
+  ProductImageUpload,
+  ProductPhotoInput,
+} from "./product.types.js";
 
 const INSTAGRAM_REQUEST_TIMEOUT_MS = 30_000;
 const INSTAGRAM_CAPTION_LIMIT = 2_200;
@@ -198,8 +203,8 @@ export function isProductInstagramPublishingEnabled() {
   return process.env.INSTAGRAM_ENABLED?.trim().toLowerCase() === "true";
 }
 
-export function validateProductInstagramConfiguration() {
-  if (isProductInstagramPublishingEnabled()) {
+export function validateProductInstagramConfiguration(required = false) {
+  if (required || isProductInstagramPublishingEnabled()) {
     getProductInstagramConfiguration();
   }
 }
@@ -375,8 +380,6 @@ async function stageInstagramImage(
   configuration: ProductInstagramConfiguration,
   photo: ProductPhotoInput,
 ) {
-  await ensureInstagramMediaServer(configuration.mediaPort);
-
   let image;
 
   try {
@@ -389,10 +392,19 @@ async function stageInstagramImage(
     );
   }
 
+  return stageInstagramUploadedImage(configuration, image);
+}
+
+async function stageInstagramUploadedImage(
+  configuration: ProductInstagramConfiguration,
+  image: ProductImageUpload,
+) {
+  await ensureInstagramMediaServer(configuration.mediaPort);
+
   if (image.blob.type !== "image/jpeg") {
     throw new ProductInstagramError(
       "UNSUPPORTED_IMAGE",
-      "Instagram requires a JPEG image. Send the product image as a Telegram Photo, not as a file.",
+      "Instagram requires JPEG images. Convert the selected image to JPEG and try again.",
     );
   }
 
@@ -422,7 +434,7 @@ function truncateCaption(value: string) {
   return `${characters.slice(0, INSTAGRAM_CAPTION_LIMIT - 1).join("")}…`;
 }
 
-export function formatProductInstagramCaption(draft: ProductDraft) {
+export function formatProductInstagramCaption(draft: ProductData) {
   const priceUnit = process.env.PRODUCT_PRICE_UNIT?.trim() || "Toman";
   const modelHashtag = getModelHashtag(draft.model);
   const modelWithHashtag = modelHashtag
@@ -632,18 +644,25 @@ export function getProductInstagramPublicMessage(error: unknown) {
   return "The Instagram post failed unexpectedly.";
 }
 
-export async function publishProductToInstagram(
-  draft: ProductDraft,
+async function publishProductToInstagramWithImages<T>(
+  product: ProductData,
+  images: readonly T[],
+  stageImage: (
+    configuration: ProductInstagramConfiguration,
+    image: T,
+  ) => Promise<Awaited<ReturnType<typeof stageInstagramUploadedImage>>>,
 ): Promise<ProductInstagramPublishResult> {
   const configuration = getProductInstagramConfiguration();
-  const stagedMedia: Awaited<ReturnType<typeof stageInstagramImage>>[] = [];
+  const stagedMedia: Awaited<
+    ReturnType<typeof stageInstagramUploadedImage>
+  >[] = [];
 
   try {
-    for (const photo of draft.photos) {
-      stagedMedia.push(await stageInstagramImage(configuration, photo));
+    for (const image of images) {
+      stagedMedia.push(await stageImage(configuration, image));
     }
 
-    const caption = formatProductInstagramCaption(draft);
+    const caption = formatProductInstagramCaption(product);
     let containerId: string;
 
     if (stagedMedia.length === 1) {
@@ -683,4 +702,25 @@ export async function publishProductToInstagram(
       stagedImages.delete(stagedImage.token);
     }
   }
+}
+
+export async function publishProductToInstagram(
+  draft: ProductDraft,
+): Promise<ProductInstagramPublishResult> {
+  return publishProductToInstagramWithImages(
+    draft,
+    draft.photos,
+    stageInstagramImage,
+  );
+}
+
+export async function publishUploadedProductToInstagram(
+  product: ProductData,
+  images: readonly ProductImageUpload[],
+): Promise<ProductInstagramPublishResult> {
+  return publishProductToInstagramWithImages(
+    product,
+    images,
+    stageInstagramUploadedImage,
+  );
 }

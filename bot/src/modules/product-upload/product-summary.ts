@@ -4,6 +4,8 @@ import {
   TYPE_LABELS,
 } from "./product.constants.js";
 import type { ProductDraft } from "./product.types.js";
+import type { ProductSitePublishResult } from "./product.types.js";
+import { PRODUCT_SITE_LABELS } from "./product-backend.api.js";
 
 function formatMoney(value: string | null) {
   if (!value) {
@@ -17,18 +19,31 @@ function formatMoney(value: string | null) {
 
 export function formatProductSummary(
   draft: ProductDraft,
-  backendProductId?: string | null,
+  publishResults: readonly ProductSitePublishResult[] = [],
 ) {
   const categoryLine =
     draft.type === "shoe" && draft.category
       ? `\nCategory: ${CATEGORY_LABELS[draft.category]}`
       : "";
 
+  const backendLines = publishResults
+    .map((result) => {
+      const status =
+        result.status === "created"
+          ? `ID: ${result.id ?? "Not returned"}`
+          : result.status === "brand_missing"
+            ? "Brand missing"
+            : "Publish failed";
+
+      return `${PRODUCT_SITE_LABELS[result.site]}: ${status}`;
+    })
+    .join("\n");
+
   return `📦 Product details
 
-Backend ID: ${backendProductId ?? "Not returned"}
+${backendLines || "Website publication: Not attempted"}
 Type: ${TYPE_LABELS[draft.type]}
-Brand: ${draft.brand}
+Brand: ${draft.brandName}
 Model: ${draft.model}${categoryLine}
 Gender: ${GENDER_LABELS[draft.gender]}
 Price: ${formatMoney(draft.price)}

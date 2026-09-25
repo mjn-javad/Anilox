@@ -6,6 +6,7 @@ import type {
 } from "../../types/context.js";
 
 import {
+  PRODUCT_SITE_LABELS,
   getProductBackendPublicMessage,
   productBackendApi,
   validateProductBackendConfiguration,
@@ -51,6 +52,10 @@ import {
 import { isProductAdmin } from "./product-upload.auth.js";
 import { ProductUploadError } from "./product-upload.error.js";
 import { formatProductSummary } from "./product-summary.js";
+import {
+  getMissingBrandInstruction,
+  queueProductPublicationRetry,
+} from "./product-publish-retry.js";
 
 import {
   getProductInstagramPublicMessage,
@@ -72,11 +77,28 @@ import {
   validateType,
 } from "./product.validation.js";
 
-import type { BrandOption, ProductDraft } from "./product.types.js";
+import type {
+  BrandOption,
+  ProductDraft,
+  ProductPublishDestination,
+  ProductSiteId,
+  ProductSitePublishResult,
+} from "./product.types.js";
 
 const PAGINATED_OPTIONS_PER_PAGE = 8;
 const MAX_PRODUCT_PHOTOS = 10;
 const DONE_PHOTOS_INPUT = "✅ Done adding photos";
+const DONE_DESTINATIONS_INPUT = "✅ تأیید مقصدهای انتشار";
+
+const PUBLISH_DESTINATIONS: ReadonlyArray<{
+  label: string;
+  value: ProductPublishDestination;
+}> = [
+  { value: "anilox", label: "سایت انیلوکس" },
+  { value: "ebraha", label: "سایت ابراهااستایل" },
+  { value: "telegram", label: "کانال تلگرام" },
+  { value: "instagram", label: "اینستاگرام" },
+];
 
 type TextValidator<T> = (value: string) => T;
 
@@ -296,6 +318,77 @@ Selected: ${selectedColors.join(", ") || "None"}`,
   }
 }
 
+function getDestinationButtonText(
+  destination: (typeof PUBLISH_DESTINATIONS)[number],
+  selected: ReadonlySet<ProductPublishDestination>,
+) {
+  return `${selected.has(destination.value) ? "✅" : "⬜"} ${destination.label}`;
+}
+
+async function askPublishDestinations(
+  conversation: AppConversation,
+  ctx: AppConversationContext,
+) {
+  const selected = new Set<ProductPublishDestination>([
+    "anilox",
+    "ebraha",
+    "telegram",
+    ...(isProductInstagramPublishingEnabled()
+      ? (["instagram"] as ProductPublishDestination[])
+      : []),
+  ]);
+
+  while (true) {
+    const keyboard = new Keyboard();
+
+    PUBLISH_DESTINATIONS.forEach((destination, index) => {
+      keyboard.text(getDestinationButtonText(destination, selected));
+
+      if ((index + 1) % 2 === 0) {
+        keyboard.row();
+      }
+    });
+
+    keyboard.text(DONE_DESTINATIONS_INPUT).row().resized();
+
+    await ctx.reply(
+      `مقصدهای انتشار را انتخاب کنید.
+با زدن دوبارهٔ هر گزینه می‌توانید آن را غیرفعال کنید.
+
+انتخاب‌شده: ${PUBLISH_DESTINATIONS.filter((item) => selected.has(item.value))
+        .map((item) => item.label)
+        .join("، ") || "هیچ‌کدام"}`,
+      { reply_markup: keyboard },
+    );
+
+    const answer = (await conversation.form.text()).trim();
+
+    if (answer === DONE_DESTINATIONS_INPUT) {
+      if (selected.size === 0) {
+        await ctx.reply("❌ حداقل یک مقصد انتشار را انتخاب کنید.");
+        continue;
+      }
+
+      return [...selected];
+    }
+
+    const destination = PUBLISH_DESTINATIONS.find(
+      (item) => getDestinationButtonText(item, selected) === answer,
+    );
+
+    if (!destination) {
+      await ctx.reply("❌ یکی از مقصدها یا دکمهٔ تأیید را انتخاب کنید.");
+      continue;
+    }
+
+    if (selected.has(destination.value)) {
+      selected.delete(destination.value);
+    } else {
+      selected.add(destination.value);
+    }
+  }
+}
+
 async function askPhotos(
   conversation: AppConversation,
   ctx: AppConversationContext,
@@ -380,6 +473,20 @@ function createGenderOptions() {
   });
 }
 
+function formatWebsitePublishResult(result: ProductSitePublishResult) {
+  const site = PRODUCT_SITE_LABELS[result.site];
+
+  if (result.status === "created") {
+    return `✅ ${site}: منتشر شد (شناسه: ${result.id ?? "برگردانده نشد"})`;
+  }
+
+  if (result.status === "brand_missing") {
+    return `⚠️ ${site}: برند در این سایت وجود ندارد`;
+  }
+
+  return `❌ ${site}: ${result.message ?? "انتشار ناموفق بود"}`;
+}
+
 export async function productUploadConversation(
   conversation: AppConversation,
   ctx: AppConversationContext,
@@ -423,11 +530,12 @@ You can send /cancel at any step.`,
 
   const brandsResult = await conversation.external(async () => {
     try {
-      const brands = await productBackendApi.getBrands();
+      const catalog = await productBackendApi.getBrands();
 
       return {
         ok: true as const,
-        brands,
+        brands: catalog.brands,
+        warnings: catalog.warnings,
       };
     } catch (error) {
       return {
@@ -442,6 +550,19 @@ You can send /cancel at any step.`,
       reply_markup: removeKeyboard(),
     });
     return;
+  }
+
+  const brandWarnings = Object.entries(brandsResult.warnings);
+
+  if (brandWarnings.length > 0) {
+    await ctx.reply(
+      `⚠️ فهرست برند یکی از سایت‌ها فعلاً در دسترس نیست؛ برندهای سایت دیگر نمایش داده می‌شوند.\n${brandWarnings
+        .map(
+          ([site, message]) =>
+            `${PRODUCT_SITE_LABELS[site as keyof typeof PRODUCT_SITE_LABELS]}: ${message}`,
+        )
+        .join("\n")}`,
+    );
   }
 
   const brandName = await askPaginatedStringChoice(
@@ -466,7 +587,15 @@ You can send /cancel at any step.`,
     return;
   }
 
-  const brand = selectedBrand.slug;
+  const brand =
+    selectedBrand.siteSlugs.anilox ?? selectedBrand.siteSlugs.ebraha;
+
+  if (!brand) {
+    await ctx.reply("❌ برای برند انتخاب‌شده slug معتبری پیدا نشد.");
+    return;
+  }
+
+  const photos = await askPhotos(conversation, ctx);
 
   const model = await askText(
     conversation,
@@ -524,13 +653,19 @@ Press ${SKIP_INPUT} to leave it empty.`,
   );
 
   const colors = await askColors(conversation, ctx);
-
-  const photos = await askPhotos(conversation, ctx);
+  const publishDestinations = await askPublishDestinations(conversation, ctx);
+  const websiteTargets = publishDestinations.filter(
+    (destination): destination is ProductSiteId =>
+      destination === "anilox" || destination === "ebraha",
+  );
+  const publishToTelegram = publishDestinations.includes("telegram");
+  const publishToInstagram = publishDestinations.includes("instagram");
 
   let draft: ProductDraft = {
     type: type as ProductType,
     brand,
     brandName,
+    brandSlugs: selectedBrand.siteSlugs,
     model,
     category,
     gender: gender as ProductGender,
@@ -543,7 +678,10 @@ Press ${SKIP_INPUT} to leave it empty.`,
 
   try {
     draft = normalizeProductDraft(draft);
-    validateProductBackendConfiguration();
+
+    if (websiteTargets.length > 0) {
+      validateProductBackendConfiguration();
+    }
   } catch (error) {
     const message =
       error instanceof ProductUploadError
@@ -557,54 +695,66 @@ Press ${SKIP_INPUT} to leave it empty.`,
     return;
   }
 
-  let channelCaption: string;
+  let channelCaption: string | null = null;
 
-  try {
-    validateProductChannelConfiguration();
+  if (publishToTelegram) {
+    try {
+      validateProductChannelConfiguration();
 
-    channelCaption = formatProductChannelCaption(draft);
-  } catch (error) {
-    await ctx.reply(`❌ ${getProductChannelPublicMessage(error)}`, {
-      reply_markup: removeKeyboard(),
-    });
+      channelCaption = formatProductChannelCaption(draft);
+    } catch (error) {
+      await ctx.reply(`❌ ${getProductChannelPublicMessage(error)}`, {
+        reply_markup: removeKeyboard(),
+      });
 
-    return;
+      return;
+    }
   }
 
-  try {
-    validateProductInstagramConfiguration();
-  } catch (error) {
-    await ctx.reply(`❌ ${getProductInstagramPublicMessage(error)}`, {
-      reply_markup: removeKeyboard(),
-    });
+  if (publishToInstagram) {
+    try {
+      validateProductInstagramConfiguration(true);
+    } catch (error) {
+      await ctx.reply(`❌ ${getProductInstagramPublicMessage(error)}`, {
+        reply_markup: removeKeyboard(),
+      });
 
-    return;
+      return;
+    }
   }
 
-  await ctx.reply("👁 Preview of the channel post:");
+  if (publishToTelegram && channelCaption) {
+    await ctx.reply("👁 پیش‌نمایش پست کانال تلگرام:");
 
-  if (draft.photos.length === 1) {
-    await ctx.replyWithPhoto(draft.photos[0]!.fileId, {
-      caption: channelCaption,
-      parse_mode: "HTML",
-    });
-  } else {
-    await ctx.api.sendMediaGroup(
-      ctx.chat.id,
-      draft.photos.map((photo, index) => ({
-        type: "photo" as const,
-        media: photo.fileId,
-        ...(index === 0
-          ? {
-              caption: channelCaption,
-              parse_mode: "HTML" as const,
-            }
-          : {}),
-      })),
-    );
+    if (draft.photos.length === 1) {
+      await ctx.replyWithPhoto(draft.photos[0]!.fileId, {
+        caption: channelCaption,
+        parse_mode: "HTML",
+      });
+    } else {
+      await ctx.api.sendMediaGroup(
+        ctx.chat.id,
+        draft.photos.map((photo, index) => ({
+          type: "photo" as const,
+          media: photo.fileId,
+          ...(index === 0
+            ? {
+                caption: channelCaption,
+                parse_mode: "HTML" as const,
+              }
+            : {}),
+        })),
+      );
+    }
   }
 
-  await ctx.reply("Publish this product?", {
+  const destinationLabels = PUBLISH_DESTINATIONS.filter((item) =>
+    publishDestinations.includes(item.value),
+  )
+    .map((item) => item.label)
+    .join("، ");
+
+  await ctx.reply(`انتشار محصول در «${destinationLabels}» تأیید می‌شود؟`, {
     reply_markup: createConfirmKeyboard(CONFIRM_INPUT),
   });
 
@@ -618,60 +768,86 @@ Press ${SKIP_INPUT} to leave it empty.`,
     await ctx.reply(`❌ Press ${CONFIRM_INPUT} or use /cancel.`);
   }
 
-  const createResult = await conversation.external(async () => {
-    try {
-      const created = await productBackendApi.createProduct(draft);
+  const createResult =
+    websiteTargets.length > 0
+      ? await conversation.external(async () => {
+          try {
+            const results = await productBackendApi.createProduct(
+              draft,
+              websiteTargets,
+            );
 
-      return {
-        ok: true as const,
-        id: created.id,
-      };
-    } catch (error) {
-      return {
-        ok: false as const,
-        message: getProductBackendPublicMessage(error),
-      };
-    }
-  });
+            return {
+              ok: true as const,
+              results,
+            };
+          } catch (error) {
+            return {
+              ok: false as const,
+              message: getProductBackendPublicMessage(error),
+            };
+          }
+        })
+      : { ok: true as const, results: [] as ProductSitePublishResult[] };
 
-  if (!createResult.ok) {
-    await ctx.reply(`❌ ${createResult.message}`, {
-      reply_markup: removeKeyboard(),
-    });
+  const publishResults: ProductSitePublishResult[] = createResult.ok
+    ? createResult.results
+    : websiteTargets.map((site) => ({
+        site,
+        status: "failed",
+        id: null,
+        message: createResult.message,
+      }));
+  const retryKeyboard = ctx.from
+    ? queueProductPublicationRetry(ctx.from.id, draft, publishResults)
+    : null;
+  const missingBrandInstructions = publishResults
+    .filter((result) => result.status === "brand_missing")
+    .map((result) => getMissingBrandInstruction(draft, result));
 
-    return;
-  }
-
-  try {
-    const channelPost = await publishProductToChannel(ctx.api, draft);
-
-    const linkText = channelPost.messageLink
-      ? `\n🔗 Post link: ${channelPost.messageLink}`
-      : "";
-
+  if (publishResults.length > 0) {
     await ctx.reply(
-      `✅ The product was created in the backend and published to the channel.
-Backend ID: ${createResult.id ?? "Not returned"}
-Channel message ID: ${channelPost.messageId}${linkText}`,
+      [
+        "📡 نتیجهٔ انتشار در سایت‌ها:",
+        ...publishResults.map(formatWebsitePublishResult),
+        ...missingBrandInstructions,
+      ].join("\n\n"),
       {
-        reply_markup: removeKeyboard(),
+        reply_markup: retryKeyboard ?? removeKeyboard(),
       },
     );
-  } catch (error) {
-    console.error("Product channel publish failed:", error);
+  }
 
-    await ctx.reply(
-      `⚠️ The product was created in the backend, but the channel post failed.
-Backend ID: ${createResult.id ?? "Not returned"}
+  if (publishToTelegram) {
+    try {
+      const channelPost = await publishProductToChannel(ctx.api, draft);
+
+      const linkText = channelPost.messageLink
+        ? `\n🔗 Post link: ${channelPost.messageLink}`
+        : "";
+
+      await ctx.reply(
+        `✅ محصول در کانال تلگرام منتشر شد.
+Channel message ID: ${channelPost.messageId}${linkText}`,
+        {
+          reply_markup: removeKeyboard(),
+        },
+      );
+    } catch (error) {
+      console.error("Product channel publish failed:", error);
+
+      await ctx.reply(
+        `⚠️ انتشار انتخاب‌شده در کانال تلگرام ناموفق بود.
 
 ${getProductChannelPublicMessage(error)}`,
-      {
-        reply_markup: removeKeyboard(),
-      },
-    );
+        {
+          reply_markup: removeKeyboard(),
+        },
+      );
+    }
   }
 
-  if (isProductInstagramPublishingEnabled()) {
+  if (publishToInstagram) {
     const instagramResult = await conversation.external(async () => {
       try {
         const published = await publishProductToInstagram(draft);
@@ -700,8 +876,7 @@ Instagram media ID: ${instagramResult.published.mediaId}`,
       );
     } else {
       await ctx.reply(
-        `⚠️ The product was created, but Instagram publishing failed.
-Backend ID: ${createResult.id ?? "Not returned"}
+        `⚠️ انتشار انتخاب‌شده در اینستاگرام ناموفق بود.
 
 ${instagramResult.message}`,
         {
@@ -711,5 +886,5 @@ ${instagramResult.message}`,
     }
   }
 
-  await ctx.reply(formatProductSummary(draft, createResult.id));
+  await ctx.reply(formatProductSummary(draft, publishResults));
 }

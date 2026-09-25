@@ -9,6 +9,7 @@ import type { AppContext } from "./types/context.js";
 import { registerConversations } from "./bot/register-conversations.js";
 import { AppError } from "./errors/app-error.js";
 import { hydrateFiles } from "@grammyjs/files";
+import { startProductMiniAppServer } from "./modules/product-upload/product-mini-app.js";
 
 const token = process.env.BOT_TOKEN;
 
@@ -22,6 +23,7 @@ bot.api.config.use(hydrateFiles(bot.token));
 registerMiddlewares(bot);
 registerConversations(bot);
 registerModules(bot);
+startProductMiniAppServer(bot.api);
 
 bot.catch(async (err) => {
   const error = err.error;

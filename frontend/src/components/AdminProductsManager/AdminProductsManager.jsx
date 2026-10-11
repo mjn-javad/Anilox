@@ -1,6 +1,6 @@
 // AdminProductsManagement.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // اضافه کردن useNavigate
+import { Link, useNavigate } from "react-router-dom"; // اضافه کردن useNavigate
 import apiClientProducts from "../../services/api-client_products";
 import apiClientBrandPopular from "../../services/api-client_brand";
 import MessageAlert from "../Shared/MessageAlert";
@@ -20,7 +20,7 @@ const AdminProductsManagement = () => {
   const fetchAllProducts = async () => {
     try {
       setLoading(true);
-      const response = await apiClientProducts.get("/");
+      const response = await apiClientProducts.get("/?includeSale=true");
       setProducts(response.data.data);
       setError("");
     } catch (err) {
@@ -142,12 +142,11 @@ const AdminProductsManagement = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Products Management</h1>
-          <button
-            onClick={fetchAllProducts}
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            🔄 Refresh
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <Link to="/admin/dashboard/brands" className="bg-gray-900 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">Manage Brands</Link>
+            <Link to="/admin/dashboard/brand-upload" className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors">New Brand</Link>
+            <button onClick={fetchAllProducts} className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">🔄 Refresh</button>
+          </div>
         </div>
 
         {/* Display messages */}

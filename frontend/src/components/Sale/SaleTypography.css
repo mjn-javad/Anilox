@@ -1,0 +1,27 @@
+@import url("https://fonts.googleapis.com/css2?family=Acme&display=swap");
+
+.ms-page,
+.ms-page button,
+.ms-page input,
+.ms-page textarea,
+.ms-page select {
+  font-family: "Acme", "Arial Narrow", "Segoe UI", sans-serif;
+}
+
+.ms-page .ms-logo,
+.ms-page .ms-products-section h2,
+.ms-page .ms-collections > h2,
+.ms-page .ms-faq h2,
+.ms-page .ms-why h2,
+.ms-page .sale-catalog__head h1,
+.ms-page .sale-empty h1,
+.ms-page .sale-product__info h1 {
+  font-family: "Acme", "Arial Narrow", "Segoe UI", sans-serif;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.ms-page .ms-logo {
+  font-weight: 400;
+  letter-spacing: 0;
+}

@@ -21,6 +21,10 @@ const migrate = async () => {
     path.join(__dirname, "product_images_ddl.sql"),
     "utf8",
   );
+  const saleProducts = fs.readFileSync(
+    path.join(__dirname, "sale_products_ddl.sql"),
+    "utf8",
+  );
 
   const userAddresses = fs.readFileSync(
     path.join(__dirname, "user_addresses_ddl.sql"),
@@ -52,6 +56,7 @@ const migrate = async () => {
     await db.query(products);
     await db.query(productStocks);
     await db.query(productImages);
+    await db.query(saleProducts);
     await db.query(userAddresses);
     await db.query(orders);
     await db.query(orderItems);

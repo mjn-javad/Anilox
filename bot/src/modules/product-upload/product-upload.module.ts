@@ -2,13 +2,15 @@ import { Composer, InlineKeyboard } from "grammy";
 
 import type { AppContext } from "../../types/context.js";
 import { isProductAdmin } from "./product-upload.auth.js";
-import { getProductMiniAppUrl } from "./product-mini-app.js";
+import { getProductMiniAppLaunchUrl } from "./product-mini-app.js";
 import { handleProductPublicationRetry } from "./product-publish-retry.js";
 
 export const productUploadModule = new Composer<AppContext>();
 
 productUploadModule.command("addproduct", async (ctx) => {
-  if (!isProductAdmin(ctx.from?.id)) {
+  const userId = ctx.from?.id;
+
+  if (!userId || !isProductAdmin(userId)) {
     await ctx.reply("⛔ دسترسی به این بخش مجاز نیست.");
     return;
   }
@@ -18,7 +20,7 @@ productUploadModule.command("addproduct", async (ctx) => {
     return;
   }
 
-  const miniAppUrl = getProductMiniAppUrl();
+  const miniAppUrl = getProductMiniAppLaunchUrl(userId);
 
   if (!miniAppUrl) {
     await ctx.conversation.enter("productUploadConversation");
@@ -26,11 +28,11 @@ productUploadModule.command("addproduct", async (ctx) => {
   }
 
   const keyboard = new InlineKeyboard()
-    .text("🧭 آپلود مرحله‌ای در بات", "product-upload:start")
+    .text("🧭 Guided Upload in Bot", "product-upload:start")
     .row()
-    .webApp("⚡ مینی‌اپ آپلود سریع", miniAppUrl);
+    .webApp("⚡ Quick Upload Mini App", miniAppUrl);
 
-  await ctx.reply("روش ثبت محصول را انتخاب کنید:", {
+  await ctx.reply("Choose how you want to add the product:", {
     reply_markup: keyboard,
   });
 });

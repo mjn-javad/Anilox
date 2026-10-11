@@ -5,6 +5,7 @@ import apiClientAuth from "../../services/api-client_auth";
 
 const adminLinks = [
   ["Add Brand", "/admin/dashboard/brand-upload"],
+  ["Manage Brands", "/admin/dashboard/brands"],
   ["Add New Product", "/admin/dashboard/product-upload"],
   ["Manage Products", "/admin/dashboard/products-manager"],
   ["Manage Users", "/admin/dashboard/users-manager"],
@@ -67,7 +68,7 @@ export default function TopNavbar({ handelOrderPopup }) {
   const mainLinks = [
     ["Home", home],
     ["New", link({ sort: "created_at", order: "DESC" })],
-    ["Sale", link({ discountOnly: "true" })],
+    ["Sale", "/sale"],
     ["Shoes", link({ type: "shoe" }), "shoe"],
     ["Bags", link({ type: "bag" }), "bag"],
     ["Watches", link({ type: "watch" }), "watch"],

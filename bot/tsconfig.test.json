@@ -9,6 +9,7 @@
     "sourceMap": false
   },
   "include": [
-    "src/modules/product-upload/product-backend.api.test.ts"
+    "src/modules/product-upload/product-backend.api.test.ts",
+    "src/modules/product-upload/product-mini-app.test.ts"
   ]
 }

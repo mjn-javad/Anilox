@@ -38,6 +38,12 @@ import BannerManager from "./components/Banner/BannerManager";
 import EditBanner from "./components/Banner/EditBanner";
 import BestSellersGlobalSlider from "./components/Slider/BestSellersGlobalSlider";
 import GenderLanding from "./pages/GenderLanding";
+import SaleLanding from "./pages/SaleLanding";
+import BrandManager from "./components/Brand/BrandManager";
+import EditBrand from "./components/Brand/EditBrand";
+import SaleProducts from "./components/Sale/SaleProducts";
+import SaleProduct from "./components/Sale/SaleProduct";
+import SaleShell from "./components/Sale/SaleShell";
 
 function App() {
   return (
@@ -45,6 +51,11 @@ function App() {
       <ScrollToTop />
 
       <Routes>
+        <Route path="/sale" element={<SaleLanding />} />
+        <Route path="/sale/products" element={<SaleProducts />} />
+        <Route path="/sale/product/:id" element={<SaleProduct />} />
+        <Route path="/sale/basket" element={<SaleShell><div className="sale-checkout-wrap"><Basket saleMode /></div></SaleShell>} />
+        <Route path="/sale/address" element={<SaleShell><div className="sale-checkout-wrap"><AddressPage saleMode /></div></SaleShell>} />
         <Route path="/" element={<Layout />}>
           {/* Home Pages */}
           <Route index element={<GenderLanding />} />
@@ -98,6 +109,12 @@ function App() {
           <Route
             path="admin/dashboard/brand-upload"
             element={<BrandUploader />}
+          />
+
+          <Route path="admin/dashboard/brands" element={<BrandManager />} />
+          <Route
+            path="admin/dashboard/editBrand/:id"
+            element={<EditBrand />}
           />
 
           <Route

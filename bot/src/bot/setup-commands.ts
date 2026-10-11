@@ -4,12 +4,16 @@ import type { AppContext } from "../types/context.js";
 export async function setupCommands(bot: Bot<AppContext>) {
   await bot.api.setMyCommands([
     {
-      command: "start",
-      description: "شروع ربات",
+      command: "addproduct",
+      description: "Add a new product",
     },
     {
-      command: "addproduct",
-      description: "اضافه کردن محصول",
+      command: "start",
+      description: "Start the bot",
     },
   ]);
+
+  await bot.api.setChatMenuButton({
+    menu_button: { type: "commands" },
+  });
 }

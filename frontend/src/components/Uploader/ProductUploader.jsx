@@ -1,7 +1,7 @@
 import apiClientProducts from "../../services/api-client_products";
 import apiClientBrand from "../../services/api-client_brand";
 
-import React, { FormEvent, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import MessageAlert from "../Shared/MessageAlert";
@@ -30,6 +30,7 @@ const ProductUploader = () => {
 
   const [brands, setBrand] = useState([]);
   const [files, setFiles] = useState([]);
+  const [addToSale, setAddToSale] = useState(false);
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -106,6 +107,13 @@ const ProductUploader = () => {
       ...form,
       [nameKey]: value,
     });
+
+    if (
+      (nameKey === "type" && value !== "shoe") ||
+      (nameKey === "gender" && value === "female")
+    ) {
+      setAddToSale(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -124,6 +132,10 @@ const ProductUploader = () => {
         }
       });
 
+      if (addToSale && form.type === "shoe" && form.gender !== "female") {
+        formData.append("addToSale", "true");
+      }
+
       for (let i = 0; i < files.length; i++) {
         formData.append("images", files[i]);
       }
@@ -133,6 +145,7 @@ const ProductUploader = () => {
       setMessage(res.data.message);
 
       setFiles([]);
+      setAddToSale(false);
     } catch (err) {
       setError(err.response?.data?.message || "Error creating product");
     } finally {
@@ -277,6 +290,22 @@ const ProductUploader = () => {
           value={form.description}
           onChange={(e) => handleChange(e.target.name, e.target.value)}
         />
+
+        <label className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-left">
+          <input
+            type="checkbox"
+            checked={addToSale}
+            onChange={(event) => setAddToSale(event.target.checked)}
+            disabled={form.type !== "shoe" || form.gender === "female"}
+            className="mt-1 h-4 w-4 accent-red-600"
+          />
+          <span>
+            <strong className="block">Add to Sale</strong>
+            <small className="text-gray-600">
+              Anilox only — available for men&apos;s and genderless shoes.
+            </small>
+          </span>
+        </label>
 
         <div>
           <label className="block mb-2">Images</label>

@@ -5,12 +5,15 @@ const User = require("../repositories/users");
 const Address = require("../repositories/address");
 const emailService = require("../services/emailService");
 
+const getStorefront = (value) => value === "sale" ? "sale" : "main";
+
 /* ========= ADD TO CART ========= */
 
 exports.addToCart = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const { productId, stock, quantity } = req.body;
+    const storefront = getStorefront(req.body.storefront);
 
     if (!productId || !stock || !quantity) {
       return res.status(400).json({
@@ -27,6 +30,10 @@ exports.addToCart = async (req, res, next) => {
       });
     }
 
+    if (storefront === "sale" && !product.is_sale) {
+      return res.status(403).json({ success: false, message: "This product is not available in the Sale store" });
+    }
+
     const isThisQuantityInStock =
       product.stocks.filter((s) => s.stock === stock)[0].quantity >= quantity;
     if (!isThisQuantityInStock) {
@@ -37,7 +44,7 @@ exports.addToCart = async (req, res, next) => {
       });
     }
 
-    const existing = await Order.findCartItemById(null, userId, productId, stock);
+    const existing = await Order.findCartItemById(null, userId, productId, stock, storefront);
 
     if (existing) {
       const productId = existing.product_id;
@@ -51,7 +58,7 @@ exports.addToCart = async (req, res, next) => {
         stock,
       );
     } else {
-      await Order.insertCartItem(null, userId, productId, stock, quantity);
+      await Order.insertCartItem(null, userId, productId, stock, quantity, storefront);
     }
 
     res.json({ success: true, message: "Added to cart" });
@@ -90,6 +97,7 @@ exports.removeAllCart = async (req, res, next) => {
 exports.getUserCart = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const storefront = getStorefront(req.query.storefront);
 
     const isUserExist = await User.findById(userId);
     if (!isUserExist) {
@@ -98,12 +106,12 @@ exports.getUserCart = async (req, res, next) => {
         .json({ success: false, message: "User is not exist" });
     }
 
-    const cartItems = await Order.getCartByUser(null, userId);
+    const cartItems = await Order.getCartByUser(null, userId, storefront);
 
     let totalPrice = 0;
     let totalDiscountPrice = 0;
     cartItems.forEach((item) => {
-      totalDiscountPrice += item.discount_price * item.cart_quantity;
+      totalDiscountPrice += (item.discount_price ?? item.price) * item.cart_quantity;
       totalPrice += item.price * item.cart_quantity;
     });
 
@@ -124,6 +132,7 @@ exports.removeFromCart = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const { cartItemId } = req.params;
+    const storefront = getStorefront(req.query.storefront);
 
     const isUserExist = await User.findById(userId);
     if (!isUserExist) {
@@ -137,7 +146,7 @@ exports.removeFromCart = async (req, res, next) => {
       product_id: productId,
       stock,
       cart_quantity: quantity,
-    } = await Order.findCartItemInfo(null, cartItemId, userId);
+    } = await Order.findCartItemInfo(null, cartItemId, userId, storefront);
 
     if (!productId || !stock || !quantity) {
       return res.status(400).json({
@@ -153,6 +162,7 @@ exports.removeFromCart = async (req, res, next) => {
       productId,
       stock,
       quantity,
+      storefront,
     );
 
     return res.json({ success: true, message: "Removed successfully" });
@@ -169,6 +179,7 @@ exports.completeOrder = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const { address_id, payment_method } = req.body;
+    const storefront = getStorefront(req.body.storefront);
 
     // اعتبارسنجی‌های همزمان با Promise.all برای بهبود performance
     const [user, address] = await Promise.all([
@@ -206,6 +217,7 @@ exports.completeOrder = async (req, res, next) => {
       userId,
       address_id,
       payment_method,
+      storefront,
     );
 
     // دریافت اطلاعات کامل سفارش برای ایمیل
@@ -244,6 +256,7 @@ exports.editQuantity = async (req, res, next) => {
     const userId = req.user.id;
     const { cartItemId } = req.params;
     const { quantity, decOrInc } = req.body;
+    const storefront = getStorefront(req.query.storefront);
 
     if (quantity + decOrInc <= 0) {
       return res.status(400).json({
@@ -252,7 +265,7 @@ exports.editQuantity = async (req, res, next) => {
       });
     }
 
-    const existing = await Order.findCartItemInfo(null, cartItemId, userId);
+    const existing = await Order.findCartItemInfo(null, cartItemId, userId, storefront);
 
     if (!existing) {
       return res.status(403).json({

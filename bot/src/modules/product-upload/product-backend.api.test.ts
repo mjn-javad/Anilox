@@ -68,7 +68,11 @@ test("merges brand catalogs and preserves the slug for each website", async () =
 
 test("publishes one multipart product to both websites with the shared key", async () => {
   configureTestEnvironment();
-  const received: Array<{ brand: FormDataEntryValue | null; key: string | null }> = [];
+  const received: Array<{
+    brand: FormDataEntryValue | null;
+    key: string | null;
+    addToSale: FormDataEntryValue | null;
+  }> = [];
 
   globalThis.fetch = async (input, init) => {
     const body = init?.body;
@@ -76,6 +80,7 @@ test("publishes one multipart product to both websites with the shared key", asy
     received.push({
       brand: body.get("brand"),
       key: new Headers(init?.headers).get("X-Telegram-Bot-Key"),
+      addToSale: body.get("addToSale"),
     });
 
     return jsonResponse({
@@ -100,12 +105,17 @@ test("publishes one multipart product to both websites with the shared key", asy
     description: null,
     colors: ["Black"],
   };
-  const results = await productBackendApi.createProductFromImages(product, [
-    {
-      blob: new Blob([new Uint8Array([1, 2, 3])], { type: "image/jpeg" }),
-      filename: "product.jpg",
-    },
-  ]);
+  const results = await productBackendApi.createProductFromImages(
+    product,
+    [
+      {
+        blob: new Blob([new Uint8Array([1, 2, 3])], { type: "image/jpeg" }),
+        filename: "product.jpg",
+      },
+    ],
+    undefined,
+    { addToSale: true },
+  );
 
   assert.deepEqual(
     results.map((result) => [result.site, result.status, result.id]),
@@ -119,6 +129,10 @@ test("publishes one multipart product to both websites with the shared key", asy
     ["gucci-anilox", "gucci-ebraha"],
   );
   assert.ok(received.every((request) => request.key === "a".repeat(32)));
+  assert.deepEqual(
+    received.map((request) => request.addToSale),
+    ["true", null],
+  );
 });
 
 test("reports a missing brand without duplicating the successful website", async () => {
@@ -211,4 +225,48 @@ test("publishes only to the website selected by the user", async () => {
     results.map((result) => result.site),
     ["ebraha"],
   );
+});
+
+test("passes HEIC files through by extension when the browser omits the MIME type", async () => {
+  configureTestEnvironment();
+  let uploadedFileName: string | null = null;
+
+  globalThis.fetch = async (_input, init) => {
+    const body = init?.body;
+    assert.ok(body instanceof FormData);
+    const image = body.get("images");
+    assert.ok(image instanceof File);
+    uploadedFileName = image.name;
+    return jsonResponse({ success: true, data: { productId: 77 } }, 201);
+  };
+
+  const product: ProductData = {
+    type: "bag",
+    brand: "loewe",
+    brandName: "Loewe",
+    brandSlugs: { anilox: "loewe" },
+    model: "Puzzle",
+    category: "other",
+    gender: "female",
+    price: "100.00",
+    discountPrice: null,
+    description: null,
+    colors: ["Brown"],
+  };
+
+  const results = await productBackendApi.createProductFromImages(
+    product,
+    [
+      {
+        blob: new Blob([new Uint8Array([1, 2, 3])], {
+          type: "application/octet-stream",
+        }),
+        filename: "iphone-photo.HEIC",
+      },
+    ],
+    ["anilox"],
+  );
+
+  assert.equal(uploadedFileName, "iphone-photo.HEIC");
+  assert.equal(results[0]?.status, "created");
 });

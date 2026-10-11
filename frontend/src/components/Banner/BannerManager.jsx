@@ -15,6 +15,7 @@ const bannerLocations = {
   9: "Women Navigation Mobile",
   10: "Women Navigation Laptop",
   11: "Big Size",
+  12: "Sale Hero",
 };
 
 const BannerManager = () => {
@@ -180,7 +181,7 @@ const BannerManager = () => {
                 </h2>
 
                 <p className="text-sm text-gray-500 mt-2 line-clamp-1">
-                  Link: {banner.title2 || "/"}
+                  Link: {banner.bannerLink || "/"}
                 </p>
 
                 <div className="mt-5 grid grid-cols-2 gap-3">

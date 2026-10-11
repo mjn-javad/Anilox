@@ -114,13 +114,23 @@ const SingleProduct = () => {
   }, [id]);
 
   useEffect(() => {
-    if (!product?.model) return;
+    if (!product?.model || !product?.brand || !product?.type || !product?.gender) return;
 
     let active = true;
 
     const fetchColors = async () => {
       try {
-        const res = await apiClientProducts.get(`/?model=${product.model}`);
+        const params = new URLSearchParams({
+          model: product.model,
+          brand: product.brand,
+          type: product.type,
+          gender: product.gender,
+          exactGender: "true",
+        });
+
+        if (product.is_sale) params.set("saleOnly", "true");
+
+        const res = await apiClientProducts.get(`/?${params.toString()}`);
         if (active && res.data.success) setColors(res.data.data || []);
       } catch (err) {
         console.error("Error fetching colors:", err);
@@ -132,7 +142,13 @@ const SingleProduct = () => {
     return () => {
       active = false;
     };
-  }, [product?.model]);
+  }, [
+    product?.model,
+    product?.brand,
+    product?.type,
+    product?.gender,
+    product?.is_sale,
+  ]);
 
   const handleAddToCart = async () => {
     if (!selectedStock) {

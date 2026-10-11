@@ -17,6 +17,7 @@ const categoryLabels = {
   formal: "Formal Products",
   boot: "Boots",
   sandal: "Sandals",
+  slipper: "Slippers",
   sport: "Sport Products",
   classic: "Classic Products",
 };
@@ -45,6 +46,7 @@ const SliderProducts = ({ limit }) => {
   const type = searchParams.get("type");
   const gender = searchParams.get("gender");
   const discountOnly = searchParams.get("discountOnly");
+  const saleOnly = searchParams.get("saleOnly");
   const search = searchParams.get("search");
 
   const myQuery = useMemo(() => {
@@ -57,11 +59,12 @@ const SliderProducts = ({ limit }) => {
     if (type) params.set("type", type);
     if (gender) params.set("gender", gender);
     if (discountOnly) params.set("discountOnly", discountOnly);
+    if (saleOnly) params.set("saleOnly", saleOnly);
     if (search) params.set("search", search);
 
     const query = params.toString();
     return query ? `?${query}` : "";
-  }, [limit, brand, model, category, type, gender, discountOnly, search]);
+  }, [limit, brand, model, category, type, gender, discountOnly, saleOnly, search]);
 
   const pageInfo = useMemo(() => {
     const genderLabel = getGenderLabel(gender);
@@ -73,7 +76,7 @@ const SliderProducts = ({ limit }) => {
     let header = "Explore Luxury Collection";
     let title = "Discover your perfect luxury item";
 
-    if (discountOnly === "true") {
+    if (discountOnly === "true" || saleOnly === "true") {
       header = genderLabel
         ? `${genderLabel} Sale Collection`
         : "Sale Collection";
@@ -135,7 +138,7 @@ const SliderProducts = ({ limit }) => {
     }
 
     return { header, title };
-  }, [brand, model, category, type, gender, discountOnly]);
+  }, [brand, model, category, type, gender, discountOnly, saleOnly]);
 
   return (
     <GlobalSlider

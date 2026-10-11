@@ -8,7 +8,7 @@ const getExecutor = (connection) => {
 
 /* ========= CART ========= */
 
-const findCartItemInfo = async (connection, cartItemId, userId) => {
+const findCartItemInfo = async (connection, cartItemId, userId, storefront = "main") => {
   const executor = getExecutor(connection);
   const [rows] = await executor.execute(
     `SELECT 
@@ -19,26 +19,26 @@ const findCartItemInfo = async (connection, cartItemId, userId) => {
       COALESCE(sz.quantity, 0) as inStockQuantity
      FROM cart_items ci
      LEFT JOIN product_stocks sz ON ci.product_id = sz.product_id AND ci.stock = sz.stock
-     WHERE ci.id = ? AND ci.user_id = ?`,
-    [cartItemId, userId],
+     WHERE ci.id = ? AND ci.user_id = ? AND ci.storefront = ?`,
+    [cartItemId, userId, storefront],
   );
   return rows[0];
 };
 
-const findCartItemById = async (connection, userId, productId, stock) => {
+const findCartItemById = async (connection, userId, productId, stock, storefront = "main") => {
   const executor = getExecutor(connection);
   const [rows] = await executor.execute(
-    "SELECT * FROM cart_items WHERE user_id=? AND product_id=? AND stock=?",
-    [userId, productId, stock],
+    "SELECT * FROM cart_items WHERE user_id=? AND product_id=? AND stock=? AND storefront=?",
+    [userId, productId, stock, storefront],
   );
   return rows[0];
 };
 
-const insertCartItem = async (connection, userId, productId, stock, quantity) => {
+const insertCartItem = async (connection, userId, productId, stock, quantity, storefront = "main") => {
   const executor = getExecutor(connection);
   await executor.execute(
-    "INSERT INTO cart_items (user_id, product_id, stock, quantity) VALUES (?,?,?,?)",
-    [userId, productId, stock, quantity],
+    "INSERT INTO cart_items (user_id, product_id, stock, quantity, storefront) VALUES (?,?,?,?,?)",
+    [userId, productId, stock, quantity, storefront],
   );
 
   await executor.execute(
@@ -97,11 +97,13 @@ const deleteCartItem = async (
   productId,
   stock,
   quantity,
+  storefront = "main",
 ) => {
   const executor = getExecutor(connection);
-  await executor.execute("DELETE FROM cart_items WHERE id=? AND user_id=?", [
+  await executor.execute("DELETE FROM cart_items WHERE id=? AND user_id=? AND storefront=?", [
     cartItemId,
     userId,
+    storefront,
   ]);
   await executor.execute(
     "UPDATE product_stocks SET quantity = quantity + ? WHERE product_id=? AND stock=?",
@@ -119,6 +121,7 @@ const getAllCarts = async (connection) => {
       ci.product_id,
       ci.stock,
       ci.quantity AS cart_quantity,
+      ci.storefront,
 
       -- user info
       u.name AS user_name,
@@ -169,6 +172,7 @@ const getAllOrders = async (connection) => {
       o.status,
       o.created_at AS order_date,
       o.address_id,
+      o.storefront,
       
       -- user info
       u.name AS user_name,
@@ -235,6 +239,7 @@ const getAllOrders = async (connection) => {
         status: order.status,
         order_date: order.order_date,
         address_id: order.address_id,
+        storefront: order.storefront,
 
         // user info
         user_name: order.user_name,
@@ -265,7 +270,7 @@ const getAllOrders = async (connection) => {
   return ordersWithItems;
 };
 
-const getCartByUser = async (connection, userId) => {
+const getCartByUser = async (connection, userId, storefront = "main") => {
   const executor = getExecutor(connection);
   const [rows] = await executor.execute(
     `SELECT 
@@ -293,8 +298,8 @@ const getCartByUser = async (connection, userId) => {
      JOIN products s ON ci.product_id = s.id
      LEFT JOIN product_stocks sz ON s.id = sz.product_id
         AND ci.stock = sz.stock
-     WHERE ci.user_id = ?`,
-    [userId],
+     WHERE ci.user_id = ? AND ci.storefront = ?`,
+    [userId, storefront],
   );
   return rows;
 };
@@ -325,7 +330,7 @@ const calculateCartTotals = async (connection, userId) => {
   return rows[0] || { total_price: 0, price_with_discount: 0 };
 };
 
-const completeOrder = async (connection, userId, addressId, paymentMethod) => {
+const completeOrder = async (connection, userId, addressId, paymentMethod, storefront = "main") => {
   const executor = getExecutor(connection);
 
   /* 1️⃣ گرفتن آیتم‌های سبد */
@@ -339,9 +344,9 @@ const completeOrder = async (connection, userId, addressId, paymentMethod) => {
       s.discount_price
     FROM cart_items ci
     JOIN products s ON ci.product_id = s.id
-    WHERE ci.user_id = ?
+    WHERE ci.user_id = ? AND ci.storefront = ?
     `,
-    [userId],
+    [userId, storefront],
   );
 
   if (cartItems.length === 0) {
@@ -364,8 +369,8 @@ const completeOrder = async (connection, userId, addressId, paymentMethod) => {
   const [orderResult] = await executor.execute(
     `
     INSERT INTO orders
-    (user_id, address_id, total_price, price_with_discount, payment_method, status)
-    VALUES (?, ?, ?, ?, ?, ?)
+    (user_id, address_id, total_price, price_with_discount, payment_method, status, storefront)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
     `,
     [
       userId,
@@ -374,6 +379,7 @@ const completeOrder = async (connection, userId, addressId, paymentMethod) => {
       priceWithDiscount,
       paymentMethod,
       "pending",
+      storefront,
     ],
   );
 
@@ -394,7 +400,7 @@ const completeOrder = async (connection, userId, addressId, paymentMethod) => {
   }
 
   /* 5️⃣ حذف سبد خرید */
-  await executor.execute("DELETE FROM cart_items WHERE user_id=?", [userId]);
+  await executor.execute("DELETE FROM cart_items WHERE user_id=? AND storefront=?", [userId, storefront]);
 
   return {
     orderId,

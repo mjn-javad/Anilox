@@ -13,6 +13,9 @@ const flash = require("express-flash");
 const session = require("express-session");
 const cookieParser = require("cookie-parser");
 const setHeader = require("./middlewares/setHeader");
+const {
+  redirectProductImageToR2,
+} = require("./middlewares/redirectProductImageToR2");
 
 const app = express();
 
@@ -22,6 +25,9 @@ app.use(setHeader);
 // Statics path
 app.use(express.static(path.resolve(__dirname, "public")));
 app.use("/images", express.static(path.resolve(__dirname, "public/images")));
+// Old product images are served locally. If a product image is not on disk,
+// it is a new image and is served from Cloudflare R2 through the custom domain.
+app.get("/images/posts/:filename", redirectProductImageToR2);
 
 // View Engine
 app.set("view engine", "ejs");

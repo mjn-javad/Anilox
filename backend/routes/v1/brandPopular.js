@@ -51,4 +51,30 @@ router.delete(
   controller.removeProductFromNewArrivel,
 );
 
+router.get("/sale", controller.getAllSaleProducts);
+
+router.post(
+  "/sale/:productId",
+  authMiddleware,
+  isAdminMiddleware,
+  controller.addProductToSale,
+);
+
+router.delete(
+  "/sale/:productId",
+  authMiddleware,
+  isAdminMiddleware,
+  controller.removeProductFromSale,
+);
+
+router.get("/:id", controller.getBrandById);
+
+router.put(
+  "/:id",
+  authMiddleware,
+  isAdminMiddleware,
+  upload.single("image"),
+  controller.updateBrand,
+);
+
 module.exports = router;

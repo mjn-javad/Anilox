@@ -31,10 +31,13 @@ import {
   validateType,
 } from "./product.validation.js";
 import { ProductUploadError } from "./product-upload.error.js";
+import { PRODUCT_COLOR_OPTIONS } from "./product.constants.js";
 
 const DEFAULT_MINI_APP_PATH = "/product-upload";
+const MINI_APP_AUTH_COOKIE = "product_mini_app_auth";
 const MAX_REQUEST_BYTES = 105 * 1024 * 1024;
 const MAX_INIT_DATA_AGE_SECONDS = 24 * 60 * 60;
+const MAX_LAUNCH_TOKEN_AGE_SECONDS = 24 * 60 * 60;
 const PUBLISH_DESTINATIONS: readonly ProductPublishDestination[] = [
   "anilox",
   "ebraha",
@@ -56,7 +59,31 @@ const assetFiles = {
     file: "mini-app/app.js",
     contentType: "text/javascript; charset=utf-8",
   },
+  "/app.v3.js": {
+    file: "mini-app/app.js",
+    contentType: "text/javascript; charset=utf-8",
+  },
+  "/app.v4.js": {
+    file: "mini-app/app.js",
+    contentType: "text/javascript; charset=utf-8",
+  },
+  "/app.v5.js": {
+    file: "mini-app/app.js",
+    contentType: "text/javascript; charset=utf-8",
+  },
   "/styles.css": {
+    file: "mini-app/styles.css",
+    contentType: "text/css; charset=utf-8",
+  },
+  "/styles.v3.css": {
+    file: "mini-app/styles.css",
+    contentType: "text/css; charset=utf-8",
+  },
+  "/styles.v4.css": {
+    file: "mini-app/styles.css",
+    contentType: "text/css; charset=utf-8",
+  },
+  "/styles.v5.css": {
     file: "mini-app/styles.css",
     contentType: "text/css; charset=utf-8",
   },
@@ -123,6 +150,33 @@ export function getProductMiniAppUrl() {
 
   url.hash = "";
   url.search = "";
+  return url.toString();
+}
+
+function signLaunchTokenPayload(payload: string) {
+  return createHmac("sha256", getBotToken())
+    .update(`product-mini-app:${payload}`)
+    .digest("hex");
+}
+
+export function createProductMiniAppLaunchToken(
+  userId: number,
+  nowSeconds = Math.floor(Date.now() / 1_000),
+) {
+  const expiresAt = nowSeconds + MAX_LAUNCH_TOKEN_AGE_SECONDS;
+  const payload = `${userId}.${expiresAt}`;
+  return `${payload}.${signLaunchTokenPayload(payload)}`;
+}
+
+export function getProductMiniAppLaunchUrl(userId: number) {
+  const publicUrl = getProductMiniAppUrl();
+
+  if (!publicUrl) {
+    return null;
+  }
+
+  const url = new URL(publicUrl);
+  url.searchParams.set("launch", createProductMiniAppLaunchToken(userId));
   return url.toString();
 }
 
@@ -206,14 +260,114 @@ function parseTelegramUser(initData: string) {
   return user.id;
 }
 
-function authenticateRequest(request: IncomingMessage) {
-  const initData = request.headers["x-telegram-init-data"];
+export function parseProductMiniAppLaunchToken(
+  token: string,
+  nowSeconds = Math.floor(Date.now() / 1_000),
+) {
+  const match = /^(\d+)\.(\d+)\.([a-f0-9]{64})$/i.exec(token.trim());
 
-  if (typeof initData !== "string") {
-    throw new MiniAppRequestError(401, "Open this page from the Telegram bot.");
+  if (!match) {
+    throw new MiniAppRequestError(401, "Mini App authentication is invalid.");
   }
 
-  return parseTelegramUser(initData);
+  const rawUserId = match[1]!;
+  const rawExpiresAt = match[2]!;
+  const rawSignature = match[3]!;
+  const userId = Number(rawUserId);
+  const expiresAt = Number(rawExpiresAt);
+  const payload = `${rawUserId}.${rawExpiresAt}`;
+  const expectedSignature = Buffer.from(signLaunchTokenPayload(payload), "hex");
+  const providedSignature = Buffer.from(rawSignature, "hex");
+
+  if (
+    providedSignature.length !== expectedSignature.length ||
+    !timingSafeEqual(providedSignature, expectedSignature)
+  ) {
+    throw new MiniAppRequestError(401, "Mini App authentication is invalid.");
+  }
+
+  if (
+    !Number.isSafeInteger(userId) ||
+    userId < 1 ||
+    !Number.isSafeInteger(expiresAt) ||
+    expiresAt <= nowSeconds ||
+    expiresAt > nowSeconds + MAX_LAUNCH_TOKEN_AGE_SECONDS + 300
+  ) {
+    throw new MiniAppRequestError(401, "Mini App authentication has expired.");
+  }
+
+  if (!isProductAdmin(userId)) {
+    throw new MiniAppRequestError(403, "You are not allowed to upload products.");
+  }
+
+  return userId;
+}
+
+function authenticateRequest(request: IncomingMessage) {
+  const initData = request.headers["x-telegram-init-data"];
+  const launchToken = request.headers["x-mini-app-launch-token"];
+  const cookieToken = getCookieValue(request, MINI_APP_AUTH_COOKIE);
+
+  if (typeof initData === "string" && initData.trim()) {
+    try {
+      return parseTelegramUser(initData);
+    } catch (error) {
+      if (
+        (typeof launchToken !== "string" || !launchToken.trim()) &&
+        !cookieToken
+      ) {
+        throw error;
+      }
+    }
+  }
+
+  if (typeof launchToken === "string" && launchToken.trim()) {
+    return parseProductMiniAppLaunchToken(launchToken);
+  }
+
+  if (cookieToken) {
+    return parseProductMiniAppLaunchToken(cookieToken);
+  }
+
+  throw new MiniAppRequestError(
+    401,
+    "Authentication is missing. Run /addproduct in the Telegram bot and open the new Mini App button.",
+  );
+}
+
+function getCookieValue(request: IncomingMessage, name: string) {
+  const cookieHeader = request.headers.cookie;
+
+  if (!cookieHeader) {
+    return null;
+  }
+
+  for (const item of cookieHeader.split(";")) {
+    const separatorIndex = item.indexOf("=");
+
+    if (separatorIndex < 0 || item.slice(0, separatorIndex).trim() !== name) {
+      continue;
+    }
+
+    try {
+      return decodeURIComponent(item.slice(separatorIndex + 1).trim());
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+function createMiniAppAuthCookie(token: string, miniAppPath: string) {
+  return [
+    `${MINI_APP_AUTH_COOKIE}=${encodeURIComponent(token)}`,
+    `Path=${miniAppPath}/`,
+    `Max-Age=${MAX_LAUNCH_TOKEN_AGE_SECONDS}`,
+    "HttpOnly",
+    "Secure",
+    "SameSite=Lax",
+  ].join("; ");
 }
 
 async function readRequestBody(request: IncomingMessage) {
@@ -276,12 +430,12 @@ function getOptionalText(form: FormData, field: string) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-function getRequestedDestinations(form: FormData) {
+export function getRequestedDestinations(form: FormData) {
   const retryTargets = form
     .getAll("targets")
     .filter((value): value is string => typeof value === "string")
-    .filter((value): value is ProductSiteId =>
-      PRODUCT_SITE_IDS.includes(value as ProductSiteId),
+    .filter((value): value is ProductPublishDestination =>
+      PUBLISH_DESTINATIONS.includes(value as ProductPublishDestination),
     );
 
   if (retryTargets.length > 0) {
@@ -361,6 +515,9 @@ async function createProductFromMiniApp(form: FormData, telegramApi: Api) {
     (destination): destination is ProductSiteId =>
       destination === "anilox" || destination === "ebraha",
   );
+  const addToSale = ["true", "1", "on"].includes(
+    String(form.get("addToSale") ?? "").toLowerCase(),
+  );
   const results: MiniAppPublishResult[] = [];
 
   if (images.length < 1 || images.length > 10) {
@@ -375,7 +532,14 @@ async function createProductFromMiniApp(form: FormData, telegramApi: Api) {
       );
     }
 
-    if (!/^image\/(?:jpeg|png|webp|heic|heif)$/.test(image.blob.type)) {
+    const supportedMime = /^image\/(?:jpeg|png|webp|heic|heif)$/i.test(
+      image.blob.type,
+    );
+    const supportedExtension = /\.(?:jpe?g|png|webp|heic|heif)$/i.test(
+      image.filename,
+    );
+
+    if (!supportedMime && !supportedExtension) {
       throw new MiniAppRequestError(400, "One of the selected files is not a supported image.");
     }
   }
@@ -386,6 +550,7 @@ async function createProductFromMiniApp(form: FormData, telegramApi: Api) {
         product,
         images,
         websiteTargets,
+        { addToSale },
       );
 
       results.push(
@@ -454,13 +619,13 @@ async function createProductFromMiniApp(form: FormData, telegramApi: Api) {
 
   return {
     results,
-    retryTargets: results
-      .filter(
-        (result): result is MiniAppPublishResult & { destination: ProductSiteId } =>
-          result.status === "brand_missing" &&
-          (result.destination === "anilox" || result.destination === "ebraha"),
-      )
-      .map((result) => result.destination),
+    retryTargets: [
+      ...new Set(
+        results
+          .filter((result) => result.status !== "created")
+          .map((result) => result.destination),
+      ),
+    ],
   };
 }
 
@@ -471,7 +636,8 @@ async function serveAsset(
   const content = await readFile(new URL(asset.file, import.meta.url));
 
   response.writeHead(200, {
-    "Cache-Control": "no-cache",
+    "Cache-Control": "no-store, max-age=0",
+    "CDN-Cache-Control": "no-store",
     "Content-Security-Policy": [
       "default-src 'self'",
       "script-src 'self' https://telegram.org",
@@ -501,6 +667,22 @@ async function handleMiniAppRequest(
   }
 
   const relativePath = requestUrl.pathname.slice(miniAppPath.length);
+  const launchToken = requestUrl.searchParams.get("launch");
+
+  if (
+    request.method === "GET" &&
+    (relativePath === "" || relativePath === "/") &&
+    launchToken
+  ) {
+    parseProductMiniAppLaunchToken(launchToken);
+    response.writeHead(302, {
+      "Cache-Control": "no-store",
+      Location: `${miniAppPath}/`,
+      "Set-Cookie": createMiniAppAuthCookie(launchToken, miniAppPath),
+    });
+    response.end();
+    return;
+  }
 
   if (request.method === "GET" && relativePath === "") {
     response.writeHead(302, { Location: `${miniAppPath}/` });
@@ -516,13 +698,13 @@ async function handleMiniAppRequest(
   }
 
   if (request.method === "GET" && relativePath === "/api/brands") {
-    authenticateRequest(request);
     const catalog = await productBackendApi.getBrands();
     sendJson(response, 200, {
       brands: catalog.brands.map((brand) => ({
         name: brand.name,
         sites: PRODUCT_SITE_IDS.filter((site) => Boolean(brand.siteSlugs[site])),
       })),
+      colorOptions: PRODUCT_COLOR_OPTIONS,
       warnings: catalog.warnings,
     });
     return;
@@ -583,8 +765,10 @@ export function startProductMiniAppServer(telegramApi: Api) {
     console.error(`Could not start Product Mini App server on port ${port}:`, error);
   });
 
-  server.listen(port, "0.0.0.0", () => {
-    console.log(`Product Mini App is listening on port ${port}: ${publicUrl}`);
+  server.listen(port, "127.0.0.1", () => {
+    console.log(
+      `Product Mini App is listening on 127.0.0.1:${port}: ${publicUrl}`,
+    );
   });
 
   return server;

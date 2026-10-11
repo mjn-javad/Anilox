@@ -8,7 +8,7 @@ import SuccessAlert from "../Shared/SuccessAlert";
 import InputField from "../Shared/InputField";
 import LoadingSpinner from "../Shared/LoadingSpinner";
 
-const AddressPage = () => {
+const AddressPage = ({ saleMode = false }) => {
   const navigate = useNavigate();
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -117,12 +117,13 @@ const AddressPage = () => {
       const response = await apiClientOrder.post("/orders", {
         address_id: selectedAddress,
         payment_method: "onDelivery",
+        storefront: saleMode ? "sale" : "main",
       });
 
       if (response.status === 201) {
         setSuccessMessage("Your order has been successfully placed!");
         setShowSuccess(true);
-        setPendingNavigation("/");
+        setPendingNavigation(saleMode ? "/sale" : "/");
       }
     } catch (error) {
       console.error("Order failed:", error);
@@ -319,7 +320,7 @@ const AddressPage = () => {
       {addresses.length > 0 && (
         <div className="flex justify-end gap-4 pt-4 border-t">
           <button
-            onClick={() => navigate("/basket")}
+            onClick={() => navigate(saleMode ? "/sale/basket" : "/basket")}
             className="px-6 py-2 border rounded-lg hover:bg-gray-100 transition"
           >
             Back to Cart

@@ -3,13 +3,41 @@
 import React, { useCallback, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import apiClientProducts from "../../services/api-client_products";
-import apiClientBrandPopular from "../../services/api-client";
+import apiClientBrandPopular from "../../services/api-client_brand";
 
 import LoadingSpinner from "../Shared/LoadingSpinner";
 import MessageAlert from "../Shared/MessageAlert";
 import ProductInfoForm from "./ProductInfoForm";
 import ProductStockManager from "./ProductStockManager";
 import ImagesManager from "./ImagesManager";
+
+const MembershipCard = ({ title, active, updating, onAdd, onRemove }) => (
+  <div className={`border rounded-lg p-3 ${active ? "border-emerald-400 bg-emerald-50" : ""}`}>
+    <p className="font-semibold mb-2">
+      {title} {active && <span className="text-xs text-emerald-700">(Active)</span>}
+    </p>
+
+    {active ? (
+      <button
+        type="button"
+        onClick={onRemove}
+        disabled={updating}
+        className="w-full bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-300 text-white py-2 rounded-lg"
+      >
+        {updating ? "..." : "Remove"}
+      </button>
+    ) : (
+      <button
+        type="button"
+        onClick={onAdd}
+        disabled={updating}
+        className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white py-2 rounded-lg"
+      >
+        {updating ? "..." : "Add"}
+      </button>
+    )}
+  </div>
+);
 
 const AdminSingleProductManagement = () => {
   const { productId } = useParams();
@@ -34,6 +62,9 @@ const AdminSingleProductManagement = () => {
   });
 
   const [stocks, setStocks] = useState([]);
+  const [isSale, setIsSale] = useState(false);
+  const [isBestSeller, setIsBestSeller] = useState(false);
+  const [isBigSize, setIsBigSize] = useState(false);
   const [images, setImages] = useState([]);
   const [newImages, setNewImages] = useState([]);
   const [deletedImages, setDeletedImages] = useState([]);
@@ -79,6 +110,9 @@ const AdminSingleProductManagement = () => {
       }
 
       setStocks(stocksArray);
+      setIsSale(Boolean(product.is_sale));
+      setIsBestSeller(Boolean(product.is_best_seller));
+      setIsBigSize(Boolean(product.is_big_size));
       setImages(product.images || []);
       setNewImages([]);
       setDeletedImages([]);
@@ -110,6 +144,8 @@ const AdminSingleProductManagement = () => {
 
       await apiClientBrandPopular.post(`/newArrivels/${productId}`);
 
+      setIsBigSize(true);
+
       showSuccess(`"${productInfo.name}" added to big size`);
     } catch (err) {
       console.error("Error adding to big size:", err);
@@ -124,6 +160,8 @@ const AdminSingleProductManagement = () => {
       setUpdating(true);
 
       await apiClientBrandPopular.delete(`/newArrivels/${productId}`);
+
+      setIsBigSize(false);
 
       showSuccess(`"${productInfo.name}" removed from big size`);
     } catch (err) {
@@ -140,6 +178,8 @@ const AdminSingleProductManagement = () => {
 
       await apiClientBrandPopular.post(`/bestSellers/${productId}`);
 
+      setIsBestSeller(true);
+
       showSuccess(`"${productInfo.name}" added to best sellers`);
     } catch (err) {
       console.error("Error adding to best sellers:", err);
@@ -155,12 +195,42 @@ const AdminSingleProductManagement = () => {
 
       await apiClientBrandPopular.delete(`/bestSellers/${productId}`);
 
+      setIsBestSeller(false);
+
       showSuccess(`"${productInfo.name}" removed from best sellers`);
     } catch (err) {
       console.error("Error removing from best sellers:", err);
       showError(
         err.response?.data?.message || "Error removing from best sellers",
       );
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleAddToSale = async () => {
+    try {
+      setUpdating(true);
+      await apiClientBrandPopular.post(`/sale/${productId}`);
+      setIsSale(true);
+      showSuccess(`"${productInfo.name}" added to sale`);
+    } catch (err) {
+      console.error("Error adding to sale:", err);
+      showError(err.response?.data?.message || "Error adding to sale");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleRemoveFromSale = async () => {
+    try {
+      setUpdating(true);
+      await apiClientBrandPopular.delete(`/sale/${productId}`);
+      setIsSale(false);
+      showSuccess(`"${productInfo.name}" removed from sale`);
+    } catch (err) {
+      console.error("Error removing from sale:", err);
+      showError(err.response?.data?.message || "Error removing from sale");
     } finally {
       setUpdating(false);
     }
@@ -581,60 +651,36 @@ const AdminSingleProductManagement = () => {
       <div className="flex flex-col gap-4 mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Edit Product</h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="border rounded-lg p-3">
-            <p className="font-semibold mb-2">Big Size</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <MembershipCard
+            title="Big Size"
+            active={isBigSize}
+            updating={updating}
+            onAdd={handleAddToBigSize}
+            onRemove={handleRemoveFromBigSize}
+          />
 
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={handleAddToBigSize}
-                disabled={updating}
-                className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white py-2 rounded-lg"
-              >
-                {updating ? "..." : "Add"}
-              </button>
+          <MembershipCard
+            title="Best Seller"
+            active={isBestSeller}
+            updating={updating}
+            onAdd={handleAddToBestSellers}
+            onRemove={handleRemoveFromBestSellers}
+          />
 
-              <button
-                type="button"
-                onClick={handleRemoveFromBigSize}
-                disabled={updating}
-                className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-300 text-white py-2 rounded-lg"
-              >
-                {updating ? "..." : "Remove"}
-              </button>
-            </div>
-          </div>
-
-          <div className="border rounded-lg p-3">
-            <p className="font-semibold mb-2">Best Seller</p>
-
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={handleAddToBestSellers}
-                disabled={updating}
-                className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white py-2 rounded-lg"
-              >
-                {updating ? "..." : "Add"}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleRemoveFromBestSellers}
-                disabled={updating}
-                className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-300 text-white py-2 rounded-lg"
-              >
-                {updating ? "..." : "Remove"}
-              </button>
-            </div>
-          </div>
+          <MembershipCard
+            title="Sale"
+            active={isSale}
+            updating={updating}
+            onAdd={handleAddToSale}
+            onRemove={handleRemoveFromSale}
+          />
 
           <button
             type="button"
             onClick={handleDeleteProduct}
             disabled={updating}
-            className="sm:col-span-2 bg-red-700 hover:bg-red-800 disabled:bg-red-300 text-white px-5 py-2.5 rounded-lg font-medium"
+            className="sm:col-span-2 lg:col-span-3 bg-red-700 hover:bg-red-800 disabled:bg-red-300 text-white px-5 py-2.5 rounded-lg font-medium"
           >
             {updating ? "Please wait..." : "Delete Product"}
           </button>

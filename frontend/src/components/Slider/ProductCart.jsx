@@ -189,7 +189,7 @@ const ProductCard = ({
                     {product.name}
                   </h3>
 
-                  <p className="text-xs uppercase tracking-wide text-gray-400">
+                  <p className="text-sm font-medium uppercase tracking-wide text-gray-500">
                     {product.brand || "Brand"}
                   </p>
 
@@ -202,16 +202,16 @@ const ProductCard = ({
                       Number(product.discount_price) !==
                         Number(product.price) ? (
                       <>
-                        <span className="text-sm font-medium text-gray-900">
+                        <span className="text-base font-semibold text-gray-900">
                           {Number(product.discount_price).toLocaleString()} AED
                         </span>
 
-                        <span className="text-xs text-gray-400 line-through">
+                        <span className="text-sm text-gray-400 line-through">
                           {Number(product.price).toLocaleString()} AED
                         </span>
                       </>
                     ) : (
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-base font-semibold text-gray-900">
                         {Number(product.price).toLocaleString()} AED
                       </span>
                     )}

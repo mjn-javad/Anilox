@@ -8,6 +8,9 @@ const {
   uploadWithErrorHandler,
 } = require("../../middlewares/uploaderConfig");
 const telegramBotAuth = require("../../middlewares/telegramBotAuth");
+const {
+  uploadProductImagesToR2,
+} = require("../../middlewares/uploadProductImagesToR2");
 
 const router = express.Router();
 
@@ -40,6 +43,7 @@ router.put(
   authMiddleware,
   isAdminMiddleware,
   uploadImages,
+  uploadProductImagesToR2,
   controller.updateProductPicture,
 );
 
@@ -57,6 +61,7 @@ router.post(
   authMiddleware,
   isAdminMiddleware,
   uploadImages,
+  uploadProductImagesToR2,
   controller.createProduct,
 );
 
@@ -64,6 +69,7 @@ router.post(
   "/telegram",
   telegramBotAuth,
   uploadImages,
+  uploadProductImagesToR2,
   controller.createProduct,
 );
 

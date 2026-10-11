@@ -93,7 +93,15 @@ const increaseStock = async (productId, stock, quantity) => {
 };
 
 const findById = async (id) => {
-  const [products] = await db.execute("SELECT * FROM products WHERE id = ?", [id]);
+  const [products] = await db.execute(
+    `SELECT s.*,
+      EXISTS(SELECT 1 FROM sale_products sp WHERE sp.product_id = s.id) AS is_sale,
+      EXISTS(SELECT 1 FROM best_sellers bs WHERE bs.product_id = s.id) AS is_best_seller,
+      EXISTS(SELECT 1 FROM new_arrivels na WHERE na.product_id = s.id) AS is_big_size
+     FROM products s
+     WHERE s.id = ?`,
+    [id],
+  );
 
   if (!products.length) return null;
 
@@ -120,10 +128,14 @@ const getAll = async ({
   search,
   type,
   gender,
+  exactGender = false,
   brand,
   model,
   category,
   discountOnly = false,
+  saleOnly = false,
+  includeSale = false,
+  inStockOnly = false,
   sort = "created_at",
   order = "DESC",
   page = 1,
@@ -152,7 +164,10 @@ const getAll = async ({
 
   // 👟 gender filter
   if (gender) {
-    if (gender === "male" || gender === "female") {
+    if (
+      (gender === "male" || gender === "female") &&
+      !(exactGender === true || exactGender === "true" || exactGender === "1")
+    ) {
       conditions.push("(s.gender = ? OR s.gender = 'genderless')");
       values.push(gender);
     } else {
@@ -165,6 +180,30 @@ const getAll = async ({
   if (type) {
     conditions.push("s.type = ?");
     values.push(type);
+  }
+
+  if (saleOnly === true || saleOnly === "true" || saleOnly === "1") {
+    conditions.push(
+      "EXISTS (SELECT 1 FROM sale_products sp WHERE sp.product_id = s.id)",
+    );
+  } else if (!(includeSale === true || includeSale === "true" || includeSale === "1")) {
+    conditions.push(
+      "NOT EXISTS (SELECT 1 FROM sale_products sp WHERE sp.product_id = s.id)",
+    );
+  }
+
+  if (
+    inStockOnly === true ||
+    inStockOnly === "true" ||
+    inStockOnly === "1"
+  ) {
+    conditions.push(`
+      EXISTS (
+        SELECT 1 FROM product_stocks available_stock
+        WHERE available_stock.product_id = s.id
+          AND available_stock.quantity > 0
+      )
+    `);
   }
 
   // 🏷 brand filter
@@ -185,7 +224,7 @@ const getAll = async ({
   // 🏷 category filter
   if (category) {
     conditions.push("s.category = ?");
-    values.push(category);
+    values.push(String(category).toLowerCase() === "slipper" ? "sandal" : category);
   }
 
   // 🏷 فقط محصولات تخفیف‌دار
@@ -258,7 +297,8 @@ const getAll = async ({
   // 📦 گرفتن دیتا
   const [rows] = await db.execute(
     `
-    SELECT s.*
+    SELECT s.*,
+      EXISTS(SELECT 1 FROM sale_products sp WHERE sp.product_id = s.id) AS is_sale
     FROM products s
     ${whereClause}
     ORDER BY s.${safeSort} ${safeOrder}
@@ -351,6 +391,7 @@ const getAll = async ({
     stocks: stocksByProduct[row.id] || [],
     total_stock:
       stocksByProduct[row.id]?.reduce((sum, item) => sum + item.quantity, 0) || 0,
+    is_sale: Boolean(row.is_sale),
     created_at: row.created_at,
     updated_at: row.updated_at,
   }));
@@ -367,7 +408,11 @@ const getAll = async ({
   };
 };
 
-const getAllNewArrivals = async ({ gender }) => {
+const getAllNewArrivals = async ({ gender = "male", saleOnly = false }) => {
+  const saleCondition =
+    saleOnly === true || saleOnly === "true" || saleOnly === "1"
+      ? "EXISTS (SELECT 1 FROM sale_products sp WHERE sp.product_id = products.id)"
+      : "NOT EXISTS (SELECT 1 FROM sale_products sp WHERE sp.product_id = products.id)";
   const [newArrivalIds] = await db.execute(
     `
       SELECT product_id
@@ -391,6 +436,7 @@ const getAllNewArrivals = async ({ gender }) => {
       SELECT *
       FROM products
       WHERE id IN (${placeholders})
+      AND ${saleCondition}
       AND gender IN (?, ?)
       ORDER BY FIELD(id, ${placeholders})
     `,
@@ -428,7 +474,11 @@ const getAllNewArrivals = async ({ gender }) => {
   };
 };
 
-const getAllBestSellers = async ({ gender }) => {
+const getAllBestSellers = async ({ gender = "male", saleOnly = false }) => {
+  const saleCondition =
+    saleOnly === true || saleOnly === "true" || saleOnly === "1"
+      ? "EXISTS (SELECT 1 FROM sale_products sp WHERE sp.product_id = products.id)"
+      : "NOT EXISTS (SELECT 1 FROM sale_products sp WHERE sp.product_id = products.id)";
   const [bestSellersIds] = await db.execute(
     `
       SELECT product_id
@@ -452,6 +502,7 @@ const getAllBestSellers = async ({ gender }) => {
       SELECT *
       FROM products
       WHERE id IN (${placeholders})
+      AND ${saleCondition}
       AND gender IN (?, ?)
       ORDER BY FIELD(id, ${placeholders})
     `,

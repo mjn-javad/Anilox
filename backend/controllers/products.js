@@ -1,8 +1,14 @@
 const ProductsRepository = require("../repositories/products");
 const BrandPopular = require("../repositories/brandPopular");
+const Sales = require("../repositories/sales");
 const fs = require("fs").promises;
 const path = require("path");
 const { date } = require("yup");
+const {
+  deleteObjects: deleteR2Objects,
+  deleteProductImage: deleteR2ProductImage,
+  productImageVariantNames,
+} = require("../services/r2Storage");
 
 exports.createProduct = async (req, res, next) => {
   try {
@@ -33,12 +39,14 @@ exports.createProduct = async (req, res, next) => {
       discount_price,
       description,
       colors,
+      addToSale,
     } = req.body;
 
     const normalizedType = String(type).trim().toLowerCase();
     const normalizedGender = String(gender || "")
       .trim()
       .toLowerCase();
+    const shouldAddToSale = [true, "true", "1", "on"].includes(addToSale);
 
     const normalizedCategory =
       category === undefined ||
@@ -67,6 +75,16 @@ exports.createProduct = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: `Invalid gender. Allowed values: ${allowedGenders.join(", ")}`,
+      });
+    }
+
+    if (
+      shouldAddToSale &&
+      (normalizedType !== "shoe" || normalizedGender === "female")
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Sale is available only for men's or genderless shoes",
       });
     }
 
@@ -135,25 +153,15 @@ exports.createProduct = async (req, res, next) => {
       });
     }
 
-    const slug = await generateSlug(name, processedModel, colorsString || "");
-
-    const hasSlugUsed = await ProductsRepository.findBySlug(null, slug);
-
-    if (hasSlugUsed) {
-      return res.status(409).json({
-        success: false,
-        message: "A product with this model and color already exists",
-      });
-    }
+    const baseSlug = generateSlug(name, processedModel, colorsString || "");
 
     const imageNames = Array.isArray(req.files)
       ? req.files.map((file) => file.filename)
       : [];
 
-    const productId = await ProductsRepository.create({
+    const productId = await createProductWithUniqueSlug(baseSlug, {
       type: normalizedType,
       name,
-      slug,
       brand,
       model: processedModel,
 
@@ -171,12 +179,17 @@ exports.createProduct = async (req, res, next) => {
       await ProductsRepository.addImages(productId, imageNames);
     }
 
+    if (shouldAddToSale) {
+      await Sales.create(null, productId);
+    }
+
     return res.status(201).json({
       success: true,
       message: "Product created successfully",
       data: {
         productId,
         model: processedModel,
+        is_sale: shouldAddToSale,
       },
     });
   } catch (error) {
@@ -293,6 +306,7 @@ exports.getAllProducts = async (req, res, next) => {
     let {
       search,
       gender,
+      exactGender,
       brand,
       model,
       type,
@@ -300,6 +314,9 @@ exports.getAllProducts = async (req, res, next) => {
       sort,
       order,
       discountOnly,
+      saleOnly,
+      includeSale,
+      inStockOnly,
       page = 1,
       limit = 20,
     } = req.query;
@@ -316,9 +333,13 @@ exports.getAllProducts = async (req, res, next) => {
       search,
       type,
       gender,
+      exactGender,
       brand,
       category,
       discountOnly,
+      saleOnly,
+      includeSale,
+      inStockOnly,
       model,
       sort,
       order,
@@ -623,12 +644,9 @@ async function deleteUploadedFiles(files) {
 
   for (const file of files) {
     try {
-      const filePath = path.join(
-        __dirname,
-        "../public/images/posts",
-        file.filename,
-      );
-
+      if (file.r2Keys?.length) {
+        await deleteR2Objects(file.r2Keys);
+      }
       await deleteImageFiles(file.filename);
       // console.log("Deleted:", file.filename);
     } catch (err) {
@@ -666,6 +684,34 @@ const generateSlug = (name, model, colors) => {
   return slug;
 };
 
+const generateUniqueProductSlug = async (baseSlug) => {
+  const normalizedBase = String(baseSlug || "product").slice(0, 255);
+  let candidate = normalizedBase;
+  let suffixNumber = 2;
+
+  while (await ProductsRepository.findBySlug(null, candidate)) {
+    const suffix = `-${suffixNumber}`;
+    candidate = `${normalizedBase.slice(0, 255 - suffix.length)}${suffix}`;
+    suffixNumber += 1;
+  }
+
+  return candidate;
+};
+
+const createProductWithUniqueSlug = async (baseSlug, productData) => {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const slug = await generateUniqueProductSlug(baseSlug);
+
+    try {
+      return await ProductsRepository.create({ ...productData, slug });
+    } catch (error) {
+      if (error?.code !== "ER_DUP_ENTRY" || attempt === 4) throw error;
+    }
+  }
+
+  throw new Error("Could not generate a unique product slug");
+};
+
 const changeStock = async (productId, stock, quantityChange) => {
   const parsedProductId = Number(productId);
   const parsedQuantity = Number(quantityChange);
@@ -695,14 +741,7 @@ const deleteImageFiles = async (imageName) => {
 
   const imagesDir = path.join(__dirname, "../public/images/posts");
 
-  const parsed = path.parse(imageName);
-
-  const files = [
-    imageName,
-    `${parsed.name}-320.webp`,
-    `${parsed.name}-640.webp`,
-    `${parsed.name}-960.webp`,
-  ];
+  const files = productImageVariantNames(imageName);
 
   for (const file of files) {
     try {
@@ -715,5 +754,11 @@ const deleteImageFiles = async (imageName) => {
         console.error(`Error deleting ${file}:`, err.message);
       }
     }
+  }
+
+  try {
+    await deleteR2ProductImage(imageName);
+  } catch (err) {
+    console.error(`Error deleting ${imageName} from R2:`, err.message);
   }
 };

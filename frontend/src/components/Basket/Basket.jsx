@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import apiClientCart from "../../services/api-client_order";
 import MessageAlert from "../Shared/MessageAlert";
 import apiClientDiscount from "../../services/api-client_discount";
 
-const Basket = () => {
+const Basket = ({ saleMode = false }) => {
+  const storefrontQuery = saleMode ? "?storefront=sale" : "";
+  const homePath = saleMode ? "/sale" : "/";
+  const productsPath = saleMode ? "/sale/products" : "/";
+  const addressPath = saleMode ? "/sale/address" : "/address";
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -20,10 +24,10 @@ const Basket = () => {
   const [validatingDiscount, setValidatingDiscount] = useState(false);
 
   // دریافت سبد خرید
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await apiClientCart.get("/cart");
+      const response = await apiClientCart.get(`/cart${storefrontQuery}`);
 
       if (response.data.success) {
         setCartItems(response.data.data || []);
@@ -36,7 +40,7 @@ const Basket = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [storefrontQuery]);
 
   // حذف آیتم از سبد خرید
   const handleRemoveItem = async (cartItemId) => {
@@ -45,7 +49,7 @@ const Basket = () => {
 
     try {
       setUpdatingItem(cartItemId);
-      const response = await apiClientCart.delete(`/cart/${cartItemId}`);
+      const response = await apiClientCart.delete(`/cart/${cartItemId}${storefrontQuery}`);
 
       if (response.data.success) {
         await fetchCart();
@@ -67,7 +71,7 @@ const Basket = () => {
   const handleUpdateQuantity = async (cartItemId, quantity, decOrInc) => {
     try {
       setUpdatingItem(cartItemId);
-      const response = await apiClientCart.put(`/cart/${cartItemId}`, {
+      const response = await apiClientCart.put(`/cart/${cartItemId}${storefrontQuery}`, {
         quantity,
         decOrInc,
       });
@@ -194,7 +198,7 @@ const Basket = () => {
 
   useEffect(() => {
     fetchCart();
-  }, []);
+  }, [fetchCart]);
 
   if (loading) {
     return (
@@ -226,7 +230,7 @@ const Basket = () => {
           Your shopping cart is empty.
         </div>
         <Link
-          to="/"
+          to={productsPath}
           className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
         >
           View products
@@ -264,7 +268,7 @@ const Basket = () => {
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                     <div>
                       <Link
-                        to={`/product/${item.product_id}`}
+                        to={saleMode ? `/sale/product/${item.product_id}` : `/product/${item.product_id}`}
                         className="text-xl font-bold hover:text-blue-600 transition"
                       >
                         {item?.name}
@@ -474,13 +478,13 @@ const Basket = () => {
             </div>
 
             <div className="mt-6 space-y-3">
-              <Link to="/address">
+              <Link to={addressPath}>
                 <button className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-bold">
                   Continue the purchase process
                 </button>
               </Link>
               <Link
-                to="/"
+                to={homePath}
                 className="block w-full text-center border border-blue-600 text-blue-600 py-3 rounded-lg hover:bg-blue-50 transition"
               >
                 Continue shopping

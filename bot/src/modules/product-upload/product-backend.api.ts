@@ -578,6 +578,7 @@ function createProductFormData(
   product: ProductData,
   brandSlug: string,
   images: readonly ProductImageUpload[],
+  addToSale = false,
 ) {
   const payload = toCreateProductPayload(product, brandSlug);
   const formData = new FormData();
@@ -591,6 +592,7 @@ function createProductFormData(
   appendOptionalFormField(formData, "discount_price", payload.discount_price);
   appendOptionalFormField(formData, "description", payload.description);
   appendOptionalFormField(formData, "colors", payload.colors);
+  if (addToSale) formData.append("addToSale", "true");
 
   const imageField = getProductImageField();
 
@@ -636,7 +638,14 @@ function validateImages(images: readonly ProductImageUpload[]) {
       );
     }
 
-    if (!/^image\/(?:jpeg|png|webp|heic|heif)$/.test(image.blob.type)) {
+    const supportedMime = /^image\/(?:jpeg|png|webp|heic|heif)$/i.test(
+      image.blob.type,
+    );
+    const supportedExtension = /\.(?:jpe?g|png|webp|heic|heif)$/i.test(
+      image.filename,
+    );
+
+    if (!supportedMime && !supportedExtension) {
       throw new ProductBackendError(
         "INVALID_PRODUCT_IMAGE",
         "Only JPEG, PNG, WebP, HEIC, and HEIF product images are supported.",
@@ -650,6 +659,7 @@ async function createProductOnSite(
   product: ProductData,
   brandSlug: string,
   images: readonly ProductImageUpload[],
+  addToSale = false,
 ) {
   const configuration = getSiteConfiguration(site);
   const payload = await requestJson(
@@ -660,7 +670,7 @@ async function createProductOnSite(
         Accept: "application/json",
         "X-Telegram-Bot-Key": getTelegramBotServiceKey(),
       },
-      body: createProductFormData(product, brandSlug, images),
+      body: createProductFormData(product, brandSlug, images, addToSale),
     },
     "PRODUCT_REQUEST_FAILED",
     `Could not create the product in ${configuration.label}.`,
@@ -703,6 +713,7 @@ async function publishProductToSite(
   site: ProductSiteId,
   product: ProductData,
   images: readonly ProductImageUpload[],
+  addToSale = false,
 ): Promise<ProductSitePublishResult> {
   try {
     const brandSlug = await resolveBrandSlug(product, site);
@@ -716,7 +727,13 @@ async function publishProductToSite(
       };
     }
 
-    const created = await createProductOnSite(site, product, brandSlug, images);
+    const created = await createProductOnSite(
+      site,
+      product,
+      brandSlug,
+      images,
+      site === "anilox" && addToSale,
+    );
 
     return { site, status: "created", id: created.id, message: null };
   } catch (error) {
@@ -797,6 +814,7 @@ export const productBackendApi = {
     product: ProductData,
     images: readonly ProductImageUpload[],
     targets: readonly ProductSiteId[] = PRODUCT_SITE_IDS,
+    options: { addToSale?: boolean } = {},
   ): Promise<ProductSitePublishResult[]> {
     validateImages(images);
 
@@ -805,7 +823,9 @@ export const productBackendApi = {
     );
 
     return Promise.all(
-      uniqueTargets.map((site) => publishProductToSite(site, product, images)),
+      uniqueTargets.map((site) =>
+        publishProductToSite(site, product, images, options.addToSale === true),
+      ),
     );
   },
 };
